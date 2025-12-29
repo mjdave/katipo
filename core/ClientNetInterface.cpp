@@ -64,10 +64,27 @@ void ClientNetInterface::disconnect()
         return;
     }
     
+    if(connected)
+    {
+        MJLog("enet disconnected");
+    }
+    else if(!disconnected)
+    {
+        MJLog("unable to connect");
+    }
+    
     needsToExit = true;
+    connected = false;
+    disconnected = true;
     thread->join();
     delete thread;
     thread = nullptr;
+    
+    for(auto& idAndCallback : callbacksByID)
+    {
+        idAndCallback.second->call("SERVER_FUNCTION_CALL_RESPONSE", nullptr);
+    }
+    callbacksByID.clear();
     
     if(enetPeer)
     {
@@ -156,6 +173,7 @@ TuiTable* ClientNetInterface::bindTui(TuiTable* rootTable)
             if(functionNameRef->type() == Tui_ref_type_STRING && functionRef->type() == Tui_ref_type_FUNCTION)
             {
                 registeredFunctions[((TuiString*)functionNameRef)->value] = (TuiFunction*)functionRef;
+                return TUI_TRUE;
             }
             else
             {
@@ -166,11 +184,17 @@ TuiTable* ClientNetInterface::bindTui(TuiTable* rootTable)
         {
             TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "Missing args");
         }
-        return nullptr;
+        return TUI_FALSE;
     });
     
     // client.callServerFunction(clientID, "playlists", testPlaylists)
     stateTable->setFunction("callServerFunction", [this](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+        if(disconnected)
+        {
+            TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "attempted to callServerFunction, but we have been disconnected");
+            return TUI_FALSE;
+        }
+        
         if(args->arrayObjects.size() >= 1)
         {
             TuiRef* functionNameRef = args->arrayObjects[0];
@@ -197,6 +221,7 @@ TuiTable* ClientNetInterface::bindTui(TuiTable* rootTable)
                 sendTable->release();
                 
                 sendData(SERVER_DATA_TYPE_CLIENT_SERVER_FUNCTION_CALL_REQUEST, (void*)dataSerialized.data(), dataSerialized.length(), true);
+                return TUI_TRUE;
                 
             }
             else
@@ -208,12 +233,17 @@ TuiTable* ClientNetInterface::bindTui(TuiTable* rootTable)
         {
             TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "Missing args");
         }
-        return nullptr;
+        return TUI_FALSE;
     });
     
     
     // client.downloadFromServer(clientID, "song", arg1, ... , callbackFunction)
     stateTable->setFunction("downloadFromServer", [this](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+        if(disconnected)
+        {
+            TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "attempted to downloadFromServer, but we have been disconnected");
+            return TUI_FALSE;
+        }
         if(args->arrayObjects.size() >= 1)
         {
             TuiRef* functionNameRef = args->arrayObjects[0];
@@ -240,6 +270,7 @@ TuiTable* ClientNetInterface::bindTui(TuiTable* rootTable)
                 sendTable->release();
                 
                 sendData(SERVER_DATA_TYPE_CLIENT_SERVER_DOWNLOAD_FILE_REQUEST, (void*)dataSerialized.data(), dataSerialized.length(), true);
+                return TUI_TRUE;
                 
             }
             else
@@ -251,16 +282,19 @@ TuiTable* ClientNetInterface::bindTui(TuiTable* rootTable)
         {
             TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "Missing args");
         }
-        return nullptr;
+        return TUI_FALSE;
     });
     
     
     // client.disconnect()
     stateTable->setFunction("disconnect", [this](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
-        disconnect();
-        if(registeredFunctions.count("disconnected") != 0)
+        if(!disconnected)
         {
-            registeredFunctions["disconnected"]->call("disconnect");
+            disconnect();
+            if(registeredFunctions.count("disconnected") != 0)
+            {
+                registeredFunctions["disconnected"]->call("disconnect");
+            }
         }
         return nullptr;
     });
@@ -274,8 +308,7 @@ TuiTable* ClientNetInterface::bindTui(TuiTable* rootTable)
 
 void ClientNetInterface::startThread()
 {
-    std::string logPath = Tui::getSavePath("enetClientLog.log"); //todo hmm
-    MJLogSetupThread(logPath);
+    //std::string logPath = Tui::getSavePath("enetClientLog.log"); //todo hmm
     
     Timer* timer = new Timer();
     
@@ -334,7 +367,7 @@ void ClientNetInterface::checkEnetEvents()
         {
             case ENET_EVENT_TYPE_CONNECT:
             {
-                MJLog("enet peer connected\n");
+                MJLog("enet connected\n");
                 
                 TuiTable* dataTable = new TuiTable(nullptr);
                 dataTable->set("clientInfo", clientInfo);
@@ -436,7 +469,7 @@ void ClientNetInterface::checkEnetEvents()
                                 MJLog("multipart download complete");
                                 if(inProgressMultiPartDownloadsByChannel.count(event.channelID) == 0)
                                 {
-                                    MJError("Got unexpected final multpart download packet")
+                                    MJError("Got unexpected final multpart download packet");
                                     abort();
                                 }
                                 
@@ -504,7 +537,6 @@ void ClientNetInterface::checkEnetEvents()
                 break;
             case ENET_EVENT_TYPE_DISCONNECT:
             {
-                MJLog("enet peer disconnect\n");
                 
                 enetPeer = nullptr;
                 if(enetClient)
@@ -633,13 +665,10 @@ void ClientNetInterface::pollNetEvents()
                         uint32_t callbackID = ((TuiNumber*)tuiData->objectsByStringKey["callbackID"])->value;
                         
                         
-                        if(callbacksByID.count(callbackID) == 0)
+                        if(callbacksByID.count(callbackID) != 0)
                         {
-                            MJError("no callback")
-                            abort();
+                            callbacksByID[callbackID]->call("SERVER_FUNCTION_CALL_RESPONSE", tuiData->get("data"));
                         }
-                        
-                        callbacksByID[callbackID]->call("SERVER_FUNCTION_CALL_RESPONSE", tuiData->get("data"));
                         
                     }
                         break;
@@ -647,19 +676,16 @@ void ClientNetInterface::pollNetEvents()
                     {
                         TuiTable* tuiData = (TuiTable*)TuiRef::loadBinaryString(std::string((const char*)output.serverData.data, output.serverData.length)); //todo memcpys
                         uint32_t callbackID = ((TuiNumber*)tuiData->objectsByStringKey["callbackID"])->value;
-                        if(callbacksByID.count(callbackID) == 0)
+                        if(callbacksByID.count(callbackID) != 0)
                         {
-                            MJError("no callback")
-                            abort();
+                            callbacksByID[callbackID]->call("SERVER_DOWNLOAD_FILE_RESPONSE", tuiData->objectsByStringKey["data"]);
                         }
-                        
-                        callbacksByID[callbackID]->call("SERVER_DOWNLOAD_FILE_RESPONSE", tuiData->objectsByStringKey["data"]);
                         
                     }
                         break;
                     default:
                     {
-                        MJError("unhandled data type")
+                        MJError("unhandled data type");
                     }
                         break;
                 }
@@ -676,7 +702,7 @@ void ClientNetInterface::pollNetEvents()
 
 void ClientNetInterface::sendData(uint8_t type, const void * data, size_t dataLength, bool reliable)
 {
-    if(!enetPeer || !enetClient)
+    if(!enetPeer || !enetClient || disconnected)
     {
         MJLog("Attempt to send data with no connection.");
         return;

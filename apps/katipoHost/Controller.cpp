@@ -3,8 +3,6 @@
 #include "ClientNetInterface.h"
 #include "TuiFileUtils.h"
 
-MJLogInfo MJLogInfoGlobal;
-
 #define TRACKER_IP "127.0.0.1"
 #define TRACKER_PORT "3470"
 
@@ -15,8 +13,10 @@ void Controller::init(std::string basePath)
     /*MJLog("run from path:%s", basePath.c_str())*/
     
     TuiTable* clientInfo = new TuiTable(nullptr);
-    clientInfo->setString("name", "Dave");
-    clientInfo->setString("clientID", "1234567812345678"); //should be the public key
+
+    //todo generate and save/load unique names and ids
+    clientInfo->setString("name", "Host");
+    clientInfo->setString("clientID", "2234567812345678"); //should be the public key
     
     trackerNetInterface = new ClientNetInterface(TRACKER_IP,
                                                               TRACKER_PORT,

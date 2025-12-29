@@ -27,18 +27,19 @@ get = function(url, clientData)
     }
 }
 
+hostInfoReceived = function()
+{
+    print("Successfully connected to katipo tracker server, with host name:", hostInfo.hostNameKey)
+}
+
 #tracker.register("clientConnected", clientConnected)
 tracker.register("get", get)
-tracker.callServerFunction("setHostinfo", hostInfo)
 
+print("Welcome to katipo.
+Attempting to connect to tracker, type 'quit' to cancel and exit, 'help' for more commands.")
 
-print("
-katipo example server is running and ready for connections.
-Type 'help' for commands."
-)
+tracker.callServerFunction("setHostinfo", hostInfo, hostInfoReceived)
 
-
-#file.getSavePath()
 
 while(true)
 {
@@ -47,13 +48,13 @@ while(true)
     if(value == "help")
     {
         print("commands:
-\tquit|exit|q exits")
+\tquit|exit exits")
     }
     else if(value == "crawl")
     {
         //doCrawl()
     }
-    else if(value == "quit" or value == "exit" or value == "q")
+    else if(value == "quit" or value == "exit")
     {
         break
     }

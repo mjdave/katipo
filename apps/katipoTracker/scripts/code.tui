@@ -68,8 +68,12 @@ hostSetHostinfo = function(clientID, hostInfo)
     hostNameKey = hostInfo.hostNameKey
     if(!hostNameKey)
     {
-        print("Error, missing host key")
-        return
+        message = "missing host key"
+        print("Error:", message)
+        return {
+            status = "error"
+            message = message
+        }
     }
 
     loadedHostInfo = knownHosts[hostNameKey]
@@ -78,8 +82,12 @@ hostSetHostinfo = function(clientID, hostInfo)
     {
         if(clientID != loadedHostInfo.clientID)
         {
-            print("Error, host name already in use by another host")
-            return
+            message = "host name already in use by another host"
+            print("Error:", message)
+            return {
+                status = "error"
+                message = message
+            }
         }
     }
     else
@@ -93,6 +101,10 @@ hostSetHostinfo = function(clientID, hostInfo)
     loadedHostInfo.info = hostInfo
 
     print("knownHosts:", knownHosts)
+    
+    return {
+        status = "ok"
+    }
 }
 
 hostServer.register("setHostinfo", hostSetHostinfo)

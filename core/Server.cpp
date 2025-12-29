@@ -62,6 +62,7 @@ void Server::bindTui(TuiTable* rootTable)
             if(functionNameRef->type() == Tui_ref_type_STRING && functionRef->type() == Tui_ref_type_FUNCTION)
             {
                 registeredFunctions[((TuiString*)functionNameRef)->value] = (TuiFunction*)functionRef;
+                return TUI_TRUE;
             }
             else
             {
@@ -72,7 +73,7 @@ void Server::bindTui(TuiTable* rootTable)
         {
             TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "Missing args");
         }
-        return nullptr;
+        return TUI_FALSE;
     });
     
     // server.call(clientID, "playlists", testPlaylists)
@@ -114,6 +115,7 @@ void Server::bindTui(TuiTable* rootTable)
                 serverData.length = dataSerialized.length();
                 
                 clients[((TuiString*)clientIDRef)->value]->sendDataToClient(serverData, true);
+                return TUI_TRUE;
                 
             }
             else
@@ -125,7 +127,7 @@ void Server::bindTui(TuiTable* rootTable)
         {
             TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "Missing args");
         }
-        return nullptr;
+        return TUI_FALSE;
     });
     
     serverTable->setFunction("sendFile", [this](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
@@ -144,10 +146,11 @@ void Server::bindTui(TuiTable* rootTable)
                 serverData.length = fileData.length();
                 
                 clients[((TuiString*)clientIDRef)->value]->sendLargeDataToClient(serverData);
+                return TUI_TRUE;
             }
         }
         
-        return nullptr;
+        return TUI_FALSE;
     });
 }
 

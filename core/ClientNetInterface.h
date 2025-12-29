@@ -7,6 +7,7 @@
 #include <string>
 #include "NetConstants.h"
 #include "ThreadSafeQueue.h"
+#include "TuiScript.h"
 
 struct ClientNetInterfaceInput {
     uint8_t*  data;
@@ -31,6 +32,8 @@ public:
     std::string port;
     
     TuiTable* stateTable;
+    bool connected = false;
+    bool disconnected = false; //true after a disconnect event
 
 private:
     ENetHost* enetClient;
@@ -49,7 +52,6 @@ private:
     std::thread* thread;
     
     bool needsToExit = false;
-    bool connected = false;
     
     std::map<std::string, TuiFunction*> registeredFunctions;
     
@@ -63,6 +65,7 @@ public:
     void disconnect();
     
     void callServerFunction(std::string functionName, TuiTable* args, TuiFunction* callback);
+    
     TuiTable* bindTui(TuiTable* rootTable);
     
     void pollNetEvents();

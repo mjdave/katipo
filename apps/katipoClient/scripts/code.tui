@@ -1,0 +1,26 @@
+
+loadCallback = function(result){
+    print("got result:", result)
+}
+
+print("fetching example...")
+katipo.get("example", "testData", loadCallback)
+
+while(true)
+{
+    value = readValue()
+
+    if(value == "help")
+    {
+        print("commands:
+\tquit|exit exits")
+    }
+    else if(value == "crawl")
+    {
+        //doCrawl()
+    }
+    else if(value == "quit" or value == "exit")
+    {
+        break
+    }
+}
