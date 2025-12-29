@@ -1,0 +1,60 @@
+hostInfo = {
+    hostNameKey = "example",
+    name = "Katipo Example Server"
+}
+
+
+/*clientConnected = function(clientInfo) #todo maybe need this?
+{
+    print("in tui clientConnected. clientInfo:", clientInfo)
+}*/
+
+get = function(url, clientData)
+{
+    print("in get. url:", url, " clientData:", clientData)
+    if(url == "example")
+    {
+        return {
+            status = "ok"
+            pageTitle = "Katipo Example Server" # optional, existance tells browser this is a basic text document
+            pageBody = "This is a very basic example server, that serves this message to be displayed in the browser with a title"
+        }
+    }
+
+    return {
+        status = "error"
+        message = "unhandled url:" + url
+    }
+}
+
+#tracker.register("clientConnected", clientConnected)
+tracker.register("get", get)
+tracker.callServerFunction("setHostinfo", hostInfo)
+
+
+print("
+katipo example server is running and ready for connections.
+Type 'help' for commands."
+)
+
+
+#file.getSavePath()
+
+while(true)
+{
+    value = readValue()
+
+    if(value == "help")
+    {
+        print("commands:
+\tquit|exit|q exits")
+    }
+    else if(value == "crawl")
+    {
+        //doCrawl()
+    }
+    else if(value == "quit" or value == "exit" or value == "q")
+    {
+        break
+    }
+}

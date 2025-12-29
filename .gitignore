@@ -39,3 +39,10 @@
 
 # debug information files
 *.dwo
+
+#xcode
+xcuserdata
+*.xcuserstate
+.DS_Store
+*.xcbkptlist
+*.xcuserdatad

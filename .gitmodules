@@ -1,0 +1,3 @@
+[submodule "thirdParty/tui"]
+	path = thirdParty/tui
+	url = https://github.com/mjdave/tui

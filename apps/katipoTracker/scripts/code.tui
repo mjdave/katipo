@@ -1,0 +1,124 @@
+
+
+knownHosts = {}
+knownClients = {}
+
+hostServer.clientConnected = function(clientID, clientInfo)
+{
+    print("host connected:", clientID, " clientInfo:", clientInfo)
+    knownClients[clientID] = clientInfo
+}
+
+
+hostServer.clientDisconnected = function(clientID) #todo
+{
+    knownClients[clientID] = nil
+}
+
+
+clientServer.clientConnected = function(clientID)
+{
+    print("client connected:", clientID, " initialData:", initialData)
+}
+
+callHostFunction = function(clientID, url, clientData, callbackFunc)
+{
+    print("client callHostFunction:", clientID, " url:", url, " clientData:", clientData)
+
+    if(url)
+    {
+        hostName = url #todo support host/subFunc
+        hostInfo = knownHosts[url]
+        if(hostInfo)
+        {
+            print("calling host server func")
+            hostServer.callClientFunction(hostInfo.clientID, "get", url, clientData, callbackFunc)
+        }
+        else
+        {
+            result = {
+                status = "error"
+                message = "unknown host:" + url
+            }
+            callbackFunc(result)
+
+            //TODO causes tui crash:
+            //callbackFunc({
+            //    status = "error"
+            //    message = "unknown host:" + url
+            //})
+        }
+    }
+    else
+    {
+        callbackFunc({
+            status = "error"
+            message = "missing host url"
+        })
+    }
+}
+
+#called by client
+clientServer.register("callHostFunction", callHostFunction)
+
+hostSetHostinfo = function(clientID, hostInfo)
+{
+    print("got hostInfo:", hostInfo)
+
+    hostNameKey = hostInfo.hostNameKey
+    if(!hostNameKey)
+    {
+        print("Error, missing host key")
+        return
+    }
+
+    loadedHostInfo = knownHosts[hostNameKey]
+
+    if(loadedHostInfo)
+    {
+        if(clientID != loadedHostInfo.clientID)
+        {
+            print("Error, host name already in use by another host")
+            return
+        }
+    }
+    else
+    {
+        loadedHostInfo = {
+            clientID = clientID
+        }
+        knownHosts[hostNameKey] = loadedHostInfo
+    }
+
+    loadedHostInfo.info = hostInfo
+
+    print("knownHosts:", knownHosts)
+}
+
+hostServer.register("setHostinfo", hostSetHostinfo)
+
+print("katipoTracker is running and ready for connections.
+Type 'help' for commands."
+)
+
+
+#file.getSavePath()
+
+while(true)
+{
+    value = readValue()
+
+    if(value == "help")
+    {
+        print("commands:
+\tquit|exit|q exits")
+    }
+    else if(value == "crawl")
+    {
+        //doCrawl()
+    }
+    else if(value == "quit" or value == "exit" or value == "q")
+    {
+        break
+    }
+}

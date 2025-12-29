@@ -1,0 +1,74 @@
+#include "Controller.h"
+#include "Timer.h"
+#include "ClientNetInterface.h"
+#include "TuiFileUtils.h"
+
+MJLogInfo MJLogInfoGlobal;
+
+#define TRACKER_IP "127.0.0.1"
+#define TRACKER_PORT "3470"
+
+void Controller::init(std::string basePath)
+{
+    rootTable = Tui::createRootTable();
+    
+    /*MJLog("run from path:%s", basePath.c_str())*/
+    
+    TuiTable* clientInfo = new TuiTable(nullptr);
+    clientInfo->setString("name", "Dave");
+    clientInfo->setString("clientID", "1234567812345678"); //should be the public key
+    
+    trackerNetInterface = new ClientNetInterface(TRACKER_IP,
+                                                              TRACKER_PORT,
+                                                              clientInfo);
+    
+    clientInfo->release();
+    
+    trackerNetInterface->bindTui(rootTable);
+    rootTable->set("tracker", trackerNetInterface->stateTable);
+    
+    thread = new std::thread(&Controller::serverEventLoop, this);
+    
+    scriptState = (TuiTable*)TuiRef::runScriptFile(Tui::getResourcePath("scripts/code.tui"), rootTable);
+}
+
+static const double SERVER_FIXED_TIME_STEP = 1.0 / 60.0;
+
+void Controller::serverEventLoop()
+{
+    Timer* timer = new Timer();
+    //Timer* deltaTimer = new Timer();
+    
+    while(1)
+    {
+        //checkInput();
+        
+        //double dt = std::clamp(deltaTimer->getDt(), 0.0, 4.0);
+        
+        trackerNetInterface->pollNetEvents();
+        
+        if(needsToExit)
+        {
+            delete timer;
+            return;
+        }
+        
+        double timeElapsed = timer->getDt();
+        if(timeElapsed < SERVER_FIXED_TIME_STEP)
+        {
+            std::this_thread::sleep_for(std::chrono::duration<double>(SERVER_FIXED_TIME_STEP - timeElapsed));
+        }
+    }
+}
+
+Controller::Controller()
+{
+    
+}
+
+Controller::~Controller()
+{
+    rootTable->release();
+    scriptState->release();
+    delete trackerNetInterface;
+}
