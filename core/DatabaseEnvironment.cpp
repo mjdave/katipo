@@ -1,7 +1,11 @@
 
 #include "DatabaseEnvironment.h"
-#include "FileUtils.h"
+#include "TuiFileUtils.h"
 #include "Database.h"
+
+#ifndef MAX 
+#define MAX(a_,b_) ((a_) > (b_) ? (a_) : (b_))
+#endif
 
 #define ABSOLUTE_MAX_DB_SIZE 16384
 
@@ -15,7 +19,7 @@ DatabaseEnvironment::DatabaseEnvironment(std::string environmentDirectoryPath_,
     environmentDirectoryPath = environmentDirectoryPath_;
     size_t maxMapSizeInMB = MAX(initialSizeInMB, 8);
     
-    createDirectoriesIfNeededForDirPath(environmentDirectoryPath);
+    Tui::createDirectoriesIfNeededForDirPath(environmentDirectoryPath);
     
     LOG_AND_RETURN_ON_FAIL(mdb_env_create(&env), "mdb_env_create");
     LOG_AND_RETURN_ON_FAIL(mdb_env_set_maxdbs(env, maxDatabases), "mdb_env_set_maxdbs");

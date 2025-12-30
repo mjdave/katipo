@@ -35,7 +35,7 @@ void Controller::serverEventLoop()
     {
         //checkInput();
         
-        double dt = std::clamp(deltaTimer->getDt(), 0.0, 4.0);
+        double dt = glm::clamp(deltaTimer->getDt(), 0.0, 4.0);
         
         hostServer->update(dt);
         clientServer->update(dt);

@@ -9,10 +9,11 @@
 
 #include <stdio.h>
 #include <string>
+#include <map>
 #include "lmdb.h"
-#include "MathUtils.h"
+//#include "MathUtils.h"
 #include "MJLog.h"
-#include "Serialization.h"
+//#include "Serialization.h"
 
 class DatabaseEnvironment;
 
@@ -41,31 +42,6 @@ public:
     bool hasKey(std::string key);
     
     uint64_t getSize();
-    
-    template<class SaveObject>
-    bool getSerialized(SaveObject* sObject, std::string key)
-    {
-        std::string value = dataForKey(key);
-        if(!value.empty())
-        {
-            return unserializeObject(sObject, value, MJ_SERIALIZATION_BINARY);
-        }
-        
-        return false;
-    }
-    
-    template<class SaveObject>
-    bool setSerialized(SaveObject& sObject, std::string key)
-    {
-        std::string serialized = serializeObject(sObject, MJ_SERIALIZATION_BINARY);
-        
-        if(!serialized.empty())
-        {
-            return setDataForKey(serialized, key);
-        }
-        
-        return false;
-    }
     
 private:
     DatabaseEnvironment* databaseEnvironment;

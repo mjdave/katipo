@@ -1,9 +1,3 @@
-//
-//  main.cpp
-//  katipoTracker
-//
-//  Created by David Frampton on 17/07/2025.
-//
 
 #include <iostream>
 #include "Controller.h"
@@ -40,8 +34,6 @@ Available options:\n\
 }
 
 int main(int argc, const char * argv[]) {
-    // insert code here...
-    
     int option_index = 0;
     int opt = 0;
 

@@ -12,6 +12,9 @@ set(GCC_COVERAGE_LINK_FLAGS    "-no-pie")
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${GCC_COVERAGE_LINK_FLAGS} -static-libgcc -static-libstdc++")
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--disable-new-dtags,-rpath='$ORIGIN'")
 set(CMAKE_INSTALL_RPATH "$ORIGIN")
+set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
+set(THREADS_PREFER_PTHREAD_FLAG TRUE)
+find_package(Threads REQUIRED)
 
 set(SOURCES 
     ../../thirdParty/tui/source/TuiFileUtils.cpp
@@ -19,8 +22,20 @@ set(SOURCES
     ../../thirdParty/tui/source/TuiRef.cpp
     ../../thirdParty/tui/source/TuiSha1.cpp
     ../../thirdParty/tui/source/TuiBuiltInFunctions.cpp
-
-    ../../core/ClientHttpInterface.cpp
+    
+    ../../thirdParty/enet-1.3.18/callbacks.c
+    ../../thirdParty/enet-1.3.18/compress.c
+    ../../thirdParty/enet-1.3.18/host.c
+    ../../thirdParty/enet-1.3.18/list.c
+    ../../thirdParty/enet-1.3.18/packet.c
+    ../../thirdParty/enet-1.3.18/peer.c
+    ../../thirdParty/enet-1.3.18/protocol.c
+    ../../thirdParty/enet-1.3.18/unix.c
+    
+    ../../thirdParty/liblmdb/mdb.c
+    ../../thirdParty/liblmdb/midl.c
+    
+    #../../core/ClientHttpInterface.cpp # requires curl and isn't currently used
     ../../core/Database.cpp
     ../../core/NetServerClient.cpp
     ../../core/ServerNetInterface.cpp
@@ -45,12 +60,15 @@ endif ( CMAKE_COMPILER_IS_GNUCC )
 
 include_directories(
     ../../core
-    ../../thirdParty/tui
+    ../../thirdParty/tui/source
+    ../../thirdParty/enet-1.3.18/include
+    ../../thirdParty/liblmdb
     ../../thirdParty/tui/thirdParty/glm/glm
 
     ../../apps/katipoTracker
 )
 
 add_executable(katipoTracker ${SOURCES})
+target_link_libraries(katipoTracker Threads::Threads)
 
 set (CMAKE_CXX_LINK_EXECUTABLE "${CMAKE_CXX_LINK_EXECUTABLE} -ldl")
