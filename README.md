@@ -14,6 +14,14 @@ git submodule update --init --recursive
 
 Katipo builds and runs on macOS, Windows, and most unix based systems. XCode and Visual studio projects are provided, along with a build script using cmake.
 
+# Linux
+
+You will need to install cmake and the basic build tools if you don't have them already:
+
+```
+sudo apt-get install build-essential cmake
+```
+
 There are three command line apps to build
 ```
 cd apps/katipoTracker
@@ -32,6 +40,12 @@ cd apps/katipoClient
 ```
 
 All going well, the client should print the test message from the host.
+
+# macOS
+Xcode projects are provided within each app directory. The cmake build scripts also work.
+
+# Windows
+Visual Studio solutions are provided within each app directory. Cmake has not been tested on windows.
 
 # Explanation and Mission Statement
 

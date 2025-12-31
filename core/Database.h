@@ -9,6 +9,7 @@
 
 #include <stdio.h>
 #include <string>
+#include <stdint.h>
 #include <map>
 #include "lmdb.h"
 //#include "MathUtils.h"
