@@ -1,5 +1,3 @@
-
-
 #include <iostream>
 #include "Controller.h"
 #include "TuiStringUtils.h"
@@ -10,11 +8,11 @@
 void printErrorForMissingArgForOption(int option)
 {
     switch (option) {
-    case 'p':
+    /*case 'p':
     {
         printf("--port must be followed by a port number.\n");
     }
-    break;
+    break;*/
 
     default:
         break;
@@ -27,7 +25,6 @@ void printUsage()
 Version:%s\n\
 \n\
 Available options:\n\
-\t--port PORT (-p) the UDP port.\n\
 \t--help (-h) display this help text\n\n\
 ", KATIPO_VERSION);
 
@@ -35,11 +32,12 @@ Available options:\n\
 }
 
 int main(int argc, const char * argv[]) {
+    // insert code here...
     
     int option_index = 0;
     int opt = 0;
 
-    std::string port;
+    //std::string port;
 
     /*if(argc < 2)
     {
@@ -55,17 +53,17 @@ int main(int argc, const char * argv[]) {
             printUsage();
             return 0;
         }
-        else if(arg == "-p" || arg == "--port")
+        /*else if(arg == "-p" || arg == "--port")
         {
             if(argc > i)
             {
                 port = argv[i + 1];
                 i++;
             }
-        }
+        }*/
         else
         {
-            printf("Server doesn't understand:%s\n", arg.c_str());
+            printf("Unsupported option:%s\n", arg.c_str());
             return 0;
         }
     }

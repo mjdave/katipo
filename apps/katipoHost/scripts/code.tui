@@ -27,9 +27,10 @@ get = function(url, clientData)
     }
 }
 
-hostInfoReceived = function()
+hostInfoReceived = function(result)
 {
-    print("Successfully connected to katipo tracker server, with host name:", hostInfo.hostNameKey)
+    print("callback result:", result)
+    //print("Successfully connected to katipo tracker server, with host name:", hostInfo.hostNameKey)
 }
 
 #tracker.register("clientConnected", clientConnected)

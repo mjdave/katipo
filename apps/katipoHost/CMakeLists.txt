@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.5)
 
-project(katipoTracker VERSION 0.1)
+project(katipoHost VERSION 0.1)
 
 set(CMAKE_BUILD_TYPE RelWithDebInfo)
 
@@ -49,7 +49,7 @@ set(SOURCES
     ../../core/Server.cpp
     ../../core/Timer.cpp
 
-    ../../apps/katipoTracker/Controller.cpp
+    ../../apps/katipoHost/Controller.cpp
 
     main.cpp
 )
@@ -70,7 +70,7 @@ include_directories(
     ../../thirdParty/tui/thirdParty/glm/glm
 )
 
-add_executable(katipoTracker ${SOURCES})
-target_link_libraries(katipoTracker Threads::Threads)
+add_executable(katipoHost ${SOURCES})
+target_link_libraries(katipoHost Threads::Threads)
 
 set (CMAKE_CXX_LINK_EXECUTABLE "${CMAKE_CXX_LINK_EXECUTABLE} -ldl")

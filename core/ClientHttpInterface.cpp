@@ -27,7 +27,7 @@ ClientHttpInterface::ClientHttpInterface(std::string host_,
 
 ClientHttpInterface::~ClientHttpInterface()
 {
-    MJTimer::getInstance()->removeTimer(updateTimerID);
+    //MJTimer::getInstance()->removeTimer(updateTimerID);
     ClientHttpInterfaceThreadInput input;
     input.exit = true;
     inputQueue->push(input);

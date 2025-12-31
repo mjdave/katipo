@@ -60,4 +60,7 @@ CTestTestfile.cmake
 _deps
 CMakeUserPresets.json
 
-linux/*/bin
+apps/*/bin
+apps/katipoTracker/katipoTracker
+apps/katipoHost/katipoHost
+apps/katipoClient/katipoClient
