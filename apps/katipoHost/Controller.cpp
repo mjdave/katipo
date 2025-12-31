@@ -1,3 +1,11 @@
+#ifdef _MSC_VER
+#define _WINSOCKAPI_    // stops windows.h including winsock.h
+#define NOMINMAX
+#define _WINSOCK_DEPRECATED_NO_WARNINGS
+#include <windows.h>
+#endif
+
+
 #include "Controller.h"
 #include "Timer.h"
 #include "ClientNetInterface.h"
