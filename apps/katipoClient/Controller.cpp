@@ -6,7 +6,7 @@
 #define TRACKER_IP "127.0.0.1"
 #define TRACKER_PORT "3471" //clients connect to 3471, servers to 3470
 
-void Controller::init(std::string basePath)
+void Controller::init(int argc, const char * argv[])
 {
     rootTable = Tui::createRootTable();
     

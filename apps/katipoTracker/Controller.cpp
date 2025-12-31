@@ -11,23 +11,58 @@
 #include "Server.h"
 #include "TuiFileUtils.h"
 
+#define KATIPO_VERSION "0.1"
 
-void Controller::init(std::string basePath)
+void Controller::init(int argc, const char * argv[])
 {
     TuiTable* rootTable = Tui::createRootTable();
     
-    MJLog("run from path:%s", basePath.c_str());
-    hostServer = new Server("hostServer", "3470", 4095, rootTable);
-    clientServer = new Server("clientServer", "3471", 4095, rootTable);
+    std::string hostPortString = "3470";
+    std::string clientPortString = "3471";
+    
+    for(int i = 1; i < argc; i++)
+    {
+        std::string arg = argv[i];
+        if(arg == "--hostPort")
+        {
+            if(i+1 >= argc)
+            {
+                MJError("missing host port. usage example: ./katipoTracker --hostPort 3470");
+                exit(1);
+            }
+            hostPortString = argv[i++];
+        }
+        else if(arg == "--clientPort")
+        {
+            if(i+1 >= argc)
+            {
+                MJError("missing client port. usage example: ./katipoTracker --clientPort 3471");
+                exit(1);
+            }
+            clientPortString = argv[i++];
+        }
+        else if(arg == "--help")
+        {
+            MJLog("Katipo Tracker version:%s\n\
+usage: ./katipoTracker --hostPort 3470 --clientPort 3471", KATIPO_VERSION);
+            exit(0);
+        }
+    }
+    
+    hostServer = new Server("hostServer", hostPortString, 4095, rootTable);
+    clientServer = new Server("clientServer", clientPortString, 4095, rootTable);
     
     if(hostServer->start() && clientServer->start())
     {
         thread = new std::thread(&Controller::serverEventLoop, this);
         
+        std::string basePath = argv[0];
+        
         TuiRef::runScriptFile(Tui::pathByRemovingLastPathComponent(basePath) + "scripts/code.tui", rootTable);
     }
     else
     {
+        MJError("Failed to start.");
         exit(1);
     }
     

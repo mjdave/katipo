@@ -6,11 +6,9 @@
 #define TRACKER_IP "127.0.0.1"
 #define TRACKER_PORT "3470"
 
-void Controller::init(std::string basePath)
+void Controller::init(int argc, const char * argv[])
 {
     rootTable = Tui::createRootTable();
-    
-    /*MJLog("run from path:%s", basePath.c_str())*/
     
     TuiTable* clientInfo = new TuiTable(nullptr);
 

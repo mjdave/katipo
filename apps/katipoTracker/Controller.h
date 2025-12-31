@@ -26,7 +26,7 @@ public:
         return instance;
     }
     
-    void init(std::string basePath);
+    void init(int argc, const char * argv[]);
     
     Controller();
     ~Controller();

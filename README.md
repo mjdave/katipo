@@ -1,7 +1,7 @@
 # Katipo
 Katipo is a new type of decentralized network, designed to be as simple as possible, and useful in ways that the web isn't currently.
 
-The Katipō is a venomous spider from New Zealand. The name seemed a good fit.
+The Katipō is an endangered venomous spider from New Zealand. The name seemed a good fit.
 
 ![Katipo browser for iOS icon](https://github.com/mjdave/katipo/blob/main/katipoBrowser-iOS128.png)
 

@@ -4,7 +4,6 @@
 
 #include "TuiScript.h"
 #include <thread>
-//#include "ThreadSafeQueue.h"
 
 class ClientNetInterface;
 
@@ -17,9 +16,6 @@ public:
     
     TuiTable* rootTable;
     TuiTable* scriptState;
-    
-    //ThreadSafeQueue<ControllerInput>* inputQueue;
-    //ThreadSafeQueue<ServerAppControllerOutput>* outputQueue;
 
 public:
     
@@ -28,7 +24,7 @@ public:
         return instance;
     }
     
-    void init(std::string basePath);
+    void init(int argc, const char * argv[]);
     
     Controller();
     ~Controller();
