@@ -5,6 +5,7 @@
 
 #include <stdio.h>
 #include "lmdb.h"
+#include <string>
 //#include "MathUtils.h"
 
 #include <map>

@@ -5,6 +5,8 @@
 #ifdef _WIN32
 
 #define ENET_BUILDING_LIB 1
+
+#define _WINSOCK_DEPRECATED_NO_WARNINGS
 #include "enet/enet.h"
 #include <windows.h>
 #include <mmsystem.h>

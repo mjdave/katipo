@@ -62,5 +62,8 @@ CMakeUserPresets.json
 
 apps/*/bin
 apps/katipoTracker/katipoTracker
+apps/katipoTracker/x64
 apps/katipoHost/katipoHost
+apps/katipoHost/x64
 apps/katipoClient/katipoClient
+apps/katipoClient/x64
