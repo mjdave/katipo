@@ -70,3 +70,5 @@ We can do that together, here, now.
 No AI is used here.
 
 --Dave
+- [dave@afk.nz](mailto:dave@afk.nz)
+- [@majicdave.bsky.social](https://bsky.app/profile/majicdave.bsky.social)
