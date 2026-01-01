@@ -10,8 +10,7 @@
 #include "Timer.h"
 #include "Server.h"
 #include "TuiFileUtils.h"
-
-#define KATIPO_VERSION "0.1"
+#include "MJVersion.h"
 
 void Controller::init(int argc, const char * argv[])
 {
@@ -30,7 +29,7 @@ void Controller::init(int argc, const char * argv[])
                 MJError("missing host port. usage example: ./katipoTracker --hostPort 3470");
                 exit(1);
             }
-            hostPortString = argv[i++];
+            hostPortString = argv[++i];
         }
         else if(arg == "--clientPort")
         {
@@ -39,7 +38,7 @@ void Controller::init(int argc, const char * argv[])
                 MJError("missing client port. usage example: ./katipoTracker --clientPort 3471");
                 exit(1);
             }
-            clientPortString = argv[i++];
+            clientPortString = argv[++i];
         }
         else if(arg == "--help")
         {

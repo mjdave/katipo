@@ -204,7 +204,7 @@ bool ServerNetInterface::checkClientAuthorized(uint16_t clientVersion,
 {
     if(clientVersion != NETWORK_COMPATIBILITY_VERSION)
     {
-        *rejectionContext = VERSION_STRING;
+        *rejectionContext = KATIPO_VERSION;
         if(clientVersion < NETWORK_COMPATIBILITY_VERSION)
         {
             *rejectionReason = "client_too_old";
@@ -213,7 +213,7 @@ bool ServerNetInterface::checkClientAuthorized(uint16_t clientVersion,
         {
             *rejectionReason = "client_too_new";
         }
-        MJLog("Connecting client version mismatch:%s. (client:%d server:%d)", rejectionReason, clientVersion, NETWORK_COMPATIBILITY_VERSION);
+        MJLog("Connecting client version mismatch:%s. (client:%d server:%d)", rejectionReason->c_str(), clientVersion, NETWORK_COMPATIBILITY_VERSION);
         
         return false;
     }

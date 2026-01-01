@@ -9,6 +9,7 @@
 #include "Timer.h"
 #include "ClientNetInterface.h"
 #include "TuiFileUtils.h"
+#include "MJVersion.h"
 
 #define TRACKER_IP "127.0.0.1"
 #define TRACKER_PORT "3471" //clients connect to 3471, servers to 3470
@@ -16,6 +17,38 @@
 void Controller::init(int argc, const char * argv[])
 {
     rootTable = Tui::createRootTable();
+    
+    trackerIP = TRACKER_IP;
+    trackerPort = TRACKER_PORT;
+    
+    for(int i = 1; i < argc; i++)
+    {
+        std::string arg = argv[i];
+        if(arg == "--trackerIP")
+        {
+            if(i+1 >= argc)
+            {
+                MJError("missing tracker IP. usage example: ./katipoTracker --trackerIP %s", TRACKER_IP);
+                exit(1);
+            }
+            trackerIP = argv[++i];
+        }
+        else if(arg == "--trackerPort")
+        {
+            if(i+1 >= argc)
+            {
+                MJError("missing tracker port. usage example: ./katipoTracker --trackerPort %s", TRACKER_PORT);
+                exit(1);
+            }
+            trackerPort = argv[++i];
+        }
+        else if(arg == "--help")
+        {
+            MJLog("Katipo Host version:%s\n\
+usage: ./katipoTracker --trackerIP %s --trackerPort %s", KATIPO_VERSION, TRACKER_IP, TRACKER_PORT);
+            exit(0);
+        }
+    }
     
     /*MJLog("run from path:%s", basePath.c_str())*/
     
@@ -40,8 +73,7 @@ void Controller::init(int argc, const char * argv[])
                 std::string remoteURL = urlRef->getStringValue();
                 std::vector<std::string> split = Tui::splitString(remoteURL, '/');
                 
-                std::string trackerURL = TRACKER_IP;
-                std::string trackerPort = TRACKER_PORT;
+                std::string trackerURL = trackerIP;
                 
                 if(split[0].find(".") != -1)
                 {

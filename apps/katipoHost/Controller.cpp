@@ -5,8 +5,8 @@
 #include <windows.h>
 #endif
 
-
 #include "Controller.h"
+#include "MJVersion.h"
 #include "Timer.h"
 #include "ClientNetInterface.h"
 #include "TuiFileUtils.h"
@@ -17,16 +17,47 @@
 void Controller::init(int argc, const char * argv[])
 {
     rootTable = Tui::createRootTable();
-    
     TuiTable* clientInfo = new TuiTable(nullptr);
+    
+    std::string trackerIP = TRACKER_IP;
+    std::string trackerPort = TRACKER_PORT;
+    
+    for(int i = 1; i < argc; i++)
+    {
+        std::string arg = argv[i];
+        if(arg == "--trackerIP")
+        {
+            if(i+1 >= argc)
+            {
+                MJError("missing tracker IP. usage example: ./katipoTracker --trackerIP %s", TRACKER_IP);
+                exit(1);
+            }
+            trackerIP = argv[++i];
+        }
+        else if(arg == "--trackerPort")
+        {
+            if(i+1 >= argc)
+            {
+                MJError("missing tracker port. usage example: ./katipoTracker --trackerPort %s", TRACKER_PORT);
+                exit(1);
+            }
+            trackerPort = argv[++i];
+        }
+        else if(arg == "--help")
+        {
+            MJLog("Katipo Host version:%s\n\
+usage: ./katipoTracker --trackerIP %s --trackerPort %s", KATIPO_VERSION, TRACKER_IP, TRACKER_PORT);
+            exit(0);
+        }
+    }
 
     //todo generate and save/load unique names and ids
     clientInfo->setString("name", "Host");
     clientInfo->setString("clientID", "2234567812345678"); //should be the public key
     
-    trackerNetInterface = new ClientNetInterface(TRACKER_IP,
-                                                              TRACKER_PORT,
-                                                              clientInfo);
+    trackerNetInterface = new ClientNetInterface(trackerIP,
+                                                 trackerPort,
+                                                 clientInfo);
     
     clientInfo->release();
     
