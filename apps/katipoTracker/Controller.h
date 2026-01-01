@@ -15,6 +15,8 @@ public:
     
     Server* hostServer;
     Server* clientServer;
+
+    TuiTable* katipoTable;
     
     //ThreadSafeQueue<ControllerInput>* inputQueue;
     //ThreadSafeQueue<ServerAppControllerOutput>* outputQueue;

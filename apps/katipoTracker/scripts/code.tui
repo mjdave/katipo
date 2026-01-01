@@ -3,6 +3,54 @@
 knownHosts = {}
 knownClients = {}
 
+KATIPO_VERSION = "0.1" #todo
+
+### loop over the launch arguments
+argCount = table.count(launchArgs)
+for(i = 0, i < argCount, i++)
+{
+    arg = launchArgs[i]
+    if(arg == "--hostPort")
+    {
+        if(i+1 >= argCount)
+        {
+            print("missing host port. usage example: ./katipoTracker --hostPort 3470")
+            return
+        }
+        i++
+        katipo.hostPort = launchArgs[i]
+    }
+    else if(arg == "--clientPort")
+    {
+        if(i+1 >= argCount)
+        {
+            print("missing client port. usage example: ./katipoTracker --clientPort 3471")
+            return
+        }
+        i++
+        katipo.clientPort = launchArgs[i]
+    }
+    else if(arg == "--help")
+    {
+        print("Katipo Tracker version:", KATIPO_VERSION, "\nusage: ./katipoTracker --hostPort 3470 --clientPort 3471")
+        return
+    }
+}
+
+### initialize katipo now that we have loaded the ports fomr the args
+success = katipo.init()
+
+if(!success)
+{
+    print("Failed to initialize katipo.")
+    return
+}
+
+hostServer = katipo.hostServer
+clientServer = katipo.clientServer
+
+### hosts
+
 hostServer.clientConnected = function(clientID, clientInfo)
 {
     print("host connected:", clientID, " clientInfo:", clientInfo)
@@ -14,52 +62,6 @@ hostServer.clientDisconnected = function(clientID) #todo
 {
     knownClients[clientID] = nil
 }
-
-
-clientServer.clientConnected = function(clientID)
-{
-    print("client connected:", clientID, " initialData:", initialData)
-}
-
-callHostFunction = function(clientID, url, clientData, callbackFunc)
-{
-    print("client callHostFunction:", clientID, " url:", url, " clientData:", clientData)
-
-    if(url)
-    {
-        hostName = url #todo support host/subFunc
-        hostInfo = knownHosts[url]
-        if(hostInfo)
-        {
-            print("calling host server func")
-            hostServer.callClientFunction(hostInfo.clientID, "get", url, clientData, callbackFunc)
-        }
-        else
-        {
-            result = {
-                status = "error"
-                message = "unknown host:" + url
-            }
-            callbackFunc(result)
-
-            //TODO causes tui crash:
-            //callbackFunc({
-            //    status = "error"
-            //    message = "unknown host:" + url
-            //})
-        }
-    }
-    else
-    {
-        callbackFunc({
-            status = "error"
-            message = "missing host url"
-        })
-    }
-}
-
-#called by client
-clientServer.register("callHostFunction", callHostFunction)
 
 hostSetHostinfo = function(clientID, hostInfo)
 {
@@ -109,12 +111,67 @@ hostSetHostinfo = function(clientID, hostInfo)
 
 hostServer.register("setHostinfo", hostSetHostinfo)
 
-print("katipoTracker is running and ready for connections.
+### clients
+
+clientServer.clientConnected = function(clientID)
+{
+    print("client connected:", clientID, " initialData:", initialData)
+}
+
+callHostFunction = function(clientID, url, clientData, callbackFunc)
+{
+    print("client callHostFunction:", clientID, " url:", url, " clientData:", clientData)
+
+    if(url)
+    {
+        hostName = url #todo support host/subFunc
+        hostInfo = knownHosts[url]
+        if(hostInfo)
+        {
+            print("calling host server func")
+            hostServer.callClientFunction(hostInfo.clientID, "get", url, clientData, callbackFunc)
+        }
+        else
+        {
+            result = {
+                status = "error"
+                message = "unknown host:" + url
+            }
+            callbackFunc(result)
+
+            //TODO causes tui crash:
+            //callbackFunc({
+            //    status = "error"
+            //    message = "unknown host:" + url
+            //})
+        }
+    }
+    else
+    {
+        callbackFunc({
+            status = "error"
+            message = "missing host url"
+        })
+    }
+}
+
+#called by client
+clientServer.register("callHostFunction", callHostFunction)
+
+
+
+### start the servers
+success = katipo.start()
+
+if(!success)
+{
+    print("Failed to start katipo servers.")
+    return
+}
+
+print("katipoTracker is running with host port ", katipo.hostPort, " and client port ", katipo.clientPort, " and is ready for connections.
 Type 'help' for commands."
 )
-
-
-#file.getSavePath()
 
 while(true)
 {
@@ -125,9 +182,9 @@ while(true)
         print("commands:
 \tquit|exit|q exits")
     }
-    else if(value == "crawl")
+    else if(value == "list")
     {
-        //doCrawl()
+        //printConnectedLists()
     }
     else if(value == "quit" or value == "exit" or value == "q")
     {

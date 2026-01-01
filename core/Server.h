@@ -24,6 +24,8 @@ public:
     std::map<std::string, NetServerClient*> clients;
 
 	std::string hostName;
+    
+	bool running = false;
 
 public:
     Server(std::string hostName_ = "localhost", std::string port_ = "7121", int maxConnections_ = 16, TuiTable* rootTable = nullptr);
@@ -75,12 +77,10 @@ protected:
     uint32_t functionCallbackIDCounter = 0;
     std::map<uint32_t, TuiFunction*> callbacksByID;
     
-	bool running = false;
-    
 private:
     void loadDatabase();
     
-    void bindTui(TuiTable* rootTable);
+    void bindTui(TuiTable* parentTable);
     
     void loadList(TuiTable* serverConfigRef, std::string listKey, std::set<uint64_t>& list);
     void loadWorldConfig();

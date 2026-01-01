@@ -20,10 +20,10 @@ Server::Server(std::string hostName_,
     }
 }
 
-void Server::bindTui(TuiTable* rootTable)
+void Server::bindTui(TuiTable* parentTable)
 {
-    TuiTable* serverTable = new TuiTable(rootTable);
-    rootTable->setTable(hostName, serverTable);
+    TuiTable* serverTable = new TuiTable(parentTable);
+    parentTable->setTable(hostName, serverTable);
     serverTable->release();
     
     serverTable->onSet = [this](TuiRef* table, const std::string& key, TuiRef* value) {
