@@ -1,5 +1,5 @@
 hostInfo = {
-    hostNameKey = "example",
+    hostNameKey = "exampleServer",
     name = "Katipo Example Server"
 }
 
@@ -71,7 +71,7 @@ tracker = katipo.tracker
 get = function(url, clientData)
 {
     print("in get. url:", url, " clientData:", clientData)
-    if(url == "example")
+    if(url == "exampleServer")
     {
         return {
             status = "ok"

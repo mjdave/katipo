@@ -54,9 +54,11 @@ loadCallback = function(result){
     print("got result:", result)
 }
 
-print("fetching example...")
+print("fetching exampleServer/")
+katipo.get("exampleServer", nil, loadCallback)
 
-katipo.get("example", "testData", loadCallback)
+print("fetching example/exampleFile.txt") #todo not implemented, results incorrect order
+katipo.get("example/exampleFile.txt", nil, loadCallback)
 
 while(true)
 {

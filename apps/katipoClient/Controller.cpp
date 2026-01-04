@@ -49,7 +49,7 @@ void Controller::init(int argc, const char * argv[])
     }
     
     //todo generate and save/load unique names and ids
-    clientInfo = new TuiTable(nullptr);
+    TuiTable* clientInfo = new TuiTable(nullptr);
     katipoTable->setTable("clientInfo", clientInfo);
     clientInfo->setString("name", "Host");
     clientInfo->setString("clientID", "1234567812345678"); //should be the public key
@@ -65,7 +65,8 @@ void Controller::init(int argc, const char * argv[])
                 std::string remoteURL = urlRef->getStringValue();
                 std::vector<std::string> split = Tui::splitString(remoteURL, '/');
                 
-                std::string trackerURL = trackerIP;
+                std::string trackerURL = katipoTable->get("trackerIP")->getStringValue();
+                std::string trackerPort = katipoTable->get("trackerPort")->getStringValue();
                 
                 if(split[0].find(".") != -1)
                 {
@@ -78,7 +79,7 @@ void Controller::init(int argc, const char * argv[])
                     remoteURL = remoteURL.substr(split[0].length() + 1, -1);
                 }
                 
-                std::string trackerKey = trackerURL + "/" + trackerPort;
+                std::string trackerKey = trackerURL + ":" + trackerPort;
                 ClientNetInterface* netInterface = nullptr;
                 if(netInterfaces.count(trackerKey) != 0)
                 {
@@ -88,7 +89,7 @@ void Controller::init(int argc, const char * argv[])
                 {
                     netInterface = new ClientNetInterface(trackerURL,
                                                           trackerPort,
-                                                        clientInfo);
+                                                        katipoTable->getTable("clientInfo"));
                     netInterfaces[trackerKey] = netInterface;
                     
                     netInterface->bindTui(rootTable);
@@ -173,7 +174,6 @@ Controller::~Controller()
 {
     rootTable->release();
     scriptState->release();
-    clientInfo->release();
     for(auto& idAndRequestInterface : netInterfaces)
     {
         delete idAndRequestInterface.second;

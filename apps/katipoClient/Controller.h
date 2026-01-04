@@ -12,14 +12,10 @@ public:
     bool needsToExit = false;
     std::thread* thread = nullptr;
     
-    std::string trackerIP;
-    std::string trackerPort;
-    
     TuiTable* rootTable;
     TuiTable* katipoTable;
     TuiTable* scriptState;
     
-    TuiTable* clientInfo;
     std::map<std::string, ClientNetInterface*> netInterfaces;
 
 public:
