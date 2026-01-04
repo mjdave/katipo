@@ -45,7 +45,6 @@ void Controller::init(int argc, const char * argv[])
             basePath = argv[++i];
             launchArgsTable->arrayObjects.push_back(new TuiString(argv[i]));
         }
-        
     }
     
     //todo generate and save/load unique names and ids

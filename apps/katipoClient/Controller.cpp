@@ -17,51 +17,43 @@
 void Controller::init(int argc, const char * argv[])
 {
     rootTable = Tui::createRootTable();
+
+    TuiTable* launchArgsTable = new TuiTable(rootTable);
+    rootTable->set("launchArgs", launchArgsTable);
+    launchArgsTable->release();
     
-    trackerIP = TRACKER_IP;
-    trackerPort = TRACKER_PORT;
+    katipoTable = new TuiTable(rootTable);
+    rootTable->set("katipo", katipoTable);
+    katipoTable->release();
+
+    katipoTable->setString("trackerIP", TRACKER_IP);
+    katipoTable->setString("trackerPort", TRACKER_PORT);
+
+    std::string basePath = Tui::pathByRemovingLastPathComponent(argv[0]);
     
     for(int i = 1; i < argc; i++)
     {
+        launchArgsTable->arrayObjects.push_back(new TuiString(argv[i]));
+
         std::string arg = argv[i];
-        if(arg == "--trackerIP")
+        if(arg == "--basePath")
         {
             if(i+1 >= argc)
             {
-                MJError("missing tracker IP. usage example: ./katipoTracker --trackerIP %s", TRACKER_IP);
+                MJError("missing basePath. usage example: ./katipoTracker --basePath %s", basePath.c_str());
                 exit(1);
             }
-            trackerIP = argv[++i];
-        }
-        else if(arg == "--trackerPort")
-        {
-            if(i+1 >= argc)
-            {
-                MJError("missing tracker port. usage example: ./katipoTracker --trackerPort %s", TRACKER_PORT);
-                exit(1);
-            }
-            trackerPort = argv[++i];
-        }
-        else if(arg == "--help")
-        {
-            MJLog("Katipo Host version:%s\n\
-usage: ./katipoTracker --trackerIP %s --trackerPort %s", KATIPO_VERSION, TRACKER_IP, TRACKER_PORT);
-            exit(0);
+            basePath = argv[++i];
+            launchArgsTable->arrayObjects.push_back(new TuiString(argv[i]));
         }
     }
     
-    /*MJLog("run from path:%s", basePath.c_str())*/
-    
-    TuiTable* katipoTable = new TuiTable(rootTable);
-    rootTable->set("katipo", katipoTable);
-    katipoTable->release();
-    
-    clientInfo = new TuiTable(katipoTable);
-    katipoTable->setTable("clientInfo", clientInfo);
-    
     //todo generate and save/load unique names and ids
-    clientInfo->setString("name", "Client");
-    clientInfo->setString("clientID", "3234567812345678"); //should be the public key
+    clientInfo = new TuiTable(nullptr);
+    katipoTable->setTable("clientInfo", clientInfo);
+    clientInfo->setString("name", "Host");
+    clientInfo->setString("clientID", "1234567812345678"); //should be the public key
+    clientInfo->release();
 
     //katipo.get("127.0.0.1/example", sendData, function(result){ print("got result:", result)})
     katipoTable->setFunction("get", [this](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {

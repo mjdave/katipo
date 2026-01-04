@@ -102,7 +102,7 @@ std::string ClientHttpInterface::getDataInternal(std::string remoteFile)
             
             if(res != CURLE_OK)
             {
-                MJLog("curl failed with code:%d error:%s", res, errbuf)
+                MJLog("curl failed with code:%d error:%s", res, errbuf);
             }
             else
             {

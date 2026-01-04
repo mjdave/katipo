@@ -1,9 +1,61 @@
 
+KATIPO_VERSION = "0.1" #todo
+
+### loop over the launch arguments
+argCount = table.count(launchArgs)
+for(i = 0, i < argCount, i++)
+{
+    arg = launchArgs[i]
+    if(arg == "--trackerIP")
+    {
+        if(i+1 >= argCount)
+        {
+            print("missing argument. usage example: ./katipoHost --trackerIP 127.0.0.1")
+            return
+        }
+        i++
+        katipo.trackerIP = launchArgs[i]
+    }
+    else if(arg == "--trackerPort")
+    {
+        if(i+1 >= argCount)
+        {
+            print("missing argument. usage example: ./katipoHost --trackerPort 3470")
+            return
+        }
+        i++
+        katipo.trackerPort = launchArgs[i]
+    }
+    else if(arg == "--help")
+    {
+        print("")
+        print("Katipo Client version:", KATIPO_VERSION)
+        print("Usage: ./katipoClient")
+        print("       ./katipoClient --help")
+        print("       ./katipoClient --trackerIP 127.0.0.1 --trackerPort 3470")
+        print("")
+        print("--basePath PATH") #this is handled by Controller.cpp
+        print("  Were to find scripts/code.tui")
+        print("  optional, default: the same directory as the katipoClient binary")
+        print("")
+        print("--trackerIP example.com")
+        print("  The IP for the tracker that you wish to connect to hosts through. In the future you will be able to supply multiple tracker IPs.")
+        print("  optional, default: 127.0.0.1, which assumes you are running a tracker on your local machine")
+        print("")
+        print("--trackerPort PORT")
+        print("  The port for the tracker.")
+        print("  optional, default: 3471")
+        return
+    }
+}
+
+
 loadCallback = function(result){
     print("got result:", result)
 }
 
 print("fetching example...")
+
 katipo.get("example", "testData", loadCallback)
 
 while(true)
