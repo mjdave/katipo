@@ -6,15 +6,17 @@ knownClients = {}
 KATIPO_VERSION = "0.1" #todo
 
 ### loop over the launch arguments
+
 argCount = table.count(launchArgs)
 for(i = 0, i < argCount, i++)
 {
     arg = launchArgs[i]
+
     if(arg == "--hostPort")
     {
         if(i+1 >= argCount)
         {
-            print("missing host port. usage example: ./katipoTracker --hostPort 3470")
+            print("missing argument. usage example: ./katipoTracker --hostPort 3470")
             return
         }
         i++
@@ -24,7 +26,7 @@ for(i = 0, i < argCount, i++)
     {
         if(i+1 >= argCount)
         {
-            print("missing client port. usage example: ./katipoTracker --clientPort 3471")
+            print("missing argument. usage example: ./katipoTracker --clientPort 3471")
             return
         }
         i++
@@ -32,12 +34,26 @@ for(i = 0, i < argCount, i++)
     }
     else if(arg == "--help")
     {
-        print("Katipo Tracker version:", KATIPO_VERSION, "\nusage: ./katipoTracker --hostPort 3470 --clientPort 3471")
+        print("")
+        print("Katipo Tracker version:", KATIPO_VERSION)
+        print("Example usage: ./katipoTracker --hostPort 3470 --clientPort 3471")
+        print("")
+        print("--basePath PATH") #this is handled by Controller.cpp
+        print("  Were to find scripts/code.tui")
+        print("  optional, default: the same directory as the katipoTracker binary")
+        print("")
+        print("--hostPort PORT")
+        print("  The port hosts will connect to.")
+        print("  optional, default: 3470")
+        print("")
+        print("--clientPort PORT")
+        print("  The port clients will connect to.")
+        print("  optional, default: 3471")
         return
     }
 }
 
-### initialize katipo now that we have loaded the ports fomr the args
+### initialize katipo now that we have loaded the launch args
 success = katipo.init()
 
 if(!success)

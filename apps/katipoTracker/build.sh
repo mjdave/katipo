@@ -3,7 +3,7 @@ cmake -H. -Bbuild
 sleep 2
 if cmake --build build -- -j4; then
 cp -f bin/katipoTracker ../katipoTracker
-echo "Build complete. The katipoTracker binary is now available in this directory. Run by typing: ./katipoTracker"
+echo "Build complete. The katipoTracker binary is now available in this directory. Run by typing: ./katipoTracker --help"
 else
 exit 1;
 fi

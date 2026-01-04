@@ -15,6 +15,7 @@ public:
     ClientNetInterface* trackerNetInterface;
     
     TuiTable* rootTable;
+    TuiTable* katipoTable;
     TuiTable* scriptState;
 
 public:

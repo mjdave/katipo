@@ -25,11 +25,30 @@ void Controller::init(int argc, const char * argv[])
 
     katipoTable->setString("hostPort", "3470");
     katipoTable->setString("clientPort", "3471");
-    
+
+    std::string basePath = Tui::pathByRemovingLastPathComponent(argv[0]);
     
     for(int i = 1; i < argc; i++)
     {
         launchArgsTable->arrayObjects.push_back(new TuiString(argv[i]));
+
+        std::string arg = argv[i];
+        if(arg == "--basePath")
+        {
+            if(i+1 >= argc)
+            {
+                MJError("missing basePath. usage example: ./katipoTracker --basePath %s", basePath.c_str());
+                exit(1);
+            }
+            basePath = argv[++i];
+            launchArgsTable->arrayObjects.push_back(new TuiString(argv[i]));
+        }
+        
+    }
+    
+    if(basePath.back() != '/' && basePath.back() != '\\')
+    {
+        basePath = basePath + "/";
     }
 
     katipoTable->setFunction("init", [this](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
@@ -57,8 +76,7 @@ void Controller::init(int argc, const char * argv[])
     });
 
     
-    std::string basePath = argv[0];
-    TuiRef::runScriptFile(Tui::pathByRemovingLastPathComponent(basePath) + "scripts/code.tui", rootTable);
+    TuiRef::runScriptFile(basePath + "scripts/code.tui", rootTable);
     
 }
 

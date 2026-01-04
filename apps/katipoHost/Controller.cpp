@@ -17,56 +17,63 @@
 void Controller::init(int argc, const char * argv[])
 {
     rootTable = Tui::createRootTable();
-    TuiTable* clientInfo = new TuiTable(nullptr);
+    TuiTable* launchArgsTable = new TuiTable(rootTable);
+    rootTable->set("launchArgs", launchArgsTable);
+    launchArgsTable->release();
     
-    std::string trackerIP = TRACKER_IP;
-    std::string trackerPort = TRACKER_PORT;
+    katipoTable = new TuiTable(rootTable);
+    rootTable->set("katipo", katipoTable);
+    katipoTable->release();
+
+    katipoTable->setString("trackerIP", TRACKER_IP);
+    katipoTable->setString("trackerPort", TRACKER_PORT);
+
+    std::string basePath = Tui::pathByRemovingLastPathComponent(argv[0]);
     
     for(int i = 1; i < argc; i++)
     {
-        std::string arg = argv[i];
-        if(arg == "--trackerIP")
-        {
-            if(i+1 >= argc)
-            {
-                MJError("missing tracker IP. usage example: ./katipoTracker --trackerIP %s", TRACKER_IP);
-                exit(1);
-            }
-            trackerIP = argv[++i];
-        }
-        else if(arg == "--trackerPort")
-        {
-            if(i+1 >= argc)
-            {
-                MJError("missing tracker port. usage example: ./katipoTracker --trackerPort %s", TRACKER_PORT);
-                exit(1);
-            }
-            trackerPort = argv[++i];
-        }
-        else if(arg == "--help")
-        {
-            MJLog("Katipo Host version:%s\n\
-usage: ./katipoTracker --trackerIP %s --trackerPort %s", KATIPO_VERSION, TRACKER_IP, TRACKER_PORT);
-            exit(0);
-        }
-    }
+        launchArgsTable->arrayObjects.push_back(new TuiString(argv[i]));
 
+        std::string arg = argv[i];
+        if(arg == "--basePath")
+        {
+            if(i+1 >= argc)
+            {
+                MJError("missing basePath. usage example: ./katipoTracker --basePath %s", basePath.c_str());
+                exit(1);
+            }
+            basePath = argv[++i];
+            launchArgsTable->arrayObjects.push_back(new TuiString(argv[i]));
+        }
+        
+    }
+    
     //todo generate and save/load unique names and ids
+    TuiTable* clientInfo = new TuiTable(nullptr);
+    katipoTable->setTable("clientInfo", clientInfo);
     clientInfo->setString("name", "Host");
     clientInfo->setString("clientID", "2234567812345678"); //should be the public key
-    
-    trackerNetInterface = new ClientNetInterface(trackerIP,
-                                                 trackerPort,
-                                                 clientInfo);
-    
     clientInfo->release();
+
+    katipoTable->setFunction("init", [this](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+        if(!trackerNetInterface)
+        {
+            trackerNetInterface = new ClientNetInterface(katipoTable->get("trackerIP")->getStringValue(),
+                                                    katipoTable->get("trackerPort")->getStringValue(),
+                                                 katipoTable->getTable("clientInfo"));
+            trackerNetInterface->bindTui(katipoTable);
+            katipoTable->set("tracker", trackerNetInterface->stateTable);
+
     
-    trackerNetInterface->bindTui(rootTable);
-    rootTable->set("tracker", trackerNetInterface->stateTable);
+            thread = new std::thread(&Controller::serverEventLoop, this);
+
+            return TUI_TRUE;
+        }
+        return nullptr;
+    });
     
-    thread = new std::thread(&Controller::serverEventLoop, this);
     
-    scriptState = (TuiTable*)TuiRef::runScriptFile(Tui::getResourcePath("scripts/code.tui"), rootTable);
+    scriptState = (TuiTable*)TuiRef::runScriptFile(basePath + "scripts/code.tui", rootTable);
 }
 
 static const double SERVER_FIXED_TIME_STEP = 1.0 / 60.0;
@@ -109,3 +116,4 @@ Controller::~Controller()
     scriptState->release();
     delete trackerNetInterface;
 }
+

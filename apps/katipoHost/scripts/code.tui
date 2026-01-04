@@ -3,6 +3,65 @@ hostInfo = {
     name = "Katipo Example Server"
 }
 
+KATIPO_VERSION = "0.1" #todo
+
+### loop over the launch arguments
+argCount = table.count(launchArgs)
+for(i = 0, i < argCount, i++)
+{
+    arg = launchArgs[i]
+    if(arg == "--trackerIP")
+    {
+        if(i+1 >= argCount)
+        {
+            print("missing argument. usage example: ./katipoHost --trackerIP 127.0.0.1")
+            return
+        }
+        i++
+        katipo.trackerIP = launchArgs[i]
+    }
+    else if(arg == "--trackerPort")
+    {
+        if(i+1 >= argCount)
+        {
+            print("missing argument. usage example: ./katipoHost --trackerPort 3470")
+            return
+        }
+        i++
+        katipo.trackerPort = launchArgs[i]
+    }
+    else if(arg == "--help")
+    {
+        print("")
+        print("Katipo Host version:", KATIPO_VERSION)
+        print("Usage: ./katipoHost")
+        print("       ./katipoHost --help")
+        print("       ./katipoHost --trackerIP 127.0.0.1 --trackerPort 3470")
+        print("")
+        print("--basePath PATH") #this is handled by Controller.cpp
+        print("  Were to find scripts/code.tui")
+        print("  optional, default: the same directory as the katipoHost binary")
+        print("")
+        print("--trackerIP example.com")
+        print("  The IP for the tracker that you wish the host to share its content through. In the future you will be able to supply multiple tracker IPs.")
+        print("  optional, default: 127.0.0.1, which assumes you are running a tracker on your local machine")
+        print("")
+        print("--trackerPort PORT")
+        print("  The port for the tracker.")
+        print("  optional, default: 3471")
+        return
+    }
+}
+
+### initialize katipo now that we have loaded the launch args
+success = katipo.init()
+if(!success)
+{
+    print("Failed to initialize katipo.")
+    return
+}
+
+tracker = katipo.tracker
 
 /*clientConnected = function(clientInfo) #todo maybe need this?
 {
@@ -48,15 +107,18 @@ while(true)
 
     if(value == "help")
     {
-        print("commands:
-\tquit|exit exits")
-    }
-    else if(value == "crawl")
-    {
-        //doCrawl()
+        print("Katipo Host version:", KATIPO_VERSION)
+        print("")
+        print("available commands:")
+        print("help: prints this text")
+        print("quit or exit: exits")
     }
     else if(value == "quit" or value == "exit")
     {
         break
+    }
+    else
+    {
+        print("unhandled command:", value)
     }
 }
