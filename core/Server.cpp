@@ -141,7 +141,7 @@ void Server::bindTui(TuiTable* parentTable)
             if(!fileData.empty())
             {
                 ServerData serverData;
-                serverData.type = SERVER_DATA_TYPE_SERVER_CLIENT_FUNCTION_CALL_REQUEST;
+                serverData.type = SERVER_DATA_TYPE_SERVER_DOWNLOAD_FILE_RESPONSE;
                 serverData.data = (void*)fileData.data();
                 serverData.length = fileData.length();
                 
@@ -276,6 +276,17 @@ void Server::removeClient(std::string clientID)
 
 void Server::clientDataReceived(NetServerClient* client, const ServerData& serverData)
 {
+    //todo handle SERVER_DATA_TYPE_SERVER_DOWNLOAD_FILE_RESPONSE
+    if(serverData.type == SERVER_DATA_TYPE_SERVER_DOWNLOAD_FILE_RESPONSE)
+    {
+        TuiTable* tuiData = (TuiTable*)TuiRef::loadBinaryString(std::string((const char*)serverData.data, serverData.length)); //todo memcpys
+        uint32_t callbackID = ((TuiNumber*)tuiData->objectsByStringKey["callbackID"])->value;
+        if(callbacksByID.count(callbackID) != 0)
+        {
+            callbacksByID[callbackID]->call("SERVER_DOWNLOAD_FILE_RESPONSE", tuiData->objectsByStringKey["data"]);
+        }
+        
+    }
     if(serverData.type == SERVER_DATA_TYPE_CLIENT_SERVER_FUNCTION_CALL_REQUEST)
     {
         TuiTable* tuiData = (TuiTable*)TuiRef::loadBinaryString(std::string((const char*)serverData.data, serverData.length)); //todo memcpys

@@ -14,6 +14,8 @@
 
 void Controller::init(int argc, const char * argv[])
 {
+    std::string basePath = Tui::pathByRemovingLastPathComponent(argv[0]);
+
     TuiTable* rootTable = Tui::createRootTable();
     TuiTable* launchArgsTable = new TuiTable(rootTable);
     rootTable->set("launchArgs", launchArgsTable);
@@ -25,8 +27,7 @@ void Controller::init(int argc, const char * argv[])
 
     katipoTable->setString("hostPort", "3470");
     katipoTable->setString("clientPort", "3471");
-
-    std::string basePath = Tui::pathByRemovingLastPathComponent(argv[0]);
+    katipoTable->setString("basePath", basePath);
     
     for(int i = 1; i < argc; i++)
     {

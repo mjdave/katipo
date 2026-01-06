@@ -18,6 +18,7 @@
 		5B2EF8392F045D9E000B649B /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B2EF8382F045D9E000B649B /* main.cpp */; };
 		5B7AB2622E283E97009E04C8 /* Controller.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B7AB2612E283E97009E04C8 /* Controller.cpp */; };
 		5B7AB2642E28E5E7009E04C8 /* scripts in CopyFiles */ = {isa = PBXBuildFile; fileRef = 5B7AB2632E28E5E7009E04C8 /* scripts */; };
+		5B9332792F0CCE5600860913 /* exampleData in CopyFiles */ = {isa = PBXBuildFile; fileRef = 5B9332782F0CCE5600860913 /* exampleData */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -27,6 +28,7 @@
 			dstPath = "";
 			dstSubfolderSpec = 16;
 			files = (
+				5B9332792F0CCE5600860913 /* exampleData in CopyFiles */,
 				5B7AB2642E28E5E7009E04C8 /* scripts in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -47,6 +49,7 @@
 		5B7AB2602E283E97009E04C8 /* Controller.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Controller.h; path = ../../apps/katipoHost/Controller.h; sourceTree = SOURCE_ROOT; };
 		5B7AB2612E283E97009E04C8 /* Controller.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = Controller.cpp; path = ../../apps/katipoHost/Controller.cpp; sourceTree = SOURCE_ROOT; };
 		5B7AB2632E28E5E7009E04C8 /* scripts */ = {isa = PBXFileReference; lastKnownFileType = folder; name = scripts; path = ../../apps/katipoHost/scripts; sourceTree = "<group>"; };
+		5B9332782F0CCE5600860913 /* exampleData */ = {isa = PBXFileReference; lastKnownFileType = folder; path = exampleData; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -93,6 +96,7 @@
 		5B7AB1922E283C0B009E04C8 = {
 			isa = PBXGroup;
 			children = (
+				5B9332782F0CCE5600860913 /* exampleData */,
 				5B7AB2632E28E5E7009E04C8 /* scripts */,
 				5B7AB2602E283E97009E04C8 /* Controller.h */,
 				5B7AB2612E283E97009E04C8 /* Controller.cpp */,

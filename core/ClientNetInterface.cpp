@@ -286,6 +286,25 @@ TuiTable* ClientNetInterface::bindTui(TuiTable* rootTable)
     });
     
     
+    
+    stateTable->setFunction("sendFile", [this](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+        
+        if(args->arrayObjects.size() >= 1 && args->arrayObjects[0]->type() == Tui_ref_type_STRING)
+        {
+            TuiRef* fileNameRef = args->arrayObjects[0];
+            
+            std::string fileData = Tui::getFileContents(((TuiString*)fileNameRef)->value);
+            if(!fileData.empty())
+            {
+                sendLargeData(SERVER_DATA_TYPE_SERVER_DOWNLOAD_FILE_RESPONSE, fileData.data(), fileData.length());
+                return TUI_TRUE;
+            }
+        }
+        
+        return TUI_FALSE;
+    });
+    
+    
     // client.disconnect()
     stateTable->setFunction("disconnect", [this](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
         if(!disconnected)
@@ -374,7 +393,7 @@ void ClientNetInterface::checkEnetEvents()
                 
                 std::string data = dataTable->serializeBinary();
                 
-                int dataSize = data.length() + sizeof(uint8_t);
+                int dataSize = (int)data.length() + (int)sizeof(uint8_t);
                 uint8_t* netData = (uint8_t*)malloc(dataSize);
                 netData[0] = SERVER_DATA_TYPE_CLIENT_JOIN_REQUEST;
                 memcpy(&(netData[1]), data.data(), data.length());
@@ -442,6 +461,11 @@ void ClientNetInterface::checkEnetEvents()
                                                                   ENET_PACKET_FLAG_RELIABLE);
                         enet_peer_send(enetPeer, 0, packet);
                     }
+                    else if(incoming.type == SERVER_DATA_TYPE_CLIENT_SERVER_DOWNLOAD_FILE_COMPLETE_NOTIFICATION)
+                    {
+                        uint8_t channelIndex = *((uint8_t*)incoming.data);
+                        inUseChannels.erase(channelIndex);
+                    }
                     else
                     {
                         bool sendToOutput = true;
@@ -460,7 +484,7 @@ void ClientNetInterface::checkEnetEvents()
                             uint32_t totalSize = *((uint32_t*)(((uint8_t*)incoming.data) + 1));
                             uint32_t dataStartOffset = *((uint32_t*)(((uint8_t*)incoming.data) + 5));
                             
-                            uint32_t recievedPayloadSize = incoming.length - additionalHeaderSize;
+                            uint32_t recievedPayloadSize = (uint32_t)incoming.length - additionalHeaderSize;
                             
                             MJLog("multipart download: %d/%d", dataStartOffset + recievedPayloadSize, totalSize);
                             
@@ -612,29 +636,83 @@ void ClientNetInterface::pollNetEvents()
                              TuiFunction* callbackFunction = nullptr;
                              if(tuiData->hasKey("callbackID"))
                              {
-                                 callbackFunction = new TuiFunction([this, tuiData](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+                                 TuiRef* callbackIDRef = tuiData->objectsByStringKey["callbackID"];
+                                 //callbackIDRef->retain();
+                                 callbackFunction = new TuiFunction([this, callbackIDRef](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
                                      TuiTable* sendTable = new TuiTable(nullptr);
-                                     sendTable->set("callbackID", tuiData->objectsByStringKey["callbackID"]); //todo don't capture
+                                     sendTable->set("callbackID", callbackIDRef);
+                                     bool sendFile = false;
+                                     
                                      if(args && args->arrayObjects.size() > 0)
                                      {
-                                         sendTable->set("data", args->arrayObjects[0]);
+                                         if(args->arrayObjects[0]->type() == Tui_ref_type_TABLE)
+                                         {
+                                             TuiTable* resultTable = (TuiTable*)args->arrayObjects[0];
+                                             
+                                             if(resultTable->objectsByStringKey.count("status") != 0 && resultTable->objectsByStringKey.count("filePath") != 0)
+                                             {
+                                                 if(((TuiString*)resultTable->objectsByStringKey["status"])->value == "ok")
+                                                 {
+                                                     TuiRef* filePathRef = resultTable->objectsByStringKey["filePath"];
+                                                     std::string filePath = ((TuiString*)filePathRef)->value;
+                                                     
+                                                     resultTable->set("filePath", TUI_NIL);
+                                                     
+                                                     TuiString* fileDataRef = new TuiString("");
+                                                     
+                                                     Tui::getFileContents(filePath, &(fileDataRef->value));
+                                                     if(!fileDataRef->value.empty())
+                                                     {
+                                                         MJLog("sending data SERVER_DATA_TYPE_SERVER_DOWNLOAD_FILE_RESPONSE");
+                                                         sendFile = true;
+                                                         resultTable->set("fileData", fileDataRef);
+                                                         sendTable->set("data", resultTable);
+                                                     }
+                                                     else
+                                                     {
+                                                         sendTable->setString("status", "error");
+                                                         sendTable->setString("message", "unable to load file");
+                                                         MJError("Unable to load file:%s", filePath.c_str());
+                                                     }
+                                                     
+                                                 }
+                                                 else
+                                                 {
+                                                     sendTable->set("filePath", TUI_NIL);
+                                                 }
+                                             }
+                                         }
+                                         
+                                         if(!sendFile)
+                                         {
+                                             sendTable->set("data", args->arrayObjects[0]);
+                                         }
+                                         
                                      }
                                      
                                      std::string dataSerialized = sendTable->serializeBinary();
                                      sendTable->release();
                                      
-                                     sendData(SERVER_DATA_TYPE_CLIENT_FUNCTION_CALL_RESPONSE, dataSerialized.data(), dataSerialized.length(), true);
+                                     if(sendFile)
+                                     {
+                                         sendLargeData(SERVER_DATA_TYPE_SERVER_DOWNLOAD_FILE_RESPONSE, dataSerialized.data(), dataSerialized.length());
+                                     }
+                                     else
+                                     {
+                                         
+                                         sendData(SERVER_DATA_TYPE_CLIENT_FUNCTION_CALL_RESPONSE, dataSerialized.data(), dataSerialized.length(), true);
+                                     }
                                      
                                      return nullptr;
                                  });
                                  sendArgs->push(callbackFunction);
+                                 sendArgs->push(callbackIDRef);//maybe not needed, but this preserves it
                              }
                              
                              TuiRef* result = registeredFunctions[functionName->value]->call(sendArgs, nullptr, &debugInfo);
                              
                              if(callbackFunction && result && result->type() != Tui_ref_type_NIL)
                              {
-                                 
                                  TuiTable* funcCallArgs = new TuiTable(nullptr);
                                  
                                  funcCallArgs->push(result);
@@ -667,6 +745,7 @@ void ClientNetInterface::pollNetEvents()
                         
                         if(callbacksByID.count(callbackID) != 0)
                         {
+                            MJLog("calling func in SERVER_DATA_TYPE_SERVER_FUNCTION_CALL_RESPONSE");
                             callbacksByID[callbackID]->call("SERVER_FUNCTION_CALL_RESPONSE", tuiData->get("data"));
                         }
                         
@@ -678,6 +757,7 @@ void ClientNetInterface::pollNetEvents()
                         uint32_t callbackID = ((TuiNumber*)tuiData->objectsByStringKey["callbackID"])->value;
                         if(callbacksByID.count(callbackID) != 0)
                         {
+                            MJLog("calling func in SERVER_DATA_TYPE_SERVER_DOWNLOAD_FILE_RESPONSE");
                             callbacksByID[callbackID]->call("SERVER_DOWNLOAD_FILE_RESPONSE", tuiData->objectsByStringKey["data"]);
                         }
                         
@@ -722,4 +802,80 @@ void ClientNetInterface::sendData(uint8_t type, const void * data, size_t dataLe
     input.dataLength = dataLength;
     input.reliable = reliable;
     inputQueue->push(input);
+}
+
+#define CLIENT_MAX_SIMULTANEOUS_DOWNLOADS 4
+
+
+void ClientNetInterface::sendLargeDataInternal(uint8_t type,
+    const void * data,
+    size_t dataLength,
+    uint8_t channel)
+{
+    if(dataLength > MJMaxPacketSize)
+    {
+        uint32_t bytesToSend = (uint32_t)dataLength;
+        uint32_t dataStartOffset = 0;
+        while(bytesToSend > 0)
+        {
+            uint32_t additionalHeaderSize = sizeof(uint8_t) + sizeof(uint32_t) + sizeof(uint32_t);
+            uint32_t thisPacketLoadBytesToSend = min(bytesToSend, MJMaxPacketSize);
+            uint32_t thisPacketTotalSize = thisPacketLoadBytesToSend + sizeof(uint8_t) + additionalHeaderSize;
+            uint8_t* netData = (uint8_t*)malloc(thisPacketTotalSize);
+            netData[0] = SERVER_DATA_TYPE_SERVER_MULTIPART_DOWNLOAD_RESPONSE;
+            netData[1] = type;
+            
+            memcpy(&(netData[2]), &dataLength, sizeof(uint32_t));
+            memcpy(&(netData[6]), &dataStartOffset, sizeof(uint32_t));
+            
+            memcpy(&(netData[10]), ((uint8_t*)data + dataStartOffset), thisPacketLoadBytesToSend);
+            
+            dataStartOffset += thisPacketLoadBytesToSend;
+            bytesToSend -= thisPacketLoadBytesToSend;
+            
+            ClientNetInterfaceInput input;
+            input.data = netData;
+            input.dataLength = thisPacketLoadBytesToSend + additionalHeaderSize;
+            input.reliable = true;
+            input.channelID = channel;
+            inputQueue->push(input);
+        }
+    }
+    else
+    {
+        uint8_t* netData = (uint8_t*)malloc(dataLength + sizeof(uint8_t));
+        netData[0] = type;
+        
+        memcpy(&(netData[1]), data, dataLength);
+        
+        ClientNetInterfaceInput input;
+        input.data = netData;
+        input.dataLength = dataLength;
+        input.reliable = true;
+        input.channelID = channel;
+        inputQueue->push(input);
+    }
+}
+
+void ClientNetInterface::sendLargeData(uint8_t type, const void * data, size_t dataLength, bool reliable)
+{
+    int freeChannel = 0;
+    for(freeChannel = 0; freeChannel < CLIENT_MAX_SIMULTANEOUS_DOWNLOADS; freeChannel++)
+    {
+        if(inUseChannels.count(freeChannel) == 0)
+        {
+            break;
+        }
+    }
+    
+    if(freeChannel < CLIENT_MAX_SIMULTANEOUS_DOWNLOADS)
+    {
+        inUseChannels.insert(freeChannel);
+        sendLargeDataInternal(type, data, dataLength, freeChannel);
+    }
+    else
+    {
+        MJError("todo MAX_SIMULTANEOUS_DOWNLOADS reached");
+        //queuedDownloads.push(serverData); // hmmmmm serverData.data is not valid once we exit this function
+    }
 }

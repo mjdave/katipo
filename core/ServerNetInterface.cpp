@@ -367,6 +367,98 @@ void ServerNetInterface::checkEnetEvents()
                             client->inUseChannels.erase(channelIndex);
                         }
                     }
+                    else if(incoming.type == SERVER_DATA_TYPE_SERVER_DOWNLOAD_FILE_RESPONSE || incoming.type == SERVER_DATA_TYPE_SERVER_MULTIPART_DOWNLOAD_RESPONSE)
+                    {
+                        if(connectedClientsByEnetPeer.count(event.peer) != 0)
+                        {
+                            NetServerClient* client = connectedClientsByEnetPeer[event.peer];
+                            bool sendToOutput = true;
+                            bool sendDownloadAcknowledge = false;
+                            
+                            if(incoming.type == SERVER_DATA_TYPE_SERVER_DOWNLOAD_FILE_RESPONSE)
+                            {
+                                sendDownloadAcknowledge = true;
+                            }
+                            else if(incoming.type == SERVER_DATA_TYPE_SERVER_MULTIPART_DOWNLOAD_RESPONSE)
+                            {
+                                sendToOutput = false;
+                                
+                                uint32_t additionalHeaderSize = sizeof(uint8_t) + sizeof(uint32_t) + sizeof(uint32_t);
+                                
+                                uint32_t totalSize = *((uint32_t*)(((uint8_t*)incoming.data) + 1));
+                                uint32_t dataStartOffset = *((uint32_t*)(((uint8_t*)incoming.data) + 5));
+                                
+                                uint32_t recievedPayloadSize = (uint32_t)incoming.length - additionalHeaderSize;
+                                
+                                MJLog("multipart download: %d/%d", dataStartOffset + recievedPayloadSize, totalSize);
+                                
+                                if(recievedPayloadSize + dataStartOffset == totalSize)
+                                {
+                                    MJLog("multipart download complete");
+                                    if(client->inProgressMultiPartDownloadsByChannel.count(event.channelID) == 0)
+                                    {
+                                        MJError("Got unexpected final multpart download packet");
+                                        abort();
+                                    }
+                                    
+                                    client->inProgressMultiPartDownloadsByChannel[event.channelID].append((((const char*)incoming.data) + additionalHeaderSize), recievedPayloadSize);
+                                    sendDownloadAcknowledge = true;
+                                    
+                                    ServerNetInterfaceOutput output;
+                                    
+                                    output.outputType = SERVER_NET_INTERFACE_OUTPUT_DATA_RECEIEVED;
+                                    
+                                    output.serverData.type = *(((uint8_t*)incoming.data) + 0);
+                                    
+                                    output.serverData.data = malloc(totalSize);
+                                    memcpy(output.serverData.data, client->inProgressMultiPartDownloadsByChannel[event.channelID].data(), client->inProgressMultiPartDownloadsByChannel[event.channelID].size());
+                                    output.serverData.length = totalSize;
+                                    
+                                    outputQueue->push(output);
+                                    client->inProgressMultiPartDownloadsByChannel.erase(event.channelID);
+                                }
+                                else
+                                {
+                                    client->inProgressMultiPartDownloadsByChannel[event.channelID].append((((const char*)incoming.data) + additionalHeaderSize), recievedPayloadSize);
+                                }
+                            }
+                            
+                            if(sendDownloadAcknowledge)
+                            {
+                                uint8_t data[2] = {
+                                    SERVER_DATA_TYPE_CLIENT_SERVER_DOWNLOAD_FILE_COMPLETE_NOTIFICATION, //todo
+                                    event.channelID
+                                };
+                                ENetPacket * packet = enet_packet_create (data,
+                                                                          sizeof(uint8_t) * 2,
+                                                                          ENET_PACKET_FLAG_RELIABLE);
+                                
+                                
+                                enet_peer_send(client->enetPeer, 0, packet);
+                            }
+                            
+                            if(sendToOutput)
+                            {
+                                ServerNetInterfaceOutput output;
+                                
+                                output.outputType = SERVER_NET_INTERFACE_OUTPUT_DATA_RECEIEVED;
+                                
+                                output.serverData.type = incoming.type;
+                                if(incoming.length > 0)
+                                {
+                                    output.serverData.data = malloc(incoming.length);
+                                    memcpy(output.serverData.data, incoming.data, incoming.length);
+                                }
+                                else
+                                {
+                                    output.serverData.data = nullptr;
+                                }
+                                output.serverData.length = incoming.length;
+                                
+                                outputQueue->push(output);
+                            }
+                        }
+                    }
                     else if(connectedClientsByEnetPeer.count(event.peer) != 0)
                     {
                         NetServerClient* client = connectedClientsByEnetPeer[event.peer];
@@ -513,7 +605,7 @@ void ServerNetInterface::sendLargeData(uint8_t type,
 {
     if(dataLength > MJMaxPacketSize)
     {
-        uint32_t bytesToSend = dataLength;
+        uint32_t bytesToSend = (uint32_t)dataLength;
         uint32_t dataStartOffset = 0;
         while(bytesToSend > 0)
         {

@@ -141,7 +141,10 @@ callHostFunction = function(clientID, url, clientData, callbackFunc)
     if(url)
     {
         hostName = url #todo support host/subFunc
-        hostInfo = knownHosts[url]
+
+        urlSplit = string.split(url, "/")
+
+        hostInfo = knownHosts[urlSplit[0]]
         if(hostInfo)
         {
             print("calling host server func")
@@ -151,7 +154,7 @@ callHostFunction = function(clientID, url, clientData, callbackFunc)
         {
             result = {
                 status = "error"
-                message = "unknown host:" + url
+                message = "unknown host:" + urlSplit[0]
             }
             callbackFunc(result)
 

@@ -49,18 +49,22 @@ for(i = 0, i < argCount, i++)
     }
 }
 
+waitingCount = 0 
 
 loadCallback = function(result){
     print("got result:", result)
+    waitingCount = waitingCount - 1
 }
 
-print("fetching exampleServer/")
-katipo.get("exampleServer", nil, loadCallback)
+print("fetching exampleHost/")
+waitingCount = waitingCount + 1
+katipo.get("exampleHost", nil, loadCallback)
 
-print("fetching example/exampleFile.txt") #todo not implemented, results incorrect order
-katipo.get("example/exampleFile.txt", nil, loadCallback)
+print("fetching exampleHost/exampleFile.txt") #todo not implemented, results incorrect order
+waitingCount = waitingCount + 1
+katipo.get("exampleHost/exampleFile.txt", nil, loadCallback)
 
-while(true)
+while(waitingCount > 0)
 {
     value = readValue()
 
@@ -77,4 +81,4 @@ while(true)
     {
         break
     }
-}
+}*/

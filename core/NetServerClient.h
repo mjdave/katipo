@@ -23,8 +23,10 @@ public:
     
     double pingDelay = 0.0;
     
-    std::set<uint8_t> inUseChannels;
-    std::queue<ServerData> queuedDownloads;
+    std::set<uint8_t> inUseChannels; //uploading to remote
+    std::queue<ServerData> queuedDownloads; //uploading to remote
+    
+    std::map<uint8_t, std::string> inProgressMultiPartDownloadsByChannel; //downloading from remote
     
 
 public:

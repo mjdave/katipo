@@ -1,0 +1,3 @@
+This is an example text file.
+
+The example katipoHost will host this file at exampleHost/exampleFile.txt.

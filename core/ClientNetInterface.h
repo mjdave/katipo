@@ -12,6 +12,7 @@
 struct ClientNetInterfaceInput {
     uint8_t*  data;
     size_t dataLength;
+    uint8_t channelID = 0;
     bool reliable;
 };
 
@@ -47,7 +48,9 @@ private:
     uint32_t functionCallbackIDCounter = 0;
     std::map<uint32_t, TuiFunction*> callbacksByID;
     
-    std::map<uint8_t, std::string> inProgressMultiPartDownloadsByChannel;
+    std::map<uint8_t, std::string> inProgressMultiPartDownloadsByChannel; //downloading from remote
+    
+    std::set<uint8_t> inUseChannels; //uploading to remote
     
     std::thread* thread;
     
@@ -71,12 +74,18 @@ public:
     void pollNetEvents();
     
     void sendData(uint8_t type, const void * data = NULL, size_t dataLength = 0, bool reliable = true);
+    void sendLargeData(uint8_t type, const void * data, size_t dataLength = 0, bool reliable = true);
     
 protected:
     
 private:
     void startThread();
     void checkEnetEvents();
+    
+    void sendLargeDataInternal(uint8_t type,
+                               const void * data,
+                               size_t dataLength,
+                               uint8_t channel);
     
 };
 

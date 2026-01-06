@@ -1,6 +1,6 @@
 hostInfo = {
-    hostNameKey = "exampleServer",
-    name = "Katipo Example Server"
+    hostNameKey = "exampleHost",
+    name = "Katipo Example Host"
 }
 
 KATIPO_VERSION = "0.1" #todo
@@ -71,12 +71,37 @@ tracker = katipo.tracker
 get = function(url, clientData)
 {
     print("in get. url:", url, " clientData:", clientData)
-    if(url == "exampleServer")
+    urlSplit = string.split(url, "/")
+
+    if(table.count(urlSplit) <= 1)
     {
         return {
             status = "ok"
-            pageTitle = "Katipo Example Server" # optional, existance tells browser this is a basic text document
+            pageTitle = "Katipo Example Host" # optional, existance tells browser this is a basic text document
             pageBody = "This is a very basic example server, that serves this message to be displayed in the browser with a title"
+        }
+    }
+    else
+    {
+        fileName = urlSplit[1]
+        print("fileName requested:", fileName)
+        #todo check request is within sandbox, eg. not "../../secretFiles.txt"
+        fullPath = katipo.basePath + "exampleData/" + fileName
+        print("fullPath:", fullPath)
+        if(file.fileExists(fullPath))
+        {
+            print("file exists. sending...")
+            return {
+                status = "ok"
+                fileName = fileName
+                filePath = fullPath
+            }
+        }
+
+        return {
+            status = "error"
+            fileName = fileName
+            message = "file not found:" + fileName
         }
     }
 
