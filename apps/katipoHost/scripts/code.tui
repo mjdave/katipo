@@ -14,7 +14,7 @@ printUsage = function()
     print("       ./katipoHost --help")
     print("       ./katipoHost --site exampleSites/basicSite --basePath . --trackerIP " + katipo.trackerIP + " --trackerPort " + katipo.trackerPort)
     print("")
-    print("--site SITE")
+    print("--site PATH")
     print("  A path to the directory containing the site to host. This directory should contain a site.tui file")
     print("  required")
     print("")
@@ -28,7 +28,7 @@ printUsage = function()
     print("")
     print("--trackerPort PORT")
     print("  The port for the tracker.")
-    print("  optional, default: 3471")
+    print("  optional, default: " + katipo.trackerPort)
     print("")
 }
 
@@ -52,7 +52,7 @@ for(i = 0, i < argCount, i++)
     {
         if(i+1 >= argCount)
         {
-            print("missing argument. usage example: ./katipoHost --trackerPort 3470")
+            print("missing argument. usage example: ./katipoHost --trackerPort " + katipo.trackerPort)
             return
         }
         i++
@@ -184,7 +184,7 @@ tracker.register("get", get)
 print("Welcome to katipo.
 Attempting to connect to tracker, type 'quit' to cancel and exit, 'help' for more commands.")
 
-tracker.callServerFunction("setSiteInfo", siteInfo, siteInfoSent)
+tracker.callHostFunction("setSiteInfo", siteInfo, siteInfoSent)
 
 
 while(true)

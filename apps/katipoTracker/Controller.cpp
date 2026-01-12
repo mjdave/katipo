@@ -59,7 +59,7 @@ void Controller::init(int argc, const char * argv[])
             clientServer = new Server("clientServer", katipoTable->get("clientPort")->getStringValue(), 4095, katipoTable);
             return TUI_TRUE;
         }
-        return nullptr;
+        return TUI_FALSE;
     });
 
 
@@ -73,7 +73,7 @@ void Controller::init(int argc, const char * argv[])
                 return TUI_TRUE;
             }
         }
-        return nullptr;
+        return TUI_FALSE;
     });
 
     

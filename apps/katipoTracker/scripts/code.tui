@@ -174,7 +174,6 @@ callHostFunction = function(clientID, url, clientData, callbackFunc)
 #called by client
 clientServer.register("callHostFunction", callHostFunction)
 
-
 ### start the servers
 success = katipo.start()
 

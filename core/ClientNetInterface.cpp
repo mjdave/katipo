@@ -188,11 +188,11 @@ TuiTable* ClientNetInterface::bindTui(TuiTable* rootTable)
         return TUI_FALSE;
     });
     
-    // client.callServerFunction(clientID, "playlists", testPlaylists)
-    stateTable->setFunction("callServerFunction", [this](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+    // client.callHostFunction(clientID, "playlists", testPlaylists)
+    stateTable->setFunction("callHostFunction", [this](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
         if(disconnected)
         {
-            TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "attempted to callServerFunction, but we have been disconnected");
+            TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "attempted to callHostFunction, but we have been disconnected");
             return TUI_FALSE;
         }
         

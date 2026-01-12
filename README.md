@@ -1,7 +1,7 @@
 # Katipo
 Katipo is a new type of decentralized network, designed to be as simple as possible, and useful in ways that the web isn't currently.
 
-The Katipō is an endangered venomous spider from New Zealand. The name seemed a good fit.
+The Katipō is an endangered venomous spider from New Zealand. The name seems a good fit.
 
 ![Katipo browser for iOS icon](https://github.com/mjdave/katipo/blob/main/katipoBrowser-iOS128.png)
 
@@ -12,7 +12,7 @@ Katipo requires the tui submodule, which itself requires the glm submodule. To f
 git submodule update --init --recursive
 ```
 
-Katipo builds and runs on macOS, Windows, and most unix based systems. XCode and Visual studio projects are provided, along with a build script using cmake.
+Katipo builds and runs on macOS, Windows, and most unix based systems. XCode and Visual Studio projects are provided, along with a build script using cmake.
 
 # Linux
 
@@ -31,12 +31,12 @@ cd apps/katipoTracker
 ```
 cd apps/katipoHost
 ./build.sh
-./katipoHost
+./katipoHost --site exampleSites/basicSite
 ```
 ```
 cd apps/katipoClient
 ./build.sh
-./katipoClient
+./katipoClient --get basicSite
 ```
 
 All going well, the client should print the test message from the host.
@@ -77,9 +77,7 @@ There is a lot more to explain, and to work on too, this is a quick overview. Ka
 
 I am very keen for help. If I am to continue alone, my focus will be on getting this and tui hardened in my own coding projects, with a goal to releasing cross platform Katipo browsers and apps within the next year or so. 
 
-But I will get more inspired and move faster if people join me. I think maybe there are enough of us not motivated by greed that we can make and use something better. 
-
-We can do that together, here, now.
+But I will get more inspired and move faster if people join me. I think maybe there are enough of us not motivated by greed that we can make and use something better. If you're interested in contributing to Katipo or Tui, or can see any way to help, please get in touch.
 
 No AI is used here.
 

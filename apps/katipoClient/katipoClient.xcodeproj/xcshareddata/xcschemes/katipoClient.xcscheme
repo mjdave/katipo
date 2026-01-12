@@ -16,9 +16,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "5B7AB19A2E283C0B009E04C8"
-               BuildableName = "katipoHost"
-               BlueprintName = "katipoHost"
-               ReferencedContainer = "container:katipoHost.xcodeproj">
+               BuildableName = "katipoClient"
+               BlueprintName = "katipoClient"
+               ReferencedContainer = "container:katipoClient.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -46,14 +46,14 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "5B7AB19A2E283C0B009E04C8"
-            BuildableName = "katipoHost"
-            BlueprintName = "katipoHost"
-            ReferencedContainer = "container:katipoHost.xcodeproj">
+            BuildableName = "katipoClient"
+            BlueprintName = "katipoClient"
+            ReferencedContainer = "container:katipoClient.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
       <CommandLineArguments>
          <CommandLineArgument
-            argument = "--site exampleSites/basicSite"
+            argument = "--get basicSite"
             isEnabled = "YES">
          </CommandLineArgument>
       </CommandLineArguments>
@@ -69,9 +69,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "5B7AB19A2E283C0B009E04C8"
-            BuildableName = "katipoHost"
-            BlueprintName = "katipoHost"
-            ReferencedContainer = "container:katipoHost.xcodeproj">
+            BuildableName = "katipoClient"
+            BlueprintName = "katipoClient"
+            ReferencedContainer = "container:katipoClient.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>

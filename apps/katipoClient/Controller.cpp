@@ -11,8 +11,8 @@
 #include "TuiFileUtils.h"
 #include "MJVersion.h"
 
-#define TRACKER_IP "127.0.0.1"
-#define TRACKER_PORT "3471" //clients connect to 3471, servers to 3470
+//#define TRACKER_IP "127.0.0.1"
+//#define TRACKER_PORT "3471" //clients connect to 3471, servers to 3470
 
 void Controller::init(int argc, const char * argv[])
 {
@@ -27,33 +27,22 @@ void Controller::init(int argc, const char * argv[])
     rootTable->set("katipo", katipoTable);
     katipoTable->release();
 
-    katipoTable->setString("trackerIP", TRACKER_IP);
-    katipoTable->setString("trackerPort", TRACKER_PORT);
-    katipoTable->setString("basePath", basePath);
-    
     for(int i = 1; i < argc; i++)
     {
         launchArgsTable->arrayObjects.push_back(new TuiString(argv[i]));
 
         std::string arg = argv[i];
-        if(arg == "--basePath")
+        if(arg == "--basePath") //base path is where we find scripts/code.tui. Allows the same executable to run different environments
         {
             if(i+1 >= argc)
             {
-                MJError("missing basePath. usage example: ./katipoTracker --basePath %s", basePath.c_str());
+                MJError("missing basePath path argument. usage example: ./katipoHost --basePath BASE_PATH");
                 exit(1);
             }
             basePath = argv[++i];
             launchArgsTable->arrayObjects.push_back(new TuiString(argv[i]));
         }
     }
-    
-    //todo generate and save/load unique names and ids
-    TuiTable* clientInfo = new TuiTable(nullptr);
-    katipoTable->setTable("clientInfo", clientInfo);
-    clientInfo->setString("name", "Host");
-    clientInfo->setString("clientID", "1234567812345678"); //should be the public key
-    clientInfo->release();
 
     //katipo.get("127.0.0.1/example", sendData, function(result){ print("got result:", result)})
     katipoTable->setFunction("get", [this](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
@@ -65,8 +54,8 @@ void Controller::init(int argc, const char * argv[])
                 std::string remoteURL = urlRef->getStringValue();
                 std::vector<std::string> split = Tui::splitString(remoteURL, '/');
                 
-                std::string trackerURL = katipoTable->get("trackerIP")->getStringValue();
-                std::string trackerPort = katipoTable->get("trackerPort")->getStringValue();
+                std::string trackerURL = "127.0.0.1";
+                std::string trackerPort = "3471";
                 
                 if(split[0].find(".") != -1)
                 {
@@ -128,10 +117,12 @@ void Controller::init(int argc, const char * argv[])
         return nullptr;
     });
     
-    
     thread = new std::thread(&Controller::serverEventLoop, this);
     
-    scriptState = (TuiTable*)TuiRef::runScriptFile(Tui::getResourcePath("scripts/code.tui"), rootTable);
+    scriptState = (TuiTable*)TuiRef::runScriptFile(Tui::pathByAppendingPathComponent(basePath,"scripts/code.tui"), rootTable);
+    
+    
+    
 }
 
 static const double SERVER_FIXED_TIME_STEP = 1.0 / 60.0;

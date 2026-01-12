@@ -33,7 +33,7 @@ NetServerClient::NetServerClient(TuiTable* joinRequest_,
     clientID = credentials->getString("publicKey");
     if(clientID.length() != 16)
     {
-        MJError("Invalid publicKey in credentials of join request. Length:%d", clientID.length());
+        MJError("Invalid publicKey in credentials of join request. Length:%d", (int)clientID.length());
         clientID = "invalid";
         return;
     }

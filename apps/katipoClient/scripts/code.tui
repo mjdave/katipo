@@ -1,54 +1,65 @@
 
 KATIPO_VERSION = "0.1" #todo
 
+printUsage = function()
+{
+    print("")
+    print("Katipo Client version:", KATIPO_VERSION)
+    print("https://github.com/mjdave/katipo")
+    print("")
+    print("Usage: ./katipoClient --get SITE_URL")
+    print("       ./katipoClient --help")
+    print("       ./katipoClient --get exampleSite/exampleFile.txt --basePath .")
+    print("")
+    print("--get SITE_URL")
+    print("  Fetches data from the remote site. SITE_URL is a basic url in the format TRACKER_IP/SITE_KEY/SUB_DATA")
+    print("")
+    print("     TRACKER_IP")
+    print("     - Identifies a remote tracker to connect to. could be example.com or 127.0.0.1")
+    print("     - Supports custom ports with the ':' syntax, eg.  example.com:1234")
+    print("     - Can be skipped, the default is 127.0.0.1:3471")
+    print("")
+    print("     SITE_KEY")
+    print("     - The site's main keyword, the 'key' specified in the host's site.tui file to identify the site")
+    print("     - You could also pass multiple TRACKER_KEYs kere first, to chain together trackers, but this is not yet supported")
+    print("")
+    print("     SUB_DATA")
+    print("     - optional additional data, can be used to provide a sub-path for the host")
+    print("")
+    print("--basePath PATH") #handled in Controller.cpp, as this is the location to find this very file
+    print("  Were to find scripts/code.tui")
+    print("  optional, default: the same directory as the katipoClient binary")
+    print("")
+}
+
 ### loop over the launch arguments
+
 argCount = table.count(launchArgs)
 for(i = 0, i < argCount, i++)
 {
     arg = launchArgs[i]
-    if(arg == "--trackerIP")
+    if(arg == "--help")
     {
-        if(i+1 >= argCount)
-        {
-            print("missing argument. usage example: ./katipoHost --trackerIP 127.0.0.1")
-            return
-        }
-        i++
-        katipo.trackerIP = launchArgs[i]
-    }
-    else if(arg == "--trackerPort")
-    {
-        if(i+1 >= argCount)
-        {
-            print("missing argument. usage example: ./katipoHost --trackerPort 3470")
-            return
-        }
-        i++
-        katipo.trackerPort = launchArgs[i]
-    }
-    else if(arg == "--help")
-    {
-        print("")
-        print("Katipo Client version:", KATIPO_VERSION)
-        print("Usage: ./katipoClient")
-        print("       ./katipoClient --help")
-        print("       ./katipoClient --trackerIP 127.0.0.1 --trackerPort 3470")
-        print("")
-        print("--basePath PATH") #this is handled by Controller.cpp
-        print("  Were to find scripts/code.tui")
-        print("  optional, default: the same directory as the katipoClient binary")
-        print("")
-        print("--trackerIP example.com")
-        print("  The IP for the tracker that you wish to connect to hosts through. In the future you will be able to supply multiple tracker IPs.")
-        print("  optional, default: 127.0.0.1, which assumes you are running a tracker on your local machine")
-        print("")
-        print("--trackerPort PORT")
-        print("  The port for the tracker.")
-        print("  optional, default: 3471")
+        printUsage()
         return
+    }
+    else if(arg == "--get")
+    {
+        if(i+1 >= argCount)
+        {
+            print("missing argument. usage example: ./katipoHost --site exampleSites/basicSite")
+            return
+        }
+        i++
+        .siteURL = launchArgs[i]
     }
 }
 
+if(!siteURL)
+{
+    printUsage()
+    return
+}
 
 credentials = {
     publicKey = "1234567812345678" #todo
@@ -66,20 +77,13 @@ loadCallback = function(result){
 
     if(waitingCount <= 0)
     {
-        print("\nAll requests have finished, press any key to exit")
+        print("\nAll requests have finished, press enter to exit")
     }
 }
 
-print("fetching fileHost/")
+print("fetching:", siteURL)
 waitingCount = waitingCount + 1
-katipo.get("fileHost", nil, loadCallback)
-
-print("fetching fileHost/exampleFile.txt")
-waitingCount = waitingCount + 1
-katipo.get("fileHost/exampleFile.txt", nil, loadCallback)
-
-
-#katipo.get("exampleHost/../../secretFile.txt", nil, loadCallback)
+katipo.get(siteURL, nil, loadCallback)
 
 while(waitingCount > 0)
 {
@@ -89,10 +93,6 @@ while(waitingCount > 0)
     {
         print("commands:
 \tquit|exit exits")
-    }
-    else if(value == "crawl")
-    {
-        //doCrawl()
     }
     else if(value == "quit" or value == "exit")
     {
