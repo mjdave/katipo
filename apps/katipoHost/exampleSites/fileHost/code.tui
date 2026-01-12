@@ -1,0 +1,52 @@
+### this function is called when clients query this site
+
+publicFileDirectoryPath = file.getAbsolutePath(katipo.sitePath + "/exampleFiles")
+
+if(!file.fileExists(publicFileDirectoryPath))
+{
+    error("directory doesn't exist:", publicFileDirectoryPath)
+}
+
+site.get = function(url, clientData)
+{
+    print("in get. url:", url, " clientData:", clientData)
+    urlSplit = string.split(url, "/")
+
+    if(table.count(urlSplit) <= 1) #respond to get fileHost/
+    {
+        directoryContents = file.directoryContents(publicFileDirectoryPath)
+        return {
+            status = "ok"
+            directoryContents = directoryContents
+        }
+    }
+    else #fileHost/fileName
+    {
+        fullPath = publicFileDirectoryPath
+        for(i = 1, i < table.count(urlSplit), i++)
+        {
+            fullPath = fullPath + "/" + urlSplit[i]
+        }
+        print("fullPath:", fullPath)
+
+        if(file.isSubPath(fullPath, publicFileDirectoryPath) and file.fileExists(fullPath)) #isSubPath is very important here for security
+        {
+            print("file exists. sending...")
+            return {
+                status = "ok"
+                fileName = fileName
+                filePath = fullPath
+            }
+        }
+
+        return {
+            status = "error"
+            message = "file not found"
+        }
+    }
+
+    return {
+        status = "error"
+        message = "unknown error"
+    }
+}

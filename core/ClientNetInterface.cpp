@@ -24,7 +24,8 @@ ClientNetInterface::~ClientNetInterface()
     disconnect();
     delete inputQueue;
     delete outputQueue;
-    delete stateTable;
+    stateTable->release();
+    clientInfo->release();
 }
 
 
@@ -286,9 +287,9 @@ TuiTable* ClientNetInterface::bindTui(TuiTable* rootTable)
     });
     
     
-    
+    //todo this isn't implemented in the tracker, files must be requested by the client currently
     stateTable->setFunction("sendFile", [this](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
-        
+        MJError("todo unimplemented");
         if(args->arrayObjects.size() >= 1 && args->arrayObjects[0]->type() == Tui_ref_type_STRING)
         {
             TuiRef* fileNameRef = args->arrayObjects[0];
@@ -655,15 +656,13 @@ void ClientNetInterface::pollNetEvents()
                                                  {
                                                      TuiRef* filePathRef = resultTable->objectsByStringKey["filePath"];
                                                      std::string filePath = ((TuiString*)filePathRef)->value;
-                                                     
-                                                     resultTable->set("filePath", TUI_NIL);
+                                                     sendTable->set("filePath", TUI_NIL);
                                                      
                                                      TuiString* fileDataRef = new TuiString("");
                                                      
                                                      Tui::getFileContents(filePath, &(fileDataRef->value));
                                                      if(!fileDataRef->value.empty())
                                                      {
-                                                         MJLog("sending data SERVER_DATA_TYPE_SERVER_DOWNLOAD_FILE_RESPONSE");
                                                          sendFile = true;
                                                          resultTable->set("fileData", fileDataRef);
                                                          sendTable->set("data", resultTable);
@@ -671,8 +670,8 @@ void ClientNetInterface::pollNetEvents()
                                                      else
                                                      {
                                                          sendTable->setString("status", "error");
-                                                         sendTable->setString("message", "unable to load file");
-                                                         MJError("Unable to load file:%s", filePath.c_str());
+                                                         sendTable->setString("message", "unable to load file not found");
+                                                         MJError("Unable to load file not found:\n%s", filePath.c_str());
                                                      }
                                                      
                                                  }
@@ -745,7 +744,7 @@ void ClientNetInterface::pollNetEvents()
                         
                         if(callbacksByID.count(callbackID) != 0)
                         {
-                            MJLog("calling func in SERVER_DATA_TYPE_SERVER_FUNCTION_CALL_RESPONSE");
+                            //MJLog("calling func in SERVER_DATA_TYPE_SERVER_FUNCTION_CALL_RESPONSE");
                             callbacksByID[callbackID]->call("SERVER_FUNCTION_CALL_RESPONSE", tuiData->get("data"));
                         }
                         
@@ -757,7 +756,7 @@ void ClientNetInterface::pollNetEvents()
                         uint32_t callbackID = ((TuiNumber*)tuiData->objectsByStringKey["callbackID"])->value;
                         if(callbacksByID.count(callbackID) != 0)
                         {
-                            MJLog("calling func in SERVER_DATA_TYPE_SERVER_DOWNLOAD_FILE_RESPONSE");
+                            //MJLog("calling func in SERVER_DATA_TYPE_SERVER_DOWNLOAD_FILE_RESPONSE");
                             callbacksByID[callbackID]->call("SERVER_DOWNLOAD_FILE_RESPONSE", tuiData->objectsByStringKey["data"]);
                         }
                         
@@ -812,6 +811,12 @@ void ClientNetInterface::sendLargeDataInternal(uint8_t type,
     size_t dataLength,
     uint8_t channel)
 {
+    if(!enetPeer || !enetClient || disconnected)
+    {
+        MJLog("Attempt to send data with no connection.");
+        return;
+    }
+    
     if(dataLength > MJMaxPacketSize)
     {
         uint32_t bytesToSend = (uint32_t)dataLength;

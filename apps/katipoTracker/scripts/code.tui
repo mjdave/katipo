@@ -73,17 +73,16 @@ hostServer.clientConnected = function(clientID, clientInfo)
     knownClients[clientID] = clientInfo
 }
 
-
 hostServer.clientDisconnected = function(clientID) #todo
 {
     knownClients[clientID] = nil
 }
 
-hostSetHostinfo = function(clientID, hostInfo)
+hostSetSiteInfo = function(clientID, siteInfo)
 {
-    print("got hostInfo:", hostInfo)
+    print("got siteInfo:", siteInfo)
 
-    hostNameKey = hostInfo.hostNameKey
+    hostNameKey = siteInfo.key
     if(!hostNameKey)
     {
         message = "missing host key"
@@ -125,7 +124,7 @@ hostSetHostinfo = function(clientID, hostInfo)
     }
 }
 
-hostServer.register("setHostinfo", hostSetHostinfo)
+hostServer.register("setSiteInfo", hostSetSiteInfo)
 
 ### clients
 
@@ -140,10 +139,8 @@ callHostFunction = function(clientID, url, clientData, callbackFunc)
 
     if(url)
     {
-        hostName = url #todo support host/subFunc
-
+        hostName = url
         urlSplit = string.split(url, "/")
-
         hostInfo = knownHosts[urlSplit[0]]
         if(hostInfo)
         {
@@ -176,7 +173,6 @@ callHostFunction = function(clientID, url, clientData, callbackFunc)
 
 #called by client
 clientServer.register("callHostFunction", callHostFunction)
-
 
 
 ### start the servers

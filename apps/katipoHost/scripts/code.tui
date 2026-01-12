@@ -1,9 +1,37 @@
-hostInfo = {
-    hostNameKey = "exampleHost",
-    name = "Katipo Example Host"
+KATIPO_VERSION = "0.1" #todo
+
+### set defaults
+katipo.trackerIP = "127.0.0.1"
+katipo.trackerPort = "3470"
+
+printUsage = function()
+{
+    print("")
+    print("Katipo Host version:", KATIPO_VERSION)
+    print("https://github.com/mjdave/katipo")
+    print("")
+    print("Usage: ./katipoHost --site exampleSites/basicSite")
+    print("       ./katipoHost --help")
+    print("       ./katipoHost --site exampleSites/basicSite --basePath . --trackerIP " + katipo.trackerIP + " --trackerPort " + katipo.trackerPort)
+    print("")
+    print("--site SITE")
+    print("  A path to the directory containing the site to host. This directory should contain a site.tui file")
+    print("  required")
+    print("")
+    print("--basePath PATH") #handled in Controller.cpp, as this is the location to find this very file
+    print("  Were to find scripts/code.tui")
+    print("  optional, default: the same directory as the katipoHost binary")
+    print("")
+    print("--trackerIP example.com")
+    print("  The IP for the tracker that you wish the host to share its content through. In the future you will be able to supply multiple tracker IPs.")
+    print("  optional, default: 127.0.0.1, which assumes you are running a tracker on your local machine")
+    print("")
+    print("--trackerPort PORT")
+    print("  The port for the tracker.")
+    print("  optional, default: 3471")
+    print("")
 }
 
-KATIPO_VERSION = "0.1" #todo
 
 ### loop over the launch arguments
 argCount = table.count(launchArgs)
@@ -30,27 +58,56 @@ for(i = 0, i < argCount, i++)
         i++
         katipo.trackerPort = launchArgs[i]
     }
+    else if(arg == "--site")
+    {
+        if(i+1 >= argCount)
+        {
+            print("missing argument. usage example: ./katipoHost --site exampleSites/basicSite")
+            return
+        }
+        i++
+        katipo.sitePath = launchArgs[i]
+    }
     else if(arg == "--help")
     {
-        print("")
-        print("Katipo Host version:", KATIPO_VERSION)
-        print("Usage: ./katipoHost")
-        print("       ./katipoHost --help")
-        print("       ./katipoHost --trackerIP 127.0.0.1 --trackerPort 3470")
-        print("")
-        print("--basePath PATH") #this is handled by Controller.cpp
-        print("  Were to find scripts/code.tui")
-        print("  optional, default: the same directory as the katipoHost binary")
-        print("")
-        print("--trackerIP example.com")
-        print("  The IP for the tracker that you wish the host to share its content through. In the future you will be able to supply multiple tracker IPs.")
-        print("  optional, default: 127.0.0.1, which assumes you are running a tracker on your local machine")
-        print("")
-        print("--trackerPort PORT")
-        print("  The port for the tracker.")
-        print("  optional, default: 3471")
+        printUsage()
         return
     }
+}
+
+if(!katipo.sitePath)
+{
+    print("\nError: katipoHost requires a site directory path to be passed with --site. run './katipoHost --help' for more information")
+    return
+}
+
+siteInfoPath = katipo.sitePath + "/site.tui"
+siteCodePath = katipo.sitePath + "/code.tui"
+
+if(!file.fileExists(siteInfoPath))
+{
+    print("\nError: Unable to find site.tui file at:", file.getAbsolutePath(siteInfoPath))
+    return
+}
+
+if(!file.fileExists(siteCodePath))
+{
+    print("\nError: Unable to find code.tui file at:", file.getAbsolutePath(siteCodePath))
+    return
+}
+
+siteInfo = require(siteInfoPath)
+siteCode = require(siteCodePath)
+print("siteInfo:", siteInfo)
+print("siteCode:", siteCode)
+
+credentials = {
+    publicKey = "1234567812345678" #todo
+}
+
+katipo.clientInfo = {
+    siteInfo = siteInfo
+    credentials = credentials
 }
 
 ### initialize katipo now that we have loaded the launch args
@@ -61,6 +118,8 @@ if(!success)
     return
 }
 
+print("Katipo initialized successfully.")
+
 tracker = katipo.tracker
 
 /*clientConnected = function(clientInfo) #todo maybe need this?
@@ -70,7 +129,9 @@ tracker = katipo.tracker
 
 get = function(url, clientData)
 {
-    print("in get. url:", url, " clientData:", clientData)
+    print("in top level get. url:", url, " clientData:", clientData)
+    return siteCode.get(url, clientData)
+    /*print("in get. url:", url, " clientData:", clientData)
     urlSplit = string.split(url, "/")
 
     if(table.count(urlSplit) <= 1)
@@ -108,10 +169,10 @@ get = function(url, clientData)
     return {
         status = "error"
         message = "unhandled url:" + url
-    }
+    }*/
 }
 
-hostInfoReceived = function(result)
+siteInfoSent = function(result)
 {
     print("callback result:", result)
     //print("Successfully connected to katipo tracker server, with host name:", hostInfo.hostNameKey)
@@ -123,7 +184,7 @@ tracker.register("get", get)
 print("Welcome to katipo.
 Attempting to connect to tracker, type 'quit' to cancel and exit, 'help' for more commands.")
 
-tracker.callServerFunction("setHostinfo", hostInfo, hostInfoReceived)
+tracker.callServerFunction("setSiteInfo", siteInfo, siteInfoSent)
 
 
 while(true)

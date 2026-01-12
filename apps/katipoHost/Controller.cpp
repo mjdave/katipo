@@ -11,8 +11,8 @@
 #include "ClientNetInterface.h"
 #include "TuiFileUtils.h"
 
-#define TRACKER_IP "127.0.0.1"
-#define TRACKER_PORT "3470"
+//#define TRACKER_IP "127.0.0.1"
+//#define TRACKER_PORT "3470"
 
 void Controller::init(int argc, const char * argv[])
 {
@@ -27,21 +27,29 @@ void Controller::init(int argc, const char * argv[])
     rootTable->set("katipo", katipoTable);
     katipoTable->release();
 
-    katipoTable->setString("trackerIP", TRACKER_IP);
+    /*katipoTable->setString("trackerIP", TRACKER_IP);
     katipoTable->setString("trackerPort", TRACKER_PORT);
     katipoTable->setString("basePath", basePath);
-
+    
+    if(argc < 2)
+    {
+        MJError("katipoHost requires a site path, pointing to a directory which contains a site.tui file");
+        MJLog("Usage: ./katipoHost exampleSites/basicSite");
+        MJLog("       ./katipoHost --help");
+    }
+    
+    std::string sitePath = argv[1];*/
     
     for(int i = 1; i < argc; i++)
     {
         launchArgsTable->arrayObjects.push_back(new TuiString(argv[i]));
 
         std::string arg = argv[i];
-        if(arg == "--basePath")
+        if(arg == "--basePath") //base path is where we find scripts/code.tui. Allows the same executable to run different environments
         {
             if(i+1 >= argc)
             {
-                MJError("missing basePath. usage example: ./katipoTracker --basePath %s", basePath.c_str());
+                MJError("missing basePath path argument. usage example: ./katipoHost --basePath BASE_PATH");
                 exit(1);
             }
             basePath = argv[++i];
@@ -49,12 +57,14 @@ void Controller::init(int argc, const char * argv[])
         }
     }
     
+    //katipoTable->setString("sitePath", sitePath);
+    
     //todo generate and save/load unique names and ids
-    TuiTable* clientInfo = new TuiTable(nullptr);
+    /*TuiTable* clientInfo = new TuiTable(nullptr);
     katipoTable->setTable("clientInfo", clientInfo);
     clientInfo->setString("name", "Host");
     clientInfo->setString("clientID", "2234567812345678"); //should be the public key
-    clientInfo->release();
+    clientInfo->release();*/
 
     katipoTable->setFunction("init", [this](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
         if(!trackerNetInterface)
@@ -73,8 +83,7 @@ void Controller::init(int argc, const char * argv[])
         return nullptr;
     });
     
-    
-    scriptState = (TuiTable*)TuiRef::runScriptFile(basePath + "scripts/code.tui", rootTable);
+    scriptState = (TuiTable*)TuiRef::runScriptFile(Tui::pathByAppendingPathComponent(basePath,"scripts/code.tui"), rootTable);
 }
 
 static const double SERVER_FIXED_TIME_STEP = 1.0 / 60.0;

@@ -1,0 +1,12 @@
+### this is a basic configuration file, which is sent to the tracker to advertise this site
+
+key = "basicSite" #used to uniquely identify this site
+title = "Basic Site Example" #displayed name
+keywords = { "example", "site" } #used for search
+description = "A basic site example" #used for search and more info
+author = "majicDave" #used for search and more info
+
+#image =
+#link =
+#httpLink = 
+

@@ -20,11 +20,20 @@ NetServerClient::NetServerClient(TuiTable* joinRequest_,
         clientID = "invalid";
         return;
     }
+
+    TuiTable* credentials = clientInfo->getTable("credentials");
     
-    clientID = clientInfo->getString("clientID");
+    if(!credentials)
+    {
+        MJError("Invalid join request, missing credentials in clientInfo");
+        clientID = "invalid";
+        return;
+    }
+    
+    clientID = credentials->getString("publicKey");
     if(clientID.length() != 16)
     {
-        MJError("Invalid clientID in join request of length:%d", clientID.length());
+        MJError("Invalid publicKey in credentials of join request. Length:%d", clientID.length());
         clientID = "invalid";
         return;
     }

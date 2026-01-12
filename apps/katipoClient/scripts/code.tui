@@ -49,20 +49,37 @@ for(i = 0, i < argCount, i++)
     }
 }
 
+
+credentials = {
+    publicKey = "1234567812345678" #todo
+}
+
+katipo.clientInfo = {
+    credentials = credentials
+}
+
 waitingCount = 0 
 
 loadCallback = function(result){
     print("got result:", result)
-    waitingCount = waitingCount - 1
+    .waitingCount = waitingCount - 1
+
+    if(waitingCount <= 0)
+    {
+        print("\nAll requests have finished, press any key to exit")
+    }
 }
 
-print("fetching exampleHost/")
+print("fetching fileHost/")
 waitingCount = waitingCount + 1
-katipo.get("exampleHost", nil, loadCallback)
+katipo.get("fileHost", nil, loadCallback)
 
-print("fetching exampleHost/exampleFile.txt") #todo not implemented, results incorrect order
+print("fetching fileHost/exampleFile.txt")
 waitingCount = waitingCount + 1
-katipo.get("exampleHost/exampleFile.txt", nil, loadCallback)
+katipo.get("fileHost/exampleFile.txt", nil, loadCallback)
+
+
+#katipo.get("exampleHost/../../secretFile.txt", nil, loadCallback)
 
 while(waitingCount > 0)
 {
@@ -81,4 +98,6 @@ while(waitingCount > 0)
     {
         break
     }
-}*/
+}
+
+print("exiting")

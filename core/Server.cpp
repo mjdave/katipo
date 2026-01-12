@@ -402,8 +402,8 @@ void Server::clientDataReceived(NetServerClient* client, const ServerData& serve
                 TuiString* dataString = nullptr;
                 if(result && result->type() == Tui_ref_type_STRING)
                 {
-                    dataString = new TuiString("");
-                    std::ifstream in((((TuiString*)result)->value).c_str(), std::ios::in | std::ios::binary);
+                    dataString = (TuiString*)result->retain();//new TuiString("");
+                    /*std::ifstream in((((TuiString*)result)->value).c_str(), std::ios::in | std::ios::binary); //this surely is a waste of time?
                     if(in)
                     {
                         in.seekg(0, std::ios::end);
@@ -411,7 +411,7 @@ void Server::clientDataReceived(NetServerClient* client, const ServerData& serve
                         in.seekg(0, std::ios::beg);
                         in.read(&(dataString->value)[0], (dataString->value).size());
                         in.close();
-                    }
+                    }*/
                 }
                 
                 if(result)
