@@ -72,12 +72,40 @@ katipo.clientInfo = {
 waitingCount = 0 
 
 loadCallback = function(result){
-    print("got result:", result)
+    
+    if(result.fileData)
+    {
+        print("got file data result with status:", result.status, " fileName:", result.fileName)
+        if(result.fileName)
+        {
+            localFileName = result.fileName #todo need to check this is within the sandbox
+            if(file.fileExists(localFileName))
+            {
+                print("error: File exists:", localFileName)
+                print("todo: could ask here for overwrite confirmation and/or have an option passed in somehow")
+                exit(0)
+            }
+
+            print("writing file...")
+            file.saveData(localFileName, result.fileData)
+            print("saved file:", localFileName)
+        }
+        else
+        {
+            print("todo: unhandled fileData without fileName")
+        }
+    }
+    else
+    {
+        print("got result:", result)
+    }
+
     .waitingCount = waitingCount - 1
 
     if(waitingCount <= 0)
     {
-        print("\nAll requests have finished, press enter to exit")
+        print("\nAll requests have finished, exiting.")
+        exit(0)
     }
 }
 

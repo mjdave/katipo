@@ -656,7 +656,8 @@ void ClientNetInterface::pollNetEvents()
                                                  {
                                                      TuiRef* filePathRef = resultTable->objectsByStringKey["filePath"];
                                                      std::string filePath = ((TuiString*)filePathRef)->value;
-                                                     sendTable->set("filePath", TUI_NIL);
+                                                     resultTable->set("filePath", TUI_NIL);
+                                                     resultTable->setString("fileName", Tui::fileNameFromPath(filePath));
                                                      
                                                      TuiString* fileDataRef = new TuiString("");
                                                      

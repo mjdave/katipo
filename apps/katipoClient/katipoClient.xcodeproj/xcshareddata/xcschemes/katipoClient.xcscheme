@@ -54,7 +54,15 @@
       <CommandLineArguments>
          <CommandLineArgument
             argument = "--get basicSite"
+            isEnabled = "NO">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "--get fileHost/exampleImage.png"
             isEnabled = "YES">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "--get fileHost"
+            isEnabled = "NO">
          </CommandLineArgument>
       </CommandLineArguments>
    </LaunchAction>
