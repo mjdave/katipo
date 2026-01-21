@@ -25,6 +25,7 @@ set(SOURCES
     ../../thirdParty/tui/source/TuiFileUtils.cpp
     ../../thirdParty/tui/source/TuiFunction.cpp
     ../../thirdParty/tui/source/TuiRef.cpp
+    ../../thirdParty/tui/source/TuiTable.cpp
     ../../thirdParty/tui/source/TuiSha1.cpp
     ../../thirdParty/tui/source/TuiBuiltInFunctions.cpp
 

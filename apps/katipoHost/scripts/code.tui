@@ -98,16 +98,13 @@ if(!file.fileExists(siteCodePath))
 
 siteInfo = require(siteInfoPath)
 siteCode = require(siteCodePath)
-print("siteInfo:", siteInfo)
-print("siteCode:", siteCode)
+#print("siteInfo:", siteInfo)
+#print("siteCode:", siteCode)
 
-credentials = {
-    publicKey = "1234567812345678" #todo
-}
-
-katipo.clientInfo = {
-    siteInfo = siteInfo
-    credentials = credentials
+katipo.siteInfo = siteInfo
+katipo.connected = function() #we should set up this callback before we call init
+{
+    print("Successfully connected to katipo tracker server, with host name:", siteInfo.nameKey)
 }
 
 ### initialize katipo now that we have loaded the launch args
@@ -120,14 +117,14 @@ if(!success)
 
 print("Katipo initialized successfully.")
 
-tracker = katipo.tracker
 
 /*clientConnected = function(clientInfo) #todo maybe need this?
 {
     print("in tui clientConnected. clientInfo:", clientInfo)
 }*/
 
-get = function(url, clientData)
+
+katipo.get = function(url, clientData)
 {
     print("in top level get. url:", url, " clientData:", clientData)
     return siteCode.get(url, clientData)
@@ -172,19 +169,9 @@ get = function(url, clientData)
     }*/
 }
 
-siteInfoSent = function(result)
-{
-    print("callback result:", result)
-    //print("Successfully connected to katipo tracker server, with host name:", hostInfo.hostNameKey)
-}
-
-#tracker.register("clientConnected", clientConnected)
-tracker.register("get", get)
-
 print("Welcome to katipo.
 Attempting to connect to tracker, type 'quit' to cancel and exit, 'help' for more commands.")
 
-tracker.callHostFunction("setSiteInfo", siteInfo, siteInfoSent)
 
 
 while(true)

@@ -61,19 +61,11 @@ if(!siteURL)
     return
 }
 
-credentials = {
-    publicKey = "1234567812345678" #todo
-}
-
-katipo.clientInfo = {
-    credentials = credentials
-}
-
 waitingCount = 0 
 
 loadCallback = function(result){
     
-    if(result.fileData)
+    if(result and result.fileData)
     {
         print("got file data result with status:", result.status, " fileName:", result.fileName)
         if(result.fileName)
@@ -111,7 +103,7 @@ loadCallback = function(result){
 
 print("fetching:", siteURL)
 waitingCount = waitingCount + 1
-katipo.get(siteURL, nil, loadCallback)
+katipo.get(siteURL, loadCallback)
 
 while(waitingCount > 0)
 {

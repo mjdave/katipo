@@ -10,6 +10,7 @@
 #include "Timer.h"
 #include "ClientNetInterface.h"
 #include "TuiFileUtils.h"
+#include "sodium.h"
 
 //#define TRACKER_IP "127.0.0.1"
 //#define TRACKER_PORT "3470"
@@ -37,7 +38,7 @@ void Controller::init(int argc, const char * argv[])
             if(i+1 >= argc)
             {
                 MJError("missing basePath path argument. usage example: ./katipoHost --basePath BASE_PATH");
-                exit(1);
+                abort();
             }
             basePath = argv[++i];
             launchArgsTable->arrayObjects.push_back(new TuiString(argv[i]));
@@ -47,9 +48,60 @@ void Controller::init(int argc, const char * argv[])
     katipoTable->setFunction("init", [this](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
         if(!trackerNetInterface)
         {
+            //TuiTable* clientInfo = katipoTable->getTable("clientInfo");
+            TuiTable* siteInfo = katipoTable->getTable("siteInfo");
+            if(!siteInfo)
+            {
+                MJError("Invalid or missing siteInfo table");
+                abort();
+            }
+            if(!siteInfo->hasKey("nameKey"))
+            {
+                MJError("siteInfo is missing a 'nameKey' entry ");
+                abort();
+            }
+            
+            std::string publicKey = "";
+            std::string secretKey = "";
+            
+            std::string hostKeyPath = siteInfo->getString("nameKey") + "_privateKey.tui";
+            
+            if(Tui::fileExistsAtPath(hostKeyPath)) //todo these should be saved in the database, not files
+            {
+                TuiTable* saveData = (TuiTable*)TuiRef::loadBinary(hostKeyPath);
+                if(saveData)
+                {
+                    publicKey = saveData->getString("publicKey");
+                    secretKey = saveData->getString("secretKey");
+                }
+            }
+            
+            if(publicKey.empty())
+            {
+                publicKey.resize(crypto_box_PUBLICKEYBYTES);
+                secretKey.resize(crypto_box_SECRETKEYBYTES);
+                crypto_box_keypair((unsigned char*)&(publicKey[0]), (unsigned char*)&(secretKey[0]));
+                
+                TuiTable* saveData = new TuiTable(nullptr);
+                
+                saveData->setString("publicKey", publicKey);
+                saveData->setString("secretKey", secretKey);
+                
+                saveData->saveBinary(hostKeyPath);
+                saveData->release();
+            
+                MJLog("Generated and saved new private key:\n%s.\nPlease backup this file and keep it safe and secure!", Tui::getAbsolutePath(hostKeyPath).c_str());
+            }
+            else
+            {
+                MJLog("loaded private key:\n%s", Tui::getAbsolutePath(hostKeyPath).c_str());
+            }
+            
+            siteInfo->setString("publicKey", publicKey);
+            
             trackerNetInterface = new ClientNetInterface(katipoTable->get("trackerIP")->getStringValue(),
                                                     katipoTable->get("trackerPort")->getStringValue(),
-                                                 katipoTable->getTable("clientInfo"));
+                                                         publicKey, secretKey, siteInfo);
             trackerNetInterface->bindTui(katipoTable);
             katipoTable->set("tracker", trackerNetInterface->stateTable);
 

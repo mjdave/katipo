@@ -1,7 +1,6 @@
 
 
-knownHosts = {}
-knownClients = {}
+siteInfosBySiteKeys = {}
 
 KATIPO_VERSION = "0.1" #todo
 
@@ -67,25 +66,16 @@ clientServer = katipo.clientServer
 
 ### hosts
 
-hostServer.clientConnected = function(clientID, clientInfo)
+hostServer.clientConnected = function(hostID, siteInfo)
 {
-    print("host connected:", clientID, " clientInfo:", clientInfo)
-    knownClients[clientID] = clientInfo
-}
+    print("host connected:", hostID)
+    print("key:", siteInfo.nameKey)
+    print("title:", siteInfo.title)
 
-hostServer.clientDisconnected = function(clientID) #todo
-{
-    knownClients[clientID] = nil
-}
-
-hostSetSiteInfo = function(clientID, siteInfo)
-{
-    print("got siteInfo:", siteInfo)
-
-    hostNameKey = siteInfo.key
-    if(!hostNameKey)
+    siteNameKey = siteInfo.nameKey
+    if(!siteNameKey)
     {
-        message = "missing host key"
+        message = "missing host nameKey"
         print("Error:", message)
         return {
             status = "error"
@@ -93,13 +83,13 @@ hostSetSiteInfo = function(clientID, siteInfo)
         }
     }
 
-    loadedHostInfo = knownHosts[hostNameKey]
+    existingSiteInfo = siteInfosBySiteKeys[siteNameKey]
 
-    if(loadedHostInfo)
+    if(existingSiteInfo)
     {
-        if(clientID != loadedHostInfo.clientID)
+        if(hostID != existingSiteInfo.hostID)
         {
-            message = "host name already in use by another host"
+            message = "host nameKey already in use by another host"
             print("Error:", message)
             return {
                 status = "error"
@@ -109,70 +99,53 @@ hostSetSiteInfo = function(clientID, siteInfo)
     }
     else
     {
-        loadedHostInfo = {
-            clientID = clientID
-        }
-        knownHosts[hostNameKey] = loadedHostInfo
+        siteInfo.hostID = hostID
+        siteInfosBySiteKeys[siteNameKey] = siteInfo
     }
-
-    loadedHostInfo.info = hostInfo
-
-    print("knownHosts:", knownHosts)
     
     return {
         status = "ok"
     }
 }
 
-hostServer.register("setSiteInfo", hostSetSiteInfo)
+hostServer.clientDisconnected = function(hostID) #todo
+{
+    print("host disconnected:", hostID)
+}
 
 ### clients
 
 clientServer.clientConnected = function(clientID)
 {
-    print("client connected:", clientID, " initialData:", initialData)
+    print("client connected:", clientID)
 }
 
-callHostFunction = function(clientID, url, clientData, callbackFunc)
+getSiteKey = function(clientID, siteNameKey, callbackFunc)
 {
-    print("client callHostFunction:", clientID, " url:", url, " clientData:", clientData)
-
-    if(url)
+    if(siteNameKey)
     {
-        hostName = url
-        urlSplit = string.split(url, "/")
-        hostInfo = knownHosts[urlSplit[0]]
-        if(hostInfo)
-        {
-            print("calling host server func")
-            hostServer.callClientFunction(hostInfo.clientID, "get", url, clientData, callbackFunc)
-        }
-        else
+        siteInfo = siteInfosBySiteKeys[siteNameKey]
+        if(siteInfo)
         {
             result = {
-                status = "error"
-                message = "unknown host:" + urlSplit[0]
+                status = "ok"
+                publicKey = siteInfo.publicKey
             }
             callbackFunc(result)
-
-            //TODO causes tui crash:
-            //callbackFunc({
-            //    status = "error"
-            //    message = "unknown host:" + url
-            //})
+            return
         }
     }
-    else
-    {
-        callbackFunc({
-            status = "error"
-            message = "missing host url"
-        })
+
+    result = {
+        status = "error"
+        message = "no host found:" + siteNameKey
     }
+
+    callbackFunc(result)
 }
 
 #called by client
-clientServer.register("callHostFunction", callHostFunction)
+clientServer.register("getSiteKey", getSiteKey)
 
 ### start the servers
 success = katipo.start()

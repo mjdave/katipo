@@ -138,6 +138,7 @@
     <ClCompile Include="../../thirdParty/tui/source/TuiFileUtils.cpp" />
     <ClCompile Include="../../thirdParty/tui/source/TuiFunction.cpp" />
     <ClCompile Include="../../thirdParty/tui/source/TuiRef.cpp" />
+    <ClCompile Include="../../thirdParty/tui/source/TuiTable.cpp" />
     <ClCompile Include="../../thirdParty/tui/source/TuiSha1.cpp" />
     <ClCompile Include="../../thirdParty/tui/source/TuiBuiltInFunctions.cpp" />
     <ClCompile Include="../../thirdParty/enet-1.3.18/callbacks.c" />

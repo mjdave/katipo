@@ -24,8 +24,6 @@ enum {
     SERVER_NET_INTERFACE_OUTPUT_ADD_CLIENT,
     SERVER_NET_INTERFACE_OUTPUT_REMOVE_CLIENT,
     SERVER_NET_INTERFACE_OUTPUT_DATA_RECEIEVED,
-    SERVER_NET_INTERFACE_OUTPUT_GET_JOIN_INFO,
-    SERVER_NET_INTERFACE_OUTPUT_PING_UPDATE,
 };
 
 struct ServerNetInterfaceOutput {
@@ -33,13 +31,6 @@ struct ServerNetInterfaceOutput {
     NetServerClient* client; //might be null, in the case of a join get-info request
     ENetPeer* enetPeer;
     ServerData serverData;
-};
-
-struct ClientPingTimer {
-    uint32_t pingIndex = 0;
-    double pingDelay = 0.0;
-    double smoothedPingDelay = 0.0;
-    std::map<uint32_t, Timer*> timers;
 };
 
 class Server;
@@ -53,14 +44,14 @@ class ServerNetInterface {
     std::map<ENetPeer*, NetServerClient*> connectedClientsByEnetPeer;
     std::map<std::string, NetServerClient*> connectedClientsByClientID;
     
-    std::map<std::string, ClientPingTimer> pingTimersByClientID;
-    
     std::string logPath;
     
     
     
 public:
-    ServerNetInterface(Server* server,
+    ServerNetInterface(const std::string& publicKey_,
+                       const std::string& secretKey_,
+                       Server* server,
                        int portNumber,
                        int maxConnections,
                        std::string logPath_);
@@ -81,14 +72,19 @@ public:
                   ENetPeer* peer,
                   uint8_t channel);
     
+    TuiTable* getDecryptedDataTable(TuiTable* tuiDataWrapper);
+    
 public:
     bool valid = false;
     
 private:
     Server* server;
     std::thread* thread;
+    std::string publicKey;
+    std::string secretKey;
     
     bool needsToExit = false;
+    void sendInitialHandshake(ENetPeer* peer);
     
 protected:
     void disconnect();

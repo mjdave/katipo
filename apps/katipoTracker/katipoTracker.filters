@@ -24,6 +24,9 @@
 <ClCompile Include="../../thirdParty/tui/source/TuiRef.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+<ClCompile Include="../../thirdParty/tui/source/TuiTable.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
 <ClCompile Include="../../thirdParty/tui/source/TuiSha1.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

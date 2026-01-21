@@ -11,9 +11,16 @@
 #include "Server.h"
 #include "TuiFileUtils.h"
 #include "MJVersion.h"
+#include "sodium.h"
 
 void Controller::init(int argc, const char * argv[])
 {
+    if(sodium_init() < 0) //this is safe to call multiple times
+    {
+        MJError("Sodium initialization failed. Exiting.");
+        abort();
+    }
+    
     std::string basePath = Tui::pathByRemovingLastPathComponent(argv[0]);
 
     TuiTable* rootTable = Tui::createRootTable();
@@ -55,8 +62,47 @@ void Controller::init(int argc, const char * argv[])
     katipoTable->setFunction("init", [this](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
         if(!hostServer)
         {
-            hostServer = new Server("hostServer", katipoTable->get("hostPort")->getStringValue(), 4095, katipoTable);
-            clientServer = new Server("clientServer", katipoTable->get("clientPort")->getStringValue(), 4095, katipoTable);
+            //todo could have separate keys for hosts/clients
+            std::string publicKey = "";
+            std::string secretKey = "";
+            
+            std::string trackerKeyPath = "trackerPrivateKey.tui";
+            
+            if(Tui::fileExistsAtPath(trackerKeyPath)) //todo these should be saved in the database, not files
+            {
+                TuiTable* saveData = (TuiTable*)TuiRef::loadBinary(trackerKeyPath);
+                if(saveData)
+                {
+                    publicKey = saveData->getString("publicKey");
+                    secretKey = saveData->getString("secretKey");
+                }
+            }
+            
+            if(publicKey.empty())
+            {
+                publicKey.resize(crypto_box_PUBLICKEYBYTES);
+                secretKey.resize(crypto_box_SECRETKEYBYTES);
+                crypto_box_keypair((unsigned char*)&(publicKey[0]), (unsigned char*)&(secretKey[0]));
+                
+                TuiTable* saveData = new TuiTable(nullptr);
+                
+                saveData->setString("publicKey", publicKey);
+                saveData->setString("secretKey", secretKey);
+                
+                saveData->saveBinary(trackerKeyPath);
+                saveData->release();
+                
+                MJLog("Generated and saved new private key:\n%s.\nPlease backup this file and keep it safe and secure!", Tui::getAbsolutePath(trackerKeyPath).c_str());
+            }
+            else
+            {
+                MJLog("loaded private key:\n%s", Tui::getAbsolutePath(trackerKeyPath).c_str());
+            }
+            
+            hostServer = new Server(publicKey, secretKey, "hostServer", katipoTable->get("hostPort")->getStringValue(), 4095, katipoTable);
+            clientServer = new Server(publicKey, secretKey, "clientServer", katipoTable->get("clientPort")->getStringValue(), 4095, katipoTable);
+            clientServer->hostServer = hostServer;
+            hostServer->clientServer = clientServer;
             return TUI_TRUE;
         }
         return TUI_FALSE;

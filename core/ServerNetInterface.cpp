@@ -5,12 +5,17 @@
 #include "Server.h"
 #include "Timer.h"
 #include "MJVersion.h"
+#include "sodium.h"
 
-ServerNetInterface::ServerNetInterface(Server* server_,
+ServerNetInterface::ServerNetInterface(const std::string& publicKey_,
+                                       const std::string& secretKey_,
+                                       Server* server_,
                                        int portNumber,
                                        int maxConnections,
                                        std::string logPath_) //todo logPath not implemented
 {
+    publicKey = publicKey_;
+    secretKey = secretKey_;
     server = server_;
     logPath = logPath_;
     
@@ -59,9 +64,6 @@ ServerNetInterface::~ServerNetInterface()
 void ServerNetInterface::startThread()
 {
     Timer* timer = new Timer();
-    Timer* pingTimer = new Timer();
-    double pingTimerAccumulation = 0.0;
-    double timeBetweenPings = 1.0;
     
     while(1)
     {
@@ -83,48 +85,6 @@ void ServerNetInterface::startThread()
         if(needsToExit)
         {
             return;
-        }
-        
-        double pingTimeElapsed = pingTimer->getDt();
-        pingTimerAccumulation = pingTimerAccumulation + pingTimeElapsed;
-        if(pingTimerAccumulation >= timeBetweenPings)
-        {
-            pingTimerAccumulation = 0.0;
-            /*for(auto& peerAndClient : connectedClientsByEnetPeer)
-            {
-                ClientPingTimer* pingTimer = &pingTimersByClientID[peerAndClient.second->clientID];
-                uint32_t pingIndex = pingTimer->pingIndex++;
-                pingTimer->timers[pingIndex] = new Timer();
-                
-                int dataSize = sizeof(uint32_t) + sizeof(uint8_t);
-                uint8_t* netData = (uint8_t*)malloc(dataSize);
-                netData[0] = SERVER_DATA_TYPE_SERVER_DELAY_PING;
-                memcpy(&(netData[1]), &(pingIndex), sizeof(uint32_t));
-                
-                ENetPacket * packet = enet_packet_create(netData,
-                                                          dataSize,
-                                                          ENET_PACKET_FLAG_RELIABLE);
-                //MJLog("send ping")
-                enet_peer_send(peerAndClient.first, 0, packet);
-                free(netData);
-                
-                pingTimer->smoothedPingDelay = mix(pingTimer->smoothedPingDelay, pingTimer->pingDelay, 0.2);
-                pingTimer->pingDelay = pingTimer->pingDelay + 1.0;
-                
-                ServerNetInterfaceOutput output;
-                output.outputType = SERVER_NET_INTERFACE_OUTPUT_PING_UPDATE;
-                output.client = peerAndClient.second;
-                
-                //output.serverData.type = SERVER_NET_INTERFACE_OUTPUT_PING_UPDATE;
-                output.serverData.length = sizeof(double);
-                output.serverData.data = malloc(output.serverData.length);
-                memcpy(output.serverData.data, &pingTimer->smoothedPingDelay, output.serverData.length);
-                
-                outputQueue->push(output);
-                
-            }*/
-            
-         //   uint32_t pingIndex;
         }
         
         double timeElapsed = timer->getDt();
@@ -184,15 +144,6 @@ void ServerNetInterface::disconnect()
     connectedClientsByClientID.clear();
     
     
-    for(auto& peerAndTimerInfo : pingTimersByClientID)
-    {
-        for(auto& timerIDAndTimer : peerAndTimerInfo.second.timers)
-        {
-            delete timerIDAndTimer.second;
-        }
-    }
-    pingTimersByClientID.clear();
-    
     enet_host_destroy(enetServer);
     enetServer = nullptr;
     enet_deinitialize(); //todo once per process?
@@ -225,14 +176,14 @@ void ServerNetInterface::sendJoinRejectionAndDisconnect(ENetPeer* peer,
                                                         std::string rejectionReason,
                                                         std::string rejectionContext)
 {
-    MJError("todo");
+    MJError("todo sendJoinRejectionAndDisconnect");
     /*JoinRejection rejection;
     rejection.reason = rejectionReason;
     rejection.context = rejectionContext;
     std::string outData = serializeObject(rejection);
     
     uint8_t* netData = (uint8_t*)malloc(outData.size() + sizeof(uint8_t));
-    netData[0] = SERVER_DATA_TYPE_SERVER_JOIN_RESPONSE_REJECT;
+    netData[0] = KATIPO_NET_TYPE_SERVER_JOIN_RESPONSE_REJECT;
     memcpy(&(netData[1]), outData.data(), outData.size());*/
     
     
@@ -248,6 +199,64 @@ void ServerNetInterface::sendJoinRejectionAndDisconnect(ENetPeer* peer,
     }
 }
 
+
+void ServerNetInterface::sendInitialHandshake(ENetPeer* peer)
+{
+    if(peer)
+    {
+        const std::string& outData = publicKey;
+        uint8_t* netData = (uint8_t*)malloc(outData.size() + sizeof(uint8_t));
+        netData[0] = KATIPO_NET_TYPE_INITIAL_HANDSHAKE;
+        memcpy(&(netData[1]), outData.data(), outData.size());
+        
+        ENetPacket * packet = enet_packet_create (netData,
+                                                  outData.size() + sizeof(uint8_t),
+                                                  ENET_PACKET_FLAG_RELIABLE);
+        enet_peer_send(peer, 0, packet);
+        free(netData);
+    }
+}
+
+
+TuiTable* ServerNetInterface::getDecryptedDataTable(TuiTable* tuiDataWrapper)
+{
+    if(tuiDataWrapper && tuiDataWrapper->hasKey("nonce") && tuiDataWrapper->hasKey("data") && tuiDataWrapper->hasKey("publicKey"))
+    {
+        TuiRef* dataRef = tuiDataWrapper->get("data");
+        TuiRef* nonceRef = tuiDataWrapper->get("nonce");
+        TuiRef* publicKeyRef = tuiDataWrapper->get("publicKey");
+        
+        TuiTable* decryptedDataTable = nullptr;
+        
+        
+        if(dataRef->type() == Tui_ref_type_STRING &&
+           nonceRef->type() == Tui_ref_type_STRING &&
+           publicKeyRef->type() == Tui_ref_type_STRING)
+        {
+            std::string decrypted;
+            unsigned long encryptedLength = (((TuiString*)dataRef)->value).length();
+            decrypted.resize(encryptedLength - crypto_box_MACBYTES);
+            
+            if (crypto_box_open_easy((unsigned char*)&(decrypted[0]),
+                                     (unsigned char*)&((((TuiString*)dataRef)->value)[0]),
+                                     encryptedLength,
+                                     (unsigned char*)(((TuiString*)nonceRef)->value).c_str(),
+                                     (unsigned char*)(((TuiString*)publicKeyRef)->value).c_str(),
+                                     (unsigned char*)&(secretKey[0])) != 0)
+            {
+                MJError("attempt failed to decrypt in KATIPO_NET_TYPE_CLIENT_SERVER_FUNCTION_CALL_REQUEST");
+            }
+            else
+            {
+                decryptedDataTable = (TuiTable*)TuiRef::loadBinaryString(std::string((const char*)decrypted.data(), decrypted.length())); //todo memcpys
+                return decryptedDataTable;
+            }
+        }
+    }
+    
+    return nullptr;
+}
+
 void ServerNetInterface::checkEnetEvents()
 {
     ENetEvent event;
@@ -257,7 +266,9 @@ void ServerNetInterface::checkEnetEvents()
         {
             case ENET_EVENT_TYPE_CONNECT:
             {
-                MJLog("enet peer connected");
+                MJLog("initial connection established.\n");
+                
+                sendInitialHandshake(event.peer);
 
                 //enet_peer_throttle_configure(event.peer, 5000, 2, 1);
             }
@@ -285,80 +296,41 @@ void ServerNetInterface::checkEnetEvents()
                     
                     //MJLog("server receive: %d -  %zu bytes", incoming.type, incoming.length);
                     
-                    if(incoming.type == SERVER_DATA_TYPE_CLIENT_JOIN_REQUEST)
+                    if(incoming.type == KATIPO_NET_TYPE_CLIENT_JOIN_REQUEST)
                     {
                         int length = 0;
-                        TuiTable* joinRequest = (TuiTable*)TuiRef::loadBinaryString((const char*)incoming.data, &length, nullptr);
+                        TuiTable* tuiDataWrapper = (TuiTable*)TuiRef::loadBinaryString((const char*)incoming.data, &length, nullptr);
+                        TuiTable* initalData = getDecryptedDataTable(tuiDataWrapper);
                         
-                        MJLog("Got connection request:");
-                        joinRequest->debugLog();
-                        
-                        if(!joinRequest->hasKey("clientInfo"))
+                        NetServerClient* client = new NetServerClient(tuiDataWrapper->getString("publicKey"),
+                                                                      this,
+                                                                      event.peer,
+                                                                      initalData);
+                        if(initalData)
                         {
-                            MJError("joinRequest missing clientInfo");
-                            continue;
+                            initalData->release();
                         }
                         
-                        
-                        bool rejected = false;
-                        std::string rejectionReason = "unknown error";
-                        std::string rejectionContext = "";
-                        
-                        if(!rejected)
+                        if(client->valid)
                         {
-                            NetServerClient* client = new NetServerClient(joinRequest,
-                                                                          this,
-                                                                          event.peer);
+                            connectedClientsByEnetPeer[event.peer] = client;
+                            connectedClientsByClientID[client->clientID] = client;
                             
-                            if(client->valid)
-                            {
-                                connectedClientsByEnetPeer[event.peer] = client;
-                                connectedClientsByClientID[client->clientID] = client;
-                                
-                                ServerNetInterfaceOutput output;
-                                output.outputType = SERVER_NET_INTERFACE_OUTPUT_ADD_CLIENT;
-                                output.client = client;
-                                output.enetPeer = event.peer;
-                                outputQueue->push(output);
-                            }
-                            else
-                            {
-                                rejected = true;
-                                rejectionReason = "invalid_clientID";
-                                MJLog("Client rejected.");
-                            }
+                            ServerNetInterfaceOutput output;
+                            output.outputType = SERVER_NET_INTERFACE_OUTPUT_ADD_CLIENT;
+                            output.client = client;
+                            output.enetPeer = event.peer;
+                            outputQueue->push(output);
                         }
-                        
-                        if(rejected && !needsToExit)
+                        else
                         {
+                            MJLog("Client rejected.");
                             sendJoinRejectionAndDisconnect(event.peer,
-                                                           rejectionReason,
-                                                           rejectionContext);
+                                                           "invalid_clientID",
+                                                           "");
                         }
                     }
-                    else if(incoming.type == SERVER_DATA_TYPE_SERVER_DELAY_PING)
-                    {
-                        if(connectedClientsByEnetPeer.count(event.peer) != 0)
-                        {
-                            NetServerClient* client = connectedClientsByEnetPeer[event.peer];
-                            ClientPingTimer* pingTimer = &pingTimersByClientID[client->clientID];
-                            uint32_t pingIndex = 0;
-                            memcpy(&pingIndex, incoming.data, sizeof(uint32_t));
-                            if(pingTimer->timers.count(pingIndex) != 0)
-                            {
-                                Timer* timer = pingTimer->timers[pingIndex];
-                                double dt = timer->getElapsed();
-                                
-                                pingTimer->pingDelay = dt;
-                                
-                                //MJLog("got ping:%.2f", pingTimer->pingDelay)
-                                
-                                delete timer;
-                                pingTimer->timers.erase(pingIndex);
-                            }
-                        }
-                    }
-                    else if(incoming.type == SERVER_DATA_TYPE_CLIENT_SERVER_DOWNLOAD_FILE_COMPLETE_NOTIFICATION)
+                    else if(incoming.type == KATIPO_NET_TYPE_CLIENT_SERVER_DOWNLOAD_FILE_COMPLETE_NOTIFICATION)
                     {
                         if(connectedClientsByEnetPeer.count(event.peer) != 0)
                         {
@@ -367,7 +339,7 @@ void ServerNetInterface::checkEnetEvents()
                             client->inUseChannels.erase(channelIndex);
                         }
                     }
-                    else if(incoming.type == SERVER_DATA_TYPE_SERVER_DOWNLOAD_FILE_RESPONSE || incoming.type == SERVER_DATA_TYPE_SERVER_MULTIPART_DOWNLOAD_RESPONSE)
+                    else if(incoming.type == KATIPO_NET_TYPE_SERVER_MULTIPART_DOWNLOAD_RESPONSE) //todo we really need to just pass this on, don't store
                     {
                         if(connectedClientsByEnetPeer.count(event.peer) != 0)
                         {
@@ -375,58 +347,52 @@ void ServerNetInterface::checkEnetEvents()
                             bool sendToOutput = true;
                             bool sendDownloadAcknowledge = false;
                             
-                            if(incoming.type == SERVER_DATA_TYPE_SERVER_DOWNLOAD_FILE_RESPONSE)
+                            
+                            sendToOutput = false;
+                            
+                            uint32_t additionalHeaderSize = sizeof(uint8_t) + sizeof(uint32_t) + sizeof(uint32_t);
+                            
+                            uint32_t totalSize = *((uint32_t*)(((uint8_t*)incoming.data) + 1));
+                            uint32_t dataStartOffset = *((uint32_t*)(((uint8_t*)incoming.data) + 5));
+                            
+                            uint32_t recievedPayloadSize = (uint32_t)incoming.length - additionalHeaderSize;
+                            
+                            MJLog("multipart download: %d/%d", dataStartOffset + recievedPayloadSize, totalSize);
+                            
+                            if(recievedPayloadSize + dataStartOffset == totalSize)
                             {
+                                MJLog("multipart download complete");
+                                if(client->inProgressMultiPartDownloadsByChannel.count(event.channelID) == 0)
+                                {
+                                    MJError("Got unexpected final multpart download packet");
+                                    abort();
+                                }
+                                
+                                client->inProgressMultiPartDownloadsByChannel[event.channelID].append((((const char*)incoming.data) + additionalHeaderSize), recievedPayloadSize);
                                 sendDownloadAcknowledge = true;
+                                
+                                ServerNetInterfaceOutput output;
+                                
+                                output.outputType = SERVER_NET_INTERFACE_OUTPUT_DATA_RECEIEVED;
+                                
+                                output.serverData.type = *(((uint8_t*)incoming.data) + 0);
+                                
+                                output.serverData.data = malloc(totalSize);
+                                memcpy(output.serverData.data, client->inProgressMultiPartDownloadsByChannel[event.channelID].data(), client->inProgressMultiPartDownloadsByChannel[event.channelID].size());
+                                output.serverData.length = totalSize;
+                                
+                                outputQueue->push(output);
+                                client->inProgressMultiPartDownloadsByChannel.erase(event.channelID);
                             }
-                            else if(incoming.type == SERVER_DATA_TYPE_SERVER_MULTIPART_DOWNLOAD_RESPONSE)
+                            else
                             {
-                                sendToOutput = false;
-                                
-                                uint32_t additionalHeaderSize = sizeof(uint8_t) + sizeof(uint32_t) + sizeof(uint32_t);
-                                
-                                uint32_t totalSize = *((uint32_t*)(((uint8_t*)incoming.data) + 1));
-                                uint32_t dataStartOffset = *((uint32_t*)(((uint8_t*)incoming.data) + 5));
-                                
-                                uint32_t recievedPayloadSize = (uint32_t)incoming.length - additionalHeaderSize;
-                                
-                                MJLog("multipart download: %d/%d", dataStartOffset + recievedPayloadSize, totalSize);
-                                
-                                if(recievedPayloadSize + dataStartOffset == totalSize)
-                                {
-                                    MJLog("multipart download complete");
-                                    if(client->inProgressMultiPartDownloadsByChannel.count(event.channelID) == 0)
-                                    {
-                                        MJError("Got unexpected final multpart download packet");
-                                        abort();
-                                    }
-                                    
-                                    client->inProgressMultiPartDownloadsByChannel[event.channelID].append((((const char*)incoming.data) + additionalHeaderSize), recievedPayloadSize);
-                                    sendDownloadAcknowledge = true;
-                                    
-                                    ServerNetInterfaceOutput output;
-                                    
-                                    output.outputType = SERVER_NET_INTERFACE_OUTPUT_DATA_RECEIEVED;
-                                    
-                                    output.serverData.type = *(((uint8_t*)incoming.data) + 0);
-                                    
-                                    output.serverData.data = malloc(totalSize);
-                                    memcpy(output.serverData.data, client->inProgressMultiPartDownloadsByChannel[event.channelID].data(), client->inProgressMultiPartDownloadsByChannel[event.channelID].size());
-                                    output.serverData.length = totalSize;
-                                    
-                                    outputQueue->push(output);
-                                    client->inProgressMultiPartDownloadsByChannel.erase(event.channelID);
-                                }
-                                else
-                                {
-                                    client->inProgressMultiPartDownloadsByChannel[event.channelID].append((((const char*)incoming.data) + additionalHeaderSize), recievedPayloadSize);
-                                }
+                                client->inProgressMultiPartDownloadsByChannel[event.channelID].append((((const char*)incoming.data) + additionalHeaderSize), recievedPayloadSize);
                             }
                             
                             if(sendDownloadAcknowledge)
                             {
                                 uint8_t data[2] = {
-                                    SERVER_DATA_TYPE_CLIENT_SERVER_DOWNLOAD_FILE_COMPLETE_NOTIFICATION, //todo
+                                    KATIPO_NET_TYPE_CLIENT_SERVER_DOWNLOAD_FILE_COMPLETE_NOTIFICATION, //todo
                                     event.channelID
                                 };
                                 ENetPacket * packet = enet_packet_create (data,
@@ -490,15 +456,6 @@ void ServerNetInterface::checkEnetEvents()
                     connectedClientsByClientID.erase(client->clientID);
                     connectedClientsByEnetPeer.erase(peer);
                     
-                    if(pingTimersByClientID.count(client->clientID) != 0)
-                    {
-                        for(auto& timerIDAndTimer : pingTimersByClientID[client->clientID].timers)
-                        {
-                            delete timerIDAndTimer.second;
-                        }
-                        pingTimersByClientID.erase(client->clientID);
-                    }
-                    
                     ServerNetInterfaceOutput output;
                     output.outputType = SERVER_NET_INTERFACE_OUTPUT_REMOVE_CLIENT;
                     output.client = client;
@@ -546,23 +503,6 @@ void ServerNetInterface::update(double dt)
             {
                 server->clientDataReceived(output.client, output.serverData);
                 //free(output.serverData.data); //no, handled in clientDataReceived
-            }
-                break;
-            case SERVER_NET_INTERFACE_OUTPUT_GET_JOIN_INFO:
-            {
-                server->clientJoinGetInfoReceived(output.enetPeer, 0, output.serverData);
-                free(output.serverData.data);
-            }
-                break;
-            case SERVER_NET_INTERFACE_OUTPUT_PING_UPDATE:
-            {
-                double pingDelay = 0.0;
-                memcpy(&pingDelay, output.serverData.data, sizeof(double));
-                
-                //MJLog("setting final ping delay:%.2f", pingDelay)
-                
-                output.client->pingDelay = clamp(pingDelay, 0.0, 60.0);
-                free(output.serverData.data);
             }
                 break;
         }
@@ -613,7 +553,7 @@ void ServerNetInterface::sendLargeData(uint8_t type,
             uint32_t thisPacketLoadBytesToSend = min(bytesToSend, MJMaxPacketSize);
             uint32_t thisPacketTotalSize = thisPacketLoadBytesToSend + sizeof(uint8_t) + additionalHeaderSize;
             uint8_t* netData = (uint8_t*)malloc(thisPacketTotalSize);
-            netData[0] = SERVER_DATA_TYPE_SERVER_MULTIPART_DOWNLOAD_RESPONSE;
+            netData[0] = KATIPO_NET_TYPE_SERVER_MULTIPART_DOWNLOAD_RESPONSE;
             netData[1] = type;
             
             memcpy(&(netData[2]), &dataLength, sizeof(uint32_t));

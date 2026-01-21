@@ -33,6 +33,7 @@ public:
     std::string port;
     
     TuiTable* stateTable;
+    TuiTable* katipoTable;
     bool connected = false;
     bool disconnected = false; //true after a disconnect event
 
@@ -43,7 +44,11 @@ private:
     ThreadSafeQueue<ClientNetInterfaceInput>* inputQueue;
     ThreadSafeQueue<ClientNetInterfaceOutput>* outputQueue;
     
-    TuiTable* clientInfo;
+    std::string publicKey;
+    std::string secretKey;
+    std::string trackerPublicKey;
+    
+    TuiTable* initialData = nullptr;
     
     uint32_t functionCallbackIDCounter = 0;
     std::map<uint32_t, TuiFunction*> callbacksByID;
@@ -56,25 +61,28 @@ private:
     
     bool needsToExit = false;
     
-    std::map<std::string, TuiFunction*> registeredFunctions;
+    //std::map<std::string, TuiFunction*> registeredFunctions;
     
 public:
     ClientNetInterface(std::string host_,
                        std::string port_,
-                       TuiTable* clientInfo_);
+                       const std::string& publicKey_,
+                       const std::string& secretKey_,
+                       TuiTable* initialData_ = nullptr);
     ~ClientNetInterface();
     
     void connect();
     void disconnect();
     
-    void callServerFunction(std::string functionName, TuiTable* args, TuiFunction* callback);
+    void callTrackerFunction(TuiTable* args);  //function name is assumed first arg, callback is last
+    void callRemoteHostFunction(std::string hostPublicKey, TuiTable* args); //function name is assumed first arg, callback is last
     
-    TuiTable* bindTui(TuiTable* rootTable);
+    TuiTable* bindTui(TuiTable* katipoTable);
     
     void pollNetEvents();
     
     void sendData(uint8_t type, const void * data = NULL, size_t dataLength = 0, bool reliable = true);
-    void sendLargeData(uint8_t type, const void * data, size_t dataLength = 0, bool reliable = true);
+    //void sendLargeData(uint8_t type, const void * data, size_t dataLength = 0, bool reliable = true);
     
 protected:
     
@@ -86,6 +94,15 @@ private:
                                const void * data,
                                size_t dataLength,
                                uint8_t channel);
+    
+    
+    TuiTable* getTrackerEncryptedDataTable(TuiTable* dataToSecure);
+    TuiTable* getHostOrClientEncryptedDataTable(std::string hostPublicKey, TuiTable* dataToSecure);
+    
+    TuiTable* getDecryptedDataTable(TuiTable* tuiDataWrapper);
+    
+    
+    void processGetRequest(TuiTable* tuiData);
     
 };
 

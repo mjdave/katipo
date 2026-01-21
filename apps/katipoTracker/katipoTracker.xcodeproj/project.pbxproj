@@ -17,6 +17,7 @@
 		5B0588AC2F0302C900557B42 /* host.c in Sources */ = {isa = PBXBuildFile; fileRef = 5B05889F2F0302C900557B42 /* host.c */; };
 		5B7AB2622E283E97009E04C8 /* Controller.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B7AB2612E283E97009E04C8 /* Controller.cpp */; };
 		5B7AB2642E28E5E7009E04C8 /* scripts in CopyFiles */ = {isa = PBXBuildFile; fileRef = 5B7AB2632E28E5E7009E04C8 /* scripts */; };
+		5B9E6DDA2F1843C1005E3DB5 /* libsodium.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5B9E6DD92F1843C1005E3DB5 /* libsodium.a */; };
 		5BC3702C2F045C4800F7B074 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5BC3702B2F045C4800F7B074 /* main.cpp */; };
 /* End PBXBuildFile section */
 
@@ -43,9 +44,10 @@
 		5B0588A32F0302C900557B42 /* protocol.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = protocol.c; path = "../../thirdParty/enet-1.3.18/protocol.c"; sourceTree = SOURCE_ROOT; };
 		5B0588A42F0302C900557B42 /* unix.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = unix.c; path = "../../thirdParty/enet-1.3.18/unix.c"; sourceTree = SOURCE_ROOT; };
 		5B7AB19B2E283C0B009E04C8 /* katipoTracker */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = katipoTracker; sourceTree = BUILT_PRODUCTS_DIR; };
-		5B7AB2602E283E97009E04C8 /* Controller.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Controller.h; path = ../../apps/katipoTracker/Controller.h; sourceTree = SOURCE_ROOT; };
+		5B7AB2602E283E97009E04C8 /* Controller.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Controller.h; sourceTree = SOURCE_ROOT; };
 		5B7AB2612E283E97009E04C8 /* Controller.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = Controller.cpp; path = ../../apps/katipoTracker/Controller.cpp; sourceTree = SOURCE_ROOT; };
 		5B7AB2632E28E5E7009E04C8 /* scripts */ = {isa = PBXFileReference; lastKnownFileType = folder; name = scripts; path = ../../apps/katipoTracker/scripts; sourceTree = "<group>"; };
+		5B9E6DD92F1843C1005E3DB5 /* libsodium.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libsodium.a; path = ../../thirdParty/libsodium/macos/lib/libsodium.a; sourceTree = "<group>"; };
 		5BC3702B2F045C4800F7B074 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -85,6 +87,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				5B9E6DDA2F1843C1005E3DB5 /* libsodium.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -95,8 +98,8 @@
 			isa = PBXGroup;
 			children = (
 				5B7AB2632E28E5E7009E04C8 /* scripts */,
-				5B7AB2602E283E97009E04C8 /* Controller.h */,
 				5BC3702B2F045C4800F7B074 /* main.cpp */,
+				5B7AB2602E283E97009E04C8 /* Controller.h */,
 				5B7AB2612E283E97009E04C8 /* Controller.cpp */,
 				5B7AB19C2E283C0B009E04C8 /* Products */,
 				5B7AB1B72E283C88009E04C8 /* source */,
@@ -109,6 +112,7 @@
 				5B0588A22F0302C900557B42 /* peer.c */,
 				5B0588A32F0302C900557B42 /* protocol.c */,
 				5B0588A42F0302C900557B42 /* unix.c */,
+				5B9E6DD82F1843C1005E3DB5 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -118,6 +122,14 @@
 				5B7AB19B2E283C0B009E04C8 /* katipoTracker */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		5B9E6DD82F1843C1005E3DB5 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				5B9E6DD92F1843C1005E3DB5 /* libsodium.a */,
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -323,11 +335,14 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 9Q78V5BF2N;
 				ENABLE_HARDENED_RUNTIME = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = NO;
+				LIBRARY_SEARCH_PATHS = "\"$(SRCROOT)/../../thirdParty/libsodium/macos/lib\"";
 				MACOSX_DEPLOYMENT_TARGET = 11.5;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				USER_HEADER_SEARCH_PATHS = (
 					"\"$(SRCROOT)/../../thirdParty/tui/thirdParty/glm/glm\"",
 					"\"$(SRCROOT)/../../thirdParty/enet-1.3.18/include\"",
+					"\"$(SRCROOT)/../../thirdParty/libsodium/macos/include\"",
 				);
 			};
 			name = Debug;
@@ -338,11 +353,14 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 9Q78V5BF2N;
 				ENABLE_HARDENED_RUNTIME = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = NO;
+				LIBRARY_SEARCH_PATHS = "\"$(SRCROOT)/../../thirdParty/libsodium/macos/lib\"";
 				MACOSX_DEPLOYMENT_TARGET = 11.5;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				USER_HEADER_SEARCH_PATHS = (
 					"\"$(SRCROOT)/../../thirdParty/tui/thirdParty/glm/glm\"",
 					"\"$(SRCROOT)/../../thirdParty/enet-1.3.18/include\"",
+					"\"$(SRCROOT)/../../thirdParty/libsodium/macos/include\"",
 				);
 			};
 			name = Release;

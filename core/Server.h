@@ -22,13 +22,27 @@ public:
     //Database* serverDatabase;
     
     std::map<std::string, NetServerClient*> clients;
+    std::map<std::string, std::string> clientsByHostRequestIDs;
 
 	std::string hostName;
     
 	bool running = false;
+    
+    Server* hostServer = nullptr;
+    Server* clientServer = nullptr;
+    
+private:
+    
+    std::string publicKey;
+    std::string secretKey;
 
 public:
-    Server(std::string hostName_ = "localhost", std::string port_ = "7121", int maxConnections_ = 16, TuiTable* rootTable = nullptr);
+    Server(const std::string& publicKey_,
+           const std::string& secretKey_,
+           std::string hostName_ = "localhost",
+           std::string port_ = "7121",
+           int maxConnections_ = 16,
+           TuiTable* rootTable = nullptr);
     ~Server();
     
 	void stop();
@@ -38,7 +52,6 @@ public:
     
     void addClient(NetServerClient* client);
     void removeClient(std::string clientID);
-    void clientJoinGetInfoReceived(ENetPeer* enetPeer, uint32_t steamConnectionHandle, const ServerData& serverData);
     void clientDataReceived(NetServerClient* client, const ServerData& data);
     void sendDataToAllClients(uint8_t type,
                               std::string& serializedData,
@@ -46,7 +59,9 @@ public:
     void sendDataToClient(NetServerClient* client,
                            uint8_t type,
                            std::string& serializedData,
-                          bool reliable);
+                          bool reliable = true);
+    
+    void relayHostResponseToClient(TuiTable* decryptedDataTable);
     
     void sendHeartbeatToClients(bool reliable);
     
