@@ -14,13 +14,9 @@
 # Linker files
 *.ilk
 
-# Debugger Files
-*.pdb
-
 # Compiled Dynamic libraries
 *.so
 *.dylib
-*.dll
 
 # Fortran module files
 *.mod
@@ -29,7 +25,6 @@
 # Compiled Static libraries
 *.lai
 *.la
-*.lib
 
 # Executables
 *.exe
