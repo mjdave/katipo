@@ -72,6 +72,12 @@ include_directories(
 )
 
 add_executable(katipoHost ${SOURCES})
+
+if(APPLE)
+    include_directories(../../thirdParty/libsodium/macos/include)
+    target_link_libraries(katipoHost ${CMAKE_SOURCE_DIR}/../../thirdParty/libsodium/macos/lib/libsodium.a)
+endif()
+
 target_link_libraries(katipoHost Threads::Threads)
 
 set (CMAKE_CXX_LINK_EXECUTABLE "${CMAKE_CXX_LINK_EXECUTABLE} -ldl")

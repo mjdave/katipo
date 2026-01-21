@@ -194,7 +194,7 @@ void Controller::init(int argc, const char * argv[])
                     std::string publicKey = "";
                     std::string secretKey = "";
                     
-                    std::string clientKeyPath = "clientKey.tui"; //todo these should be saved in the database, not files
+                    std::string clientKeyPath = "client_privateKey.tui"; //todo these should be saved in the database, not files
                     
                     if(Tui::fileExistsAtPath(clientKeyPath))
                     {

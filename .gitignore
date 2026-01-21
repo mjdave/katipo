@@ -67,3 +67,5 @@ apps/katipoHost/katipoHost
 apps/katipoHost/x64
 apps/katipoClient/katipoClient
 apps/katipoClient/x64
+
+*_privateKey.tui
