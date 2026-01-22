@@ -5,6 +5,7 @@
 #include "enet/enet.h"
 #include <inttypes.h>
 #include "string.h"
+#define SODIUM_STATIC
 
 #include "MJLog.h"
 
