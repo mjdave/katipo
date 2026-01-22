@@ -11,9 +11,9 @@ Katipo replaces the transport and application layers in the standard IP model. I
 
 The katipo transport layer is based on UDP, and uses enet, with only IPv4 support (for now).
 
-The katipo application layer uses the tui interpreted programming language. Configuration and code are mostly done in tui, with the option of using C++ or interfacing with any other language. Tui configuration files are very similar to json, and tui code is similar to lua.
+The katipo application layer uses the tui interpreted programming language. Configuration and code are mostly written in tui, with the option of using C++ or interfacing with any other language. Tui configuration files are very similar to json, and tui code is similar to lua.
 
-All data is encrypted between the client and the host, as well as between the client and the tracker, and the tracker and the host. 
+All data is encrypted between the client and the host, as well as between the client and the tracker, and the tracker and the host. Data never travels between hosts and clients directly, but always via at least one tracker, which acts like a proxy. 
 
 Trackers cannot view or modify the data between hosts and clients, and hosts cannot derive the identity of any clients, without their permission.
 
