@@ -76,6 +76,12 @@ add_executable(katipoHost ${SOURCES})
 if(APPLE)
     include_directories(../../thirdParty/libsodium/macos/include)
     target_link_libraries(katipoHost ${CMAKE_SOURCE_DIR}/../../thirdParty/libsodium/macos/lib/libsodium.a)
+elseif(WIN32)
+    include_directories(../../thirdParty/libsodium/windows/include)
+    #target_link_libraries(katipoHost ${CMAKE_SOURCE_DIR}/../../thirdParty/libsodium/windows/lib/libsodium.a) #hmm
+else()
+    include_directories(../../thirdParty/libsodium/linux/include)
+    target_link_libraries(katipoHost ${CMAKE_SOURCE_DIR}/../../thirdParty/libsodium/linux/lib/libsodium.a)
 endif()
 
 target_link_libraries(katipoHost Threads::Threads)
