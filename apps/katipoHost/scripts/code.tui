@@ -128,51 +128,16 @@ katipo.get = function(url, clientData)
 {
     print("in top level get. url:", url, " clientData:", clientData)
     return siteCode.get(url, clientData)
-    /*print("in get. url:", url, " clientData:", clientData)
-    urlSplit = string.split(url, "/")
-
-    if(table.count(urlSplit) <= 1)
-    {
-        return {
-            status = "ok"
-            pageTitle = "Katipo Example Host" # optional, existance tells browser this is a basic text document
-            pageBody = "This is a very basic example server, that serves this message to be displayed in the browser with a title"
-        }
-    }
-    else
-    {
-        fileName = urlSplit[1]
-        print("fileName requested:", fileName)
-        #todo check request is within sandbox, eg. not "../../secretFiles.txt"
-        fullPath = katipo.basePath + "exampleData/" + fileName
-        print("fullPath:", fullPath)
-        if(file.fileExists(fullPath))
-        {
-            print("file exists. sending...")
-            return {
-                status = "ok"
-                fileName = fileName
-                filePath = fullPath
-            }
-        }
-
-        return {
-            status = "error"
-            fileName = fileName
-            message = "file not found:" + fileName
-        }
-    }
-
-    return {
-        status = "error"
-        message = "unhandled url:" + url
-    }*/
 }
 
 print("Welcome to katipo.
 Attempting to connect to tracker, type 'quit' to cancel and exit, 'help' for more commands.")
 
-
+if(siteCode.runLoop)
+{
+    siteCode.runLoop()
+    return
+}
 
 while(true)
 {

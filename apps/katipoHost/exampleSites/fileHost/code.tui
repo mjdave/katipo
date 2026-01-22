@@ -1,5 +1,3 @@
-### this function is called when clients query this site
-
 publicFileDirectoryPath = file.getAbsolutePath(katipo.sitePath + "/exampleFiles")
 
 if(!file.fileExists(publicFileDirectoryPath))
@@ -7,7 +5,8 @@ if(!file.fileExists(publicFileDirectoryPath))
     error("directory doesn't exist:", publicFileDirectoryPath)
 }
 
-site.get = function(url, clientData)
+### this function is called when clients query this site
+get = function(url, clientData)
 {
     print("in get. url:", url, " clientData:", clientData)
     urlSplit = string.split(url, "/")

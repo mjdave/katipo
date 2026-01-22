@@ -1,5 +1,5 @@
 ### this function is called when clients query this site
-site.get = function(url, clientData)
+get = function(url, clientData)
 {
     print("in get. url:", url, " clientData:", clientData)
     urlSplit = string.split(url, "/")
