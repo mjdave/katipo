@@ -5,6 +5,28 @@ The Katipō is an endangered venomous spider from New Zealand. The name seems a 
 
 ![Katipo browser for iOS icon](https://github.com/mjdave/katipo/blob/main/katipoBrowser-iOS128.png)
 
+Katipo replaces the transport and application layers in the standard IP model. It uses a tracker based system to provide networking between clients and hosts that can both be behind firewalls, without the need to open any ports.
+
+![Katipo network diagram](https://github.com/mjdave/katipo/blob/main/katipoBasicNetwork.png)
+
+The katipo transport layer is based on UDP, and uses enet, with only IPv4 support (for now).
+
+The katipo application layer uses the tui interpreted programming language. Configuration and code are mostly done in tui, with the option of using C++ or interfacing with any other language. Tui configuration files are very similar to json, and tui code is similar to lua.
+
+All data is encrypted between the client and the host, as well as between the client and the tracker, and the tracker and the host. 
+
+Trackers cannot view or modify the data between hosts and clients, and hosts cannot derive the identity of any clients, without their permission.
+
+Katipo is designed to give people total control of all of their data, and tracker-based features like backups and in/outboxes are planned.
+
+# Current status
+
+This is currently a blueprint. It is bare bones, with a few missing parts and some of the components don't quite fit. But it is functional, it's good enough for a few things already, and over time it will be good enough for more.
+
+End to end encryption has just been added with libsodium, and the source repository has a couple of working examples, a fileServer and a basic example that returns a data table.
+
+All 3 apps have been compiled and tested on macos 26, Windows 11, and Ubuntu running under WSL.
+
 # How to install and run
 
 Katipo requires the tui submodule, which itself requires the glm submodule. To fetch these, after checking out this repository you can simply run in the root katipo directory:
@@ -69,7 +91,7 @@ How this works is that when you host, you give it the address of a tracker serve
 
 For now, this repository only contains the core proof of concept networking library and command line apps. I have started working on a full Katipo browser client with a Vulkan based renderer, and I plan to release this too in the future. This will allow the sharing of apps, games, music and images, and will feature a built in tui editor and the ability to host.
 
-PLEASE NOTE! Currently there is no encryption or Tui sandboxing. This will be worked on soon, but for now, you should not use Katipo to transmit sensitive data or to connect to trackers or hosts that you do not trust.
+PLEASE NOTE! Encryption has only just been implemented. For now, you should not use Katipo to transmit sensitive data or to connect to trackers or hosts that you do not trust.
 
 Katipo is written in c++ and tui. Tui is a simple scripting language and serialization library which replaces html, javascript, css, and json in the Katipo stack. Katipo uses enet for low level networking over UDP. This is not necessarily always going to be the case, but it is a good fit for now.
 
