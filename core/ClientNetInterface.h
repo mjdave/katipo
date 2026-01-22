@@ -44,8 +44,12 @@ private:
     ThreadSafeQueue<ClientNetInterfaceInput>* inputQueue;
     ThreadSafeQueue<ClientNetInterfaceOutput>* outputQueue;
     
-    std::string publicKey;
-    std::string secretKey;
+    std::string savedPermanentPublicKey;
+    std::string savedPermanentSecretKey;
+    
+    std::string sessionTransientPublicKey;
+    std::string sessionTransientSecretKey;
+    
     std::string trackerPublicKey;
     
     TuiTable* initialData = nullptr;
@@ -66,8 +70,8 @@ private:
 public:
     ClientNetInterface(std::string host_,
                        std::string port_,
-                       const std::string& publicKey_,
-                       const std::string& secretKey_,
+                       const std::string& savedPermanentPublicKey_,
+                       const std::string& savedPermanentSecretKey_,
                        TuiTable* initialData_ = nullptr);
     ~ClientNetInterface();
     
@@ -99,7 +103,7 @@ private:
     TuiTable* getTrackerEncryptedDataTable(TuiTable* dataToSecure);
     TuiTable* getHostOrClientEncryptedDataTable(std::string hostPublicKey, TuiTable* dataToSecure);
     
-    TuiTable* getDecryptedDataTable(TuiTable* tuiDataWrapper);
+    TuiTable* getDecryptedDataTable(TuiTable* tuiDataWrapper, bool useTransientSessionKey);
     
     
     void processGetRequest(TuiTable* tuiData);

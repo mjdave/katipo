@@ -6,14 +6,14 @@
 
 ClientNetInterface::ClientNetInterface(std::string host_,
                                        std::string port_,
-                                       const std::string& publicKey_,
-                                       const std::string& secretKey_,
+                                       const std::string& savedPermanentPublicKey_,
+                                       const std::string& savedPermanentSecretKey_,
                                        TuiTable* initialData_)
 {
     host = host_;
     port = port_;
-    publicKey = publicKey_;
-    secretKey = secretKey_;
+    savedPermanentPublicKey = savedPermanentPublicKey_;
+    savedPermanentSecretKey = savedPermanentSecretKey_;
     initialData = initialData_;
     if(initialData)
     {
@@ -22,6 +22,11 @@ ClientNetInterface::ClientNetInterface(std::string host_,
     
     inputQueue = new ThreadSafeQueue<ClientNetInterfaceInput>();
     outputQueue = new ThreadSafeQueue<ClientNetInterfaceOutput>();
+    
+    //todo this key pair is not used on the host, doesn't need to be generated there
+    sessionTransientPublicKey.resize(crypto_box_PUBLICKEYBYTES);
+    sessionTransientSecretKey.resize(crypto_box_SECRETKEYBYTES);
+    crypto_box_keypair((unsigned char*)&(sessionTransientPublicKey[0]), (unsigned char*)&(sessionTransientSecretKey[0]));
     
     connect();
 }
@@ -147,7 +152,7 @@ TuiTable* ClientNetInterface::getTrackerEncryptedDataTable(TuiTable* dataToSecur
     if (crypto_box_easy((unsigned char*)&(cipherText[0]),
                         (unsigned char*)&(dataToSecureSerialized[0]),
                         dataToSecureSerialized.length(), (unsigned char*)nonce.c_str(),
-                        (unsigned char*)trackerPublicKey.c_str(), (unsigned char*)secretKey.c_str()) != 0)
+                        (unsigned char*)trackerPublicKey.c_str(), (unsigned char*)savedPermanentSecretKey.c_str()) != 0)
     {
         return nullptr;
     }
@@ -155,7 +160,7 @@ TuiTable* ClientNetInterface::getTrackerEncryptedDataTable(TuiTable* dataToSecur
     TuiTable* sendTable = new TuiTable(nullptr);
     
     sendTable->setString("nonce", nonce);
-    sendTable->setString("publicKey", publicKey);
+    sendTable->setString("publicKey", savedPermanentPublicKey);
     sendTable->setString("data", cipherText);
     
     return sendTable;
@@ -175,7 +180,7 @@ TuiTable* ClientNetInterface::getHostOrClientEncryptedDataTable(std::string host
     if (crypto_box_easy((unsigned char*)&(cipherText[0]),
                         (unsigned char*)&(dataToSecureSerialized[0]),
                         dataToSecureSerialized.length(), (unsigned char*)nonce.c_str(),
-                        (unsigned char*)hostOrClientPublicKey.c_str(), (unsigned char*)secretKey.c_str()) != 0)
+                        (unsigned char*)hostOrClientPublicKey.c_str(), (unsigned char*)sessionTransientSecretKey.c_str()) != 0)
     {
         return nullptr;
     }
@@ -183,7 +188,7 @@ TuiTable* ClientNetInterface::getHostOrClientEncryptedDataTable(std::string host
     TuiTable* sendTable = new TuiTable(nullptr);
     
     sendTable->setString("nonce", nonce);
-    sendTable->setString("publicKey", publicKey);
+    sendTable->setString("publicKey", sessionTransientPublicKey);
     sendTable->setString("data", cipherText);
     
     return sendTable;
@@ -275,7 +280,6 @@ void ClientNetInterface::callRemoteHostFunction(std::string hostPublicKey, TuiTa
     }
     
     //encrypt the args with the host key, so only the host can decrypt
-    //TODO IMPORTANT! We must generate a new key pair here every session for the client, so that the host can't use our public key, embeded in this call to getHostOrClientEncryptedDataTable to identify and track us between sessions.
     TuiTable* hostSendTable = getHostOrClientEncryptedDataTable(hostPublicKey, hostDataToSecureTable);
     hostDataToSecureTable->release();
     
@@ -731,7 +735,7 @@ void ClientNetInterface::checkEnetEvents()
 }
 
 
-TuiTable* ClientNetInterface::getDecryptedDataTable(TuiTable* tuiDataWrapper)
+TuiTable* ClientNetInterface::getDecryptedDataTable(TuiTable* tuiDataWrapper, bool useTransientSessionKey)
 {
     if(tuiDataWrapper && tuiDataWrapper->hasKey("nonce") && tuiDataWrapper->hasKey("data") && tuiDataWrapper->hasKey("publicKey"))
     {
@@ -754,7 +758,7 @@ TuiTable* ClientNetInterface::getDecryptedDataTable(TuiTable* tuiDataWrapper)
                                      encryptedLength,
                                      (unsigned char*)(((TuiString*)nonceRef)->value).c_str(),
                                      (unsigned char*)(((TuiString*)publicKeyRef)->value).c_str(),
-                                     (unsigned char*)&(secretKey[0])) != 0)
+                                     (unsigned char*)&((useTransientSessionKey ? sessionTransientSecretKey : savedPermanentSecretKey)[0])) != 0)
             {
                 MJError("attempt failed to decrypt in ClientNetInterface::getDecryptedDataTable");
             }
@@ -779,7 +783,7 @@ void ClientNetInterface::processGetRequest(TuiTable* trackerData) //we are on a 
     
     int length = 0;
     TuiTable* tuiDataWrapper = (TuiTable*)TuiRef::loadBinaryString((const char*)((TuiString*)trackerData->objectsByStringKey["data"])->value.c_str(), &length, nullptr);
-    TuiTable* clientData = getDecryptedDataTable(tuiDataWrapper);
+    TuiTable* clientData = getDecryptedDataTable(tuiDataWrapper, false); //use our permanent key, as that is what is provided by the tracker and what the client uses to encrypt this
     std::string clientPublicKey = tuiDataWrapper->getString("publicKey");
     tuiDataWrapper->release();
     
@@ -967,7 +971,7 @@ void ClientNetInterface::pollNetEvents()
                     {
                         int length = 0;
                         TuiTable* tuiDataWrapper = (TuiTable*)TuiRef::loadBinaryString((const char*)output.serverData.data, &length, nullptr);
-                        TuiTable* tuiData = getDecryptedDataTable(tuiDataWrapper);
+                        TuiTable* tuiData = getDecryptedDataTable(tuiDataWrapper, false);
                         tuiDataWrapper->release();
                         
                         uint32_t callbackID = ((TuiNumber*)tuiData->objectsByStringKey["callbackID"])->value;
@@ -983,7 +987,7 @@ void ClientNetInterface::pollNetEvents()
                     {
                         int length = 0;
                         TuiTable* trackerDataWrapper = (TuiTable*)TuiRef::loadBinaryString((const char*)output.serverData.data, &length, nullptr);
-                        TuiTable* trackerData = getDecryptedDataTable(trackerDataWrapper);
+                        TuiTable* trackerData = getDecryptedDataTable(trackerDataWrapper, false);
                         trackerDataWrapper->release();
                         
                         if(trackerData)
@@ -997,7 +1001,7 @@ void ClientNetInterface::pollNetEvents()
                                 }
                                 else
                                 {
-                                    TuiTable* hostData = getDecryptedDataTable((TuiTable*)hostEncryptedData);
+                                    TuiTable* hostData = getDecryptedDataTable((TuiTable*)hostEncryptedData, true);
                                     
                                     if(hostData->hasKey("callbackID"))
                                     {
@@ -1025,23 +1029,11 @@ void ClientNetInterface::pollNetEvents()
                         
                     }
                         break;
-                    /*case KATIPO_NET_TYPE_SERVER_DOWNLOAD_FILE_RESPONSE:
-                    {
-                        TuiTable* tuiData = (TuiTable*)TuiRef::loadBinaryString(std::string((const char*)output.serverData.data, output.serverData.length)); //todo memcpys
-                        uint32_t callbackID = ((TuiNumber*)tuiData->objectsByStringKey["callbackID"])->value;
-                        if(callbacksByID.count(callbackID) != 0)
-                        {
-                            //MJLog("calling func in KATIPO_NET_TYPE_SERVER_DOWNLOAD_FILE_RESPONSE");
-                            callbacksByID[callbackID]->call("SERVER_DOWNLOAD_FILE_RESPONSE", tuiData); //releases tuiData
-                        }
-                        
-                    }
-                        break;*/
                     case KATIPO_NET_TYPE_REMOTE_HOST_REQUEST: //we must be a host /todo if we are a client we shouldn't listen for this
                     {
                         int length = 0;
                         TuiTable* tuiDataWrapper = (TuiTable*)TuiRef::loadBinaryString((const char*)output.serverData.data, &length, nullptr);
-                        TuiTable* tuiData = getDecryptedDataTable(tuiDataWrapper);
+                        TuiTable* tuiData = getDecryptedDataTable(tuiDataWrapper, false);
                         tuiDataWrapper->release();
                         processGetRequest(tuiData);
                         tuiData->release();
