@@ -54,11 +54,15 @@
       <CommandLineArguments>
          <CommandLineArgument
             argument = "--site exampleSites/basicSite"
+            isEnabled = "YES">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "--site exampleSites/scraperBot"
             isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
             argument = "--site exampleSites/fileHost"
-            isEnabled = "YES">
+            isEnabled = "NO">
          </CommandLineArgument>
       </CommandLineArguments>
    </LaunchAction>

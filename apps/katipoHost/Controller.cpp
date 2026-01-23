@@ -5,12 +5,17 @@
 #include <windows.h>
 #endif
 
+
 #include "Controller.h"
 #include "MJVersion.h"
 #include "Timer.h"
 #include "ClientNetInterface.h"
 #include "TuiFileUtils.h"
 #include "sodium.h"
+
+#if COMPILE_WITH_HTTP_INTERFACE
+#include "ClientHttpInterface.h"
+#endif
 
 //#define TRACKER_IP "127.0.0.1"
 //#define TRACKER_PORT "3470"
@@ -27,6 +32,11 @@ void Controller::init(int argc, const char * argv[])
     katipoTable = new TuiTable(rootTable);
     rootTable->set("katipo", katipoTable);
     katipoTable->release();
+    
+#if COMPILE_WITH_HTTP_INTERFACE
+    httpInterface = new ClientHttpInterface();
+    httpInterface->bindTui(rootTable);
+#endif
     
     for(int i = 1; i < argc; i++)
     {
@@ -113,6 +123,7 @@ void Controller::init(int argc, const char * argv[])
         return nullptr;
     });
     
+    
     scriptState = (TuiTable*)TuiRef::runScriptFile(Tui::pathByAppendingPathComponent(basePath,"scripts/code.tui"), rootTable);
 }
 
@@ -130,6 +141,9 @@ void Controller::serverEventLoop()
         //double dt = std::clamp(deltaTimer->getDt(), 0.0, 4.0);
         
         trackerNetInterface->pollNetEvents();
+#if COMPILE_WITH_HTTP_INTERFACE
+        httpInterface->update();
+#endif
         
         if(needsToExit)
         {

@@ -10,6 +10,8 @@
 #include <string>
 #include <functional>
 
+class TuiTable;
+
 struct ClientHttpInterfaceThreadInput {
     std::string remoteFile;
     std::function<void(const std::string& result)> callbackFunc;
@@ -23,9 +25,6 @@ struct ClientHttpInterfaceThreadOutput {
 };
 
 class ClientHttpInterface {
-
-	std::string host;
-	int port;
     
 private:
     
@@ -38,19 +37,19 @@ private:
 	//uint8_t* readBuffer;
     
 public:
-	ClientHttpInterface(std::string host_,
-                       int port_);
+	ClientHttpInterface();
     ~ClientHttpInterface();
     
+    void bindTui(TuiTable* rootTable); //adds an http.get function
     void update(); //must be called periodically to process events
 
-    void get(std::string remoteFile, std::function<void(const std::string& result)> callback = nullptr);
-	void downloadFile(std::string remoteFile, std::string localPath, std::function<void(bool success)> callback = nullptr); //WARNING! not implemented
+    void get(std::string remoteURL, std::function<void(const std::string& result)> callback = nullptr);
+	//void downloadFile(std::string remoteFile, std::string localPath, std::function<void(bool success)> callback = nullptr); //WARNING! not implemented
     
 private:
     
     void updateThread();
-    std::string getDataInternal(std::string remoteFile);
+    std::string getDataInternal(std::string remoteURL);
 };
 
 

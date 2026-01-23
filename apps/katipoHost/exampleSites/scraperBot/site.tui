@@ -1,0 +1,12 @@
+### this is a basic configuration file, which is sent to the tracker to advertise this site
+
+nameKey = "scraperBot" #used to uniquely identify this site
+title = "Scraper Bot Example" #displayed name
+keywords = { "example", "site", "scraper" } #used for search
+description = "This example downloads the same remote images every 10 minutes, and makes them available for clients to download. It could be useful for downloading the most up to date webcam image for example." #used for search and more info
+author = "anonymous" #used for search and more info
+
+#image =
+#link =
+#httpLink = 
+

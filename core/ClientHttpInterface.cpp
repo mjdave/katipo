@@ -6,23 +6,19 @@
 #include "curl/curl.h"
 #include <string>
 #include "MJLog.h"
+#include "TuiScript.h"
 
 size_t writeFunction(void* ptr, size_t size, size_t nmemb, std::string* data) {
     data->append((char*)ptr, size * nmemb);
     return size * nmemb;
 }
 
-ClientHttpInterface::ClientHttpInterface(std::string host_,
-                                       int port_)
+ClientHttpInterface::ClientHttpInterface()
 {
-	host = host_;
-	port = port_;
-    
     inputQueue = new ThreadSafeQueue<ClientHttpInterfaceThreadInput>();
     outputQueue = new ThreadSafeQueue<ClientHttpInterfaceThreadOutput>();
     
     _thread = new std::thread(&ClientHttpInterface::updateThread, this);
-    
 }
 
 ClientHttpInterface::~ClientHttpInterface()
@@ -37,6 +33,34 @@ ClientHttpInterface::~ClientHttpInterface()
     
     delete inputQueue;
     delete outputQueue;
+    
+}
+
+void ClientHttpInterface::bindTui(TuiTable* rootTable) //adds an http.get function
+{
+    //http.get(url)
+    TuiTable* httpTable = new TuiTable(rootTable);
+    rootTable->set("http", httpTable);
+    httpTable->release();
+    
+    httpTable->setFunction("get", [this](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+        
+        if(args && args->arrayObjects.size() > 1 && args->arrayObjects[0]->type() == Tui_ref_type_STRING && args->arrayObjects[1]->type() == Tui_ref_type_FUNCTION)
+        {
+            TuiFunction* callbackFunc = (TuiFunction*)(args->arrayObjects[1]->retain());
+            get(((TuiString*)args->arrayObjects[0])->value, [callbackFunc](const std::string& result){
+                TuiString* reponseData = new TuiString(result);
+                callbackFunc->call("http.get response", reponseData); //reponseData is released in call()
+                callbackFunc->release();
+            });
+        }
+        else
+        {
+            TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "http.get expected url and callback function");
+        }
+        
+        return TUI_NIL;
+    });
     
 }
 
@@ -72,17 +96,24 @@ void ClientHttpInterface::updateThread()
 }
 
 
-std::string ClientHttpInterface::getDataInternal(std::string remoteFile)
+std::string ClientHttpInterface::getDataInternal(std::string remoteURL)
 {
     int retryCount = 0;
     bool success = false;
     std::string response_string;
     
-    while(!success && retryCount < 4)
+    int port = 80;
+    
+    if(remoteURL.find("https://") == 0)
+    {
+        port = 443;
+    }
+    
+    while(!success && retryCount < 1)
     {
         auto curl = curl_easy_init();
         if (curl) {
-            curl_easy_setopt(curl, CURLOPT_URL, (host + "/" + remoteFile).c_str());
+            curl_easy_setopt(curl, CURLOPT_URL, remoteURL.c_str());
             curl_easy_setopt(curl, CURLOPT_PORT, port);
             curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 1L);
             curl_easy_setopt(curl, CURLOPT_MAXREDIRS, 50L);
@@ -93,16 +124,17 @@ std::string ClientHttpInterface::getDataInternal(std::string remoteFile)
             errbuf[0] = 0;
             curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, errbuf);
             
-            std::string header_string;
+            //std::string header_string;
             curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, writeFunction);
             curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response_string);
-            curl_easy_setopt(curl, CURLOPT_HEADERDATA, &header_string);
+            //curl_easy_setopt(curl, CURLOPT_HEADERDATA, &header_string);
             
             CURLcode res = curl_easy_perform(curl);
             
             if(res != CURLE_OK)
             {
                 MJLog("curl failed with code:%d error:%s", res, errbuf);
+                response_string = "";
             }
             else
             {
@@ -144,10 +176,10 @@ void ClientHttpInterface::get(std::string remoteFile, std::function<void(const s
     inputQueue->push(input);
 }
 
-void ClientHttpInterface::downloadFile(std::string remoteFile, std::string localPath, std::function<void(bool success)> callback)
+/*void ClientHttpInterface::downloadFile(std::string remoteFile, std::string localPath, std::function<void(bool success)> callback)
 {
     MJError("unimplimented");
-	/*bool success = false;
+	bool success = false;
 	char errorBuffer[512];
 	struct mg_connection* conn = mg_download(host.c_str(), atoi(port.c_str()), 0, &errorBuffer[0], 512, "GET /%s HTTP/1.0\r\n \r\n\r\n", remoteFile.c_str() );
 	if(conn)
@@ -197,6 +229,6 @@ void ClientHttpInterface::downloadFile(std::string remoteFile, std::string local
 		mg_close_connection(conn);
 	}
 
-	return success;*/
+	return success;
     
-}
+}*/

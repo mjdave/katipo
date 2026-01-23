@@ -4,6 +4,8 @@ project(katipoHost VERSION 0.1)
 
 set(CMAKE_BUILD_TYPE RelWithDebInfo)
 
+#set(KATIPO_COMPILE_WITH_HTTP_INTERFACE TRUE) #allows hosts to send http get requests, but requires curl. Also needs to be defined in katipoHost/Controller.h
+
 IF(APPLE)
     set(CMAKE_THREAD_LIBS_INIT "-lpthread")
     set(CMAKE_HAVE_THREADS_LIBRARY 1)
@@ -12,14 +14,11 @@ IF(APPLE)
     set(THREADS_PREFER_PTHREAD_FLAG ON)
 ENDIF()
 
-#set(GCC_COVERAGE_LINK_FLAGS    "-no-pie")
-#set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${GCC_COVERAGE_LINK_FLAGS} -static-libgcc -static-libstdc++")
-#set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--disable-new-dtags,-rpath='$ORIGIN'")
-#set(CMAKE_INSTALL_RPATH "$ORIGIN")
 set (CMAKE_CXX_STANDARD 17)
 set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
 set(THREADS_PREFER_PTHREAD_FLAG TRUE)
 find_package(Threads REQUIRED)
+
 
 set(SOURCES 
     ../../thirdParty/tui/source/TuiFileUtils.cpp
@@ -41,7 +40,6 @@ set(SOURCES
     ../../thirdParty/liblmdb/mdb.c
     ../../thirdParty/liblmdb/midl.c
 
-    #../../core/ClientHttpInterface.cpp # requires curl and isn't currently used
     ../../core/Database.cpp
     ../../core/NetServerClient.cpp
     ../../core/ServerNetInterface.cpp
@@ -72,6 +70,12 @@ include_directories(
 )
 
 add_executable(katipoHost ${SOURCES})
+
+if(KATIPO_COMPILE_WITH_HTTP_INTERFACE)
+    find_package(CURL REQUIRED) #optional
+    target_sources(katipoHost PRIVATE ../../core/ClientHttpInterface.cpp) #optional
+    target_link_libraries(katipoHost CURL::libcurl) #optional
+endif()
 
 if(APPLE)
     include_directories(../../thirdParty/libsodium/macos/include)

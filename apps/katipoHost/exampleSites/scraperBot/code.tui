@@ -1,0 +1,101 @@
+
+
+publicFileDirectoryPath = file.getAbsolutePath(katipo.sitePath + "/publicData")
+
+if(!file.fileExists(publicFileDirectoryPath))
+{
+    print("creating public directory:", publicFileDirectoryPath)
+    file.createDirectoriesIfNeededForDirPath(publicFileDirectoryPath)
+}
+
+urls = {
+    {
+        filename = "spaceWeather.gif"
+        url = "https://services.swpc.noaa.gov/images/swx-overview-large.gif"
+    }
+    {
+        filename = "satellite.jpg"
+        url = "https://eumetview.eumetsat.int/static-images/latestImages/EUMETSAT_MSG_RGBNatColour_LowResolution.jpg"
+    }
+}
+
+### this function is called when clients query this site
+get = function(url, clientData)
+{
+    print("in get. url:", url, " clientData:", clientData)
+    urlSplit = string.split(url, "/")
+
+    if(table.count(urlSplit) <= 1) #respond to get fileHost/
+    {
+        directoryContents = file.directoryContents(publicFileDirectoryPath)
+        return {
+            status = "ok"
+            directoryContents = directoryContents
+        }
+    }
+    else #fileHost/fileName
+    {
+        fullPath = publicFileDirectoryPath
+        for(i = 1, i < table.count(urlSplit), i++)
+        {
+            fullPath = fullPath + "/" + urlSplit[i]
+        }
+        print("fullPath:", fullPath)
+
+        if(file.isSubPath(fullPath, publicFileDirectoryPath) and file.fileExists(fullPath)) #isSubPath is very important here for security
+        {
+            print("file exists. sending...")
+            return {
+                status = "ok"
+                fileName = fileName
+                filePath = fullPath
+            }
+        }
+
+        return {
+            status = "error"
+            message = "file not found"
+        }
+    }
+
+    return {
+        status = "error"
+        message = "unknown error"
+    }
+}
+
+timeDelay = 60 * 10 #fetch every 10 minutes
+
+runLoop = function()
+{
+    print("Scraperbot is running!")
+    while(true)
+    {
+        print("running fetch")
+
+        for(urlInfo in urls)
+        {
+            print("fetching:", urlInfo.url)
+
+            resultCallback = function(resultData)
+            {
+                if(resultData)
+                {
+                    filePath = publicFileDirectoryPath + "/" + urlInfo.filename
+                    print("writing file:", filePath)
+                    file.saveData(filePath, resultData)
+                    print("finished writing file.")
+                }
+                else
+                {
+                    print("resultData:", resultData)
+                }
+            } 
+
+            http.get(urlInfo.url, resultCallback)
+        }
+
+        print("going to sleep for ", timeDelay, " seconds")
+        sleep(timeDelay)
+    }
+}

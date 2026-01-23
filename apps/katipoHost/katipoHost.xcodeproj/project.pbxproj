@@ -19,6 +19,7 @@
 		5B7AB2622E283E97009E04C8 /* Controller.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5B7AB2612E283E97009E04C8 /* Controller.cpp */; };
 		5B7AB2642E28E5E7009E04C8 /* scripts in CopyFiles */ = {isa = PBXBuildFile; fileRef = 5B7AB2632E28E5E7009E04C8 /* scripts */; };
 		5B849DF52F18886B007FCBE6 /* libsodium.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5B849DF42F18886B007FCBE6 /* libsodium.a */; };
+		5B9BE33F2F22E2750066EE8A /* libcurl.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 5B9BE33E2F22E2750066EE8A /* libcurl.tbd */; };
 		5B9E6D0D2F1433DD005E3DB5 /* exampleSites in CopyFiles */ = {isa = PBXBuildFile; fileRef = 5B9E6D0C2F1433DD005E3DB5 /* exampleSites */; };
 /* End PBXBuildFile section */
 
@@ -51,6 +52,7 @@
 		5B7AB2612E283E97009E04C8 /* Controller.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = Controller.cpp; path = ../../apps/katipoHost/Controller.cpp; sourceTree = SOURCE_ROOT; };
 		5B7AB2632E28E5E7009E04C8 /* scripts */ = {isa = PBXFileReference; lastKnownFileType = folder; name = scripts; path = ../../apps/katipoHost/scripts; sourceTree = "<group>"; };
 		5B849DF42F18886B007FCBE6 /* libsodium.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libsodium.a; path = ../../thirdParty/libsodium/macos/lib/libsodium.a; sourceTree = "<group>"; };
+		5B9BE33E2F22E2750066EE8A /* libcurl.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libcurl.tbd; path = usr/lib/libcurl.tbd; sourceTree = SDKROOT; };
 		5B9E6D0C2F1433DD005E3DB5 /* exampleSites */ = {isa = PBXFileReference; lastKnownFileType = folder; path = exampleSites; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -58,7 +60,6 @@
 		5B7AB25F2E283D43009E04C8 /* Exceptions for "core" folder in "katipoHost" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				ClientHttpInterface.cpp,
 				Database.cpp,
 				DatabaseEnvironment.cpp,
 			);
@@ -89,6 +90,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				5B9BE33F2F22E2750066EE8A /* libcurl.tbd in Frameworks */,
 				5B849DF52F18886B007FCBE6 /* libsodium.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -130,6 +132,7 @@
 		5B849DF32F18886B007FCBE6 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				5B9BE33E2F22E2750066EE8A /* libcurl.tbd */,
 				5B849DF42F18886B007FCBE6 /* libsodium.a */,
 			);
 			name = Frameworks;

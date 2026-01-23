@@ -1077,7 +1077,7 @@ void ClientNetInterface::sendLargeDataInternal(uint8_t type,
         //uint32_t dataStartOffset = 0;
         while(bytesToSend > 0)
         {
-            MJError("Todo ClientNetInterface::sendLargeDataInternal");
+            MJError("Todo ClientNetInterface::sendLargeDataInternal. Katipo does not currently support data larger than 32MB.");
             abort();
             //todo IMPORTANT we need to send this in chunks with the request ID so that it can be passed on to the client immediately
             /*uint32_t additionalHeaderSize = sizeof(uint8_t) + sizeof(uint32_t) + sizeof(uint32_t);
