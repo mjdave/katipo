@@ -69,6 +69,15 @@ Xcode projects are provided within each app directory. The cmake build scripts a
 # Windows
 Visual Studio solutions are provided within each app directory. Cmake has not been tested on windows.
 
+# HTTP get requests
+There is an option to add a http.get method for the host. This allows communication with a lot of existing services over http, but requires curl.
+
+If you would like the host to be able to make http get requests, you will need curl. This is already installed on macos, on windows you are on your own for now, and on linux you can install libcurl developer libraries with:
+```
+sudo apt-get install libcurl4-openssl-dev
+```
+Enabling this also (for now) requires setting COMPILE_WITH_HTTP_INTERFACE to 1 in apps/katipoHost/Controller.h and uncommenting the line #set(KATIPO_COMPILE_WITH_HTTP_INTERFACE TRUE) in apps/katipoHost/CmakeLists.txt
+
 # Explanation and Mission Statement
 
 The web was originally created by academics and nerds with the needs of end users (other academics and nerds) being the main focus. These nerds created bulletin boards, hosting content for a handful of others who dialed in on their phone lines. Later we had GeoCities, a free hosting service where anyone could learn some basic HTML and have their own website. It exploded in popularity but was killed by Yahoo's profit seeking.
