@@ -622,7 +622,7 @@ void ClientNetInterface::checkEnetEvents()
                     else
                     {
                         bool sendToOutput = true;
-                        bool sendDownloadAcknowledge = false;
+                        bool sendDownloadAcknowledge = true;
                         
                         /*if(incoming.type == KATIPO_NET_TYPE_SERVER_DOWNLOAD_FILE_RESPONSE)
                         {
@@ -651,7 +651,7 @@ void ClientNetInterface::checkEnetEvents()
                                 }
                                 
                                 inProgressMultiPartDownloadsByChannel[event.channelID].append((((const char*)incoming.data) + additionalHeaderSize), recievedPayloadSize);
-                                sendDownloadAcknowledge = true;
+                               
                                 
                                 ClientNetInterfaceOutput output;
                                 
@@ -669,6 +669,7 @@ void ClientNetInterface::checkEnetEvents()
                             else
                             {
                                 inProgressMultiPartDownloadsByChannel[event.channelID].append((((const char*)incoming.data) + additionalHeaderSize), recievedPayloadSize);
+                                sendDownloadAcknowledge = false;
                             }
                         }
                         

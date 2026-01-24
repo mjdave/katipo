@@ -102,6 +102,10 @@ std::string ClientHttpInterface::getDataInternal(std::string remoteURL)
     bool success = false;
     std::string response_string;
     
+    char *header = "Cache-Control: no-cache";
+    struct curl_slist *headers = NULL;
+    headers = curl_slist_append(headers, header);
+
     int port = 80;
     
     if(remoteURL.find("https://") == 0)
@@ -117,8 +121,10 @@ std::string ClientHttpInterface::getDataInternal(std::string remoteURL)
             curl_easy_setopt(curl, CURLOPT_PORT, port);
             curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 1L);
             curl_easy_setopt(curl, CURLOPT_MAXREDIRS, 50L);
-            curl_easy_setopt(curl, CURLOPT_TCP_KEEPALIVE, 1L);
-            curl_easy_setopt(curl, CURLOPT_USERAGENT, "curl/7.42.0");
+            //curl_easy_setopt(curl, CURLOPT_TCP_KEEPALIVE, 1L);
+            curl_easy_setopt(curl, CURLOPT_USERAGENT, "katipo/0.1");
+            curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
+            curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
             
             char errbuf[CURL_ERROR_SIZE];
             errbuf[0] = 0;
