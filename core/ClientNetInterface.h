@@ -9,6 +9,8 @@
 #include "ThreadSafeQueue.h"
 #include "TuiScript.h"
 
+class Timer;
+
 struct ClientNetInterfaceInput {
     uint8_t*  data;
     size_t dataLength;
@@ -64,6 +66,9 @@ private:
     std::thread* thread;
     
     bool needsToExit = false;
+    
+    Timer* reconnectTimer = nullptr;
+    double timeBetweenReconnects = 5.0;
     
     //std::map<std::string, TuiFunction*> registeredFunctions;
     

@@ -28,6 +28,7 @@ ClientNetInterface::ClientNetInterface(std::string host_,
     sessionTransientSecretKey.resize(crypto_box_SECRETKEYBYTES);
     crypto_box_keypair((unsigned char*)&(sessionTransientPublicKey[0]), (unsigned char*)&(sessionTransientSecretKey[0]));
     
+    enet_initialize();
     connect();
 }
 
@@ -35,6 +36,7 @@ ClientNetInterface::ClientNetInterface(std::string host_,
 ClientNetInterface::~ClientNetInterface()
 {
     disconnect();
+    enet_deinitialize();
     delete inputQueue;
     delete outputQueue;
     stateTable->release();
@@ -52,7 +54,8 @@ void ClientNetInterface::connect()
         return;
     }
     
-    enet_initialize();
+    disconnected = false;
+    needsToExit = false;
     
     enetClient = enet_host_create (nullptr, // create a client host
                                    1,
@@ -87,7 +90,7 @@ void ClientNetInterface::disconnect()
     }
     else if(!disconnected)
     {
-        MJError("Unable to connect to tracker.");
+        MJLog("Couldn't connect to tracker. Trying again in %d seconds", (int)timeBetweenReconnects);
     }
     
     needsToExit = true;
@@ -135,7 +138,6 @@ void ClientNetInterface::disconnect()
         enetClient = nullptr;
     }
     
-    enet_deinitialize();
 }
 
 TuiTable* ClientNetInterface::getTrackerEncryptedDataTable(TuiTable* dataToSecureTable)
@@ -927,6 +929,25 @@ void ClientNetInterface::processGetRequest(TuiTable* trackerData) //we are on a 
 
 void ClientNetInterface::pollNetEvents()
 {
+    if(disconnected)
+    {
+        if(!reconnectTimer)
+        {
+            reconnectTimer = new Timer();
+        }
+        else
+        {
+            if(reconnectTimer->getElapsed() > 5.0)
+            {
+                MJLog("Attempting to reconnect...");
+                delete reconnectTimer;
+                reconnectTimer = nullptr;
+                connect();
+            }
+        }
+        return;
+    }
+    
     while(!outputQueue->empty())
     {
         ClientNetInterfaceOutput output;
