@@ -100,9 +100,9 @@ std::string ClientHttpInterface::getDataInternal(std::string remoteURL)
 {
     int retryCount = 0;
     bool success = false;
-    std::string response_string;
+    std::string response_string = "";
     
-    char *header = "Cache-Control: no-cache";
+    const char* header = "Cache-Control: no-cache, no-store, must-revalidate";
     struct curl_slist *headers = NULL;
     headers = curl_slist_append(headers, header);
 
@@ -113,7 +113,7 @@ std::string ClientHttpInterface::getDataInternal(std::string remoteURL)
         port = 443;
     }
     
-    while(!success && retryCount < 1)
+    while(!success && retryCount < 2)
     {
         auto curl = curl_easy_init();
         if (curl) {
