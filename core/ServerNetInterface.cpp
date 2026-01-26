@@ -313,6 +313,19 @@ void ServerNetInterface::checkEnetEvents()
                         
                         if(client->valid)
                         {
+                            if(connectedClientsByClientID.count(client->clientID) != 0)
+                            {
+                                NetServerClient* clientToRemove = connectedClientsByClientID[client->clientID];
+                                
+                                connectedClientsByClientID.erase(clientToRemove->clientID);
+                                enet_peer_reset(clientToRemove->enetPeer);
+                                connectedClientsByEnetPeer.erase(clientToRemove->enetPeer);
+                                
+                                ServerNetInterfaceOutput output;
+                                output.outputType = SERVER_NET_INTERFACE_OUTPUT_REMOVE_CLIENT;
+                                output.client = clientToRemove;
+                                outputQueue->push(output);
+                            }
                             connectedClientsByEnetPeer[event.peer] = client;
                             connectedClientsByClientID[client->clientID] = client;
                             
@@ -345,7 +358,7 @@ void ServerNetInterface::checkEnetEvents()
                         {
                             NetServerClient* client = connectedClientsByEnetPeer[event.peer];
                             bool sendToOutput = true;
-                            bool sendDownloadAcknowledge = false;
+                            bool sendDownloadAcknowledge = true;
                             
                             
                             sendToOutput = false;
@@ -369,7 +382,6 @@ void ServerNetInterface::checkEnetEvents()
                                 }
                                 
                                 client->inProgressMultiPartDownloadsByChannel[event.channelID].append((((const char*)incoming.data) + additionalHeaderSize), recievedPayloadSize);
-                                sendDownloadAcknowledge = true;
                                 
                                 ServerNetInterfaceOutput output;
                                 
@@ -387,6 +399,7 @@ void ServerNetInterface::checkEnetEvents()
                             else
                             {
                                 client->inProgressMultiPartDownloadsByChannel[event.channelID].append((((const char*)incoming.data) + additionalHeaderSize), recievedPayloadSize);
+                                sendDownloadAcknowledge = false;
                             }
                             
                             if(sendDownloadAcknowledge)
@@ -427,6 +440,18 @@ void ServerNetInterface::checkEnetEvents()
                     }
                     else if(connectedClientsByEnetPeer.count(event.peer) != 0)
                     {
+                        
+                        uint8_t data[2] = {
+                            KATIPO_NET_TYPE_CLIENT_SERVER_DOWNLOAD_FILE_COMPLETE_NOTIFICATION,
+                            event.channelID
+                        };
+                        ENetPacket * packet = enet_packet_create (data,
+                                                                  sizeof(uint8_t) * 2,
+                                                                  ENET_PACKET_FLAG_RELIABLE);
+                        
+                        
+                        enet_peer_send(event.peer, 0, packet);
+                        
                         NetServerClient* client = connectedClientsByEnetPeer[event.peer];
                         ServerNetInterfaceOutput output;
                         
