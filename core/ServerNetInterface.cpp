@@ -306,6 +306,8 @@ void ServerNetInterface::checkEnetEvents()
                                                                       this,
                                                                       event.peer,
                                                                       initalData);
+                        
+                        tuiDataWrapper->release();
                         if(initalData)
                         {
                             initalData->release();
