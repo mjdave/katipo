@@ -23,7 +23,7 @@ void Controller::init(int argc, const char * argv[])
     
     std::string basePath = Tui::pathByRemovingLastPathComponent(argv[0]);
 
-    TuiTable* rootTable = Tui::createRootTable();
+    TuiTable* rootTable = Tui::getRootTable();
     TuiTable* launchArgsTable = new TuiTable(rootTable);
     rootTable->set("launchArgs", launchArgsTable);
     launchArgsTable->release();
