@@ -100,11 +100,16 @@ void ClientNetInterface::disconnect()
     delete thread;
     thread = nullptr;
     
-    for(auto& idAndCallback : callbacksByID)
+    if(!callbacksByID.empty())
     {
-        idAndCallback.second->call("SERVER_FUNCTION_CALL_RESPONSE", nullptr);
+        TuiRef* statusResult = new TuiTable("{status='error',message='not connected'}");
+        for(auto& idAndCallback : callbacksByID)
+        {
+            idAndCallback.second->call("SERVER_FUNCTION_CALL_RESPONSE", statusResult);
+        }
+        statusResult->release();
+        callbacksByID.clear();
     }
-    callbacksByID.clear();
     
     if(enetPeer)
     {
