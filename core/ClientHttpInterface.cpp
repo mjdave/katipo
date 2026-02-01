@@ -50,8 +50,9 @@ void ClientHttpInterface::bindTui(TuiTable* rootTable) //adds an http.get functi
             TuiFunction* callbackFunc = (TuiFunction*)(args->arrayObjects[1]->retain());
             get(((TuiString*)args->arrayObjects[0])->value, [callbackFunc](const std::string& result){
                 TuiString* reponseData = new TuiString(result);
-                callbackFunc->call("http.get response", reponseData); //reponseData is released in call()
+                callbackFunc->call("http.get response", reponseData);
                 callbackFunc->release();
+                reponseData->release();
             });
         }
         else

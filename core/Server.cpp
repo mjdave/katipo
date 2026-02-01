@@ -187,7 +187,9 @@ void Server::addClient(NetServerClient* client)
     
     if(clientConnectedFunction)
     {
-        clientConnectedFunction->call("Server::addClient::clientConnectedFunction", new TuiString(client->clientID), client->initialData->retain());
+        TuiRef* clientIDRef = new TuiString(client->clientID);
+        clientConnectedFunction->call("Server::addClient::clientConnectedFunction", clientIDRef, client->initialData);
+        clientIDRef->release();
     }
     
 }
@@ -196,7 +198,9 @@ void Server::removeClient(std::string clientID)
 {
     if(clientDisconnectedFunction)
     {
-        clientDisconnectedFunction->call("Server::addClient::clientDisconnectedFunction", new TuiString(clientID));
+        TuiRef* clientIDRef = new TuiString(clientID);
+        clientDisconnectedFunction->call("Server::addClient::clientDisconnectedFunction", clientIDRef);
+        clientIDRef->release();
     }
     clients.erase(clientID);
 }

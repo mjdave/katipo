@@ -1000,8 +1000,10 @@ void ClientNetInterface::pollNetEvents()
                         
                         if(callbacksByID.count(callbackID) != 0)
                         {
-                            callbacksByID[callbackID]->call("SERVER_FUNCTION_CALL_RESPONSE", tuiData); //releases tuiData
+                            callbacksByID[callbackID]->call("SERVER_FUNCTION_CALL_RESPONSE", tuiData);
                         }
+                        
+                        tuiData->release();
                         
                     }
                         break;
@@ -1034,7 +1036,7 @@ void ClientNetInterface::pollNetEvents()
                                         if(callbacksByID.count(callbackID) != 0)
                                         {
                                             //MJLog("calling func in KATIPO_NET_TYPE_FUNCTION_CALL_RESPONSE_TO_CLIENT_FROM_TRACKER");
-                                            callbacksByID[callbackID]->call("KATIPO_NET_TYPE_FUNCTION_CALL_RESPONSE_TO_CLIENT_FROM_HOST", responseData->retain()); //releases responseData
+                                            callbacksByID[callbackID]->call("KATIPO_NET_TYPE_FUNCTION_CALL_RESPONSE_TO_CLIENT_FROM_HOST", responseData);
                                         }
                                     }
                                     else
