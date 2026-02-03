@@ -66,7 +66,7 @@ void Controller::init(int argc, const char * argv[])
             std::string publicKey = "";
             std::string secretKey = "";
             
-            std::string trackerKeyPath = "tracker_privateKey.tui";
+            std::string trackerKeyPath = "tracker_privateKey.tuib";
             
             if(Tui::fileExistsAtPath(trackerKeyPath)) //todo these should be saved in the database, not files
             {
