@@ -452,7 +452,7 @@ TuiTable* ClientNetInterface::bindTui(TuiTable* katipoTable_)
                 registeredFunctions["disconnected"]->call("disconnect");
             }*/
         }
-        return nullptr;
+        return TUI_NIL;
     });
     
     return stateTable;
