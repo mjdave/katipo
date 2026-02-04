@@ -12,13 +12,6 @@
 
 #define MAX_SIMULTANEOUS_DOWNLOADS 4
 
-static char clientIDBuffer[128];
-static inline std::string clientIDForPublicKey(const std::string& publicKey)
-{
-    return sodium_bin2hex(clientIDBuffer, 128,
-                         (unsigned char*)&(publicKey[0]), publicKey.length());
-}
-
 class ServerNetInterface;
 
 class NetServerClient {

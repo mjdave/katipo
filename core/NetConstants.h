@@ -4,14 +4,22 @@
 
 #include "enet/enet.h"
 #include <inttypes.h>
-#include "string.h"
+#include <string>
 #define SODIUM_STATIC
 
 #include "MJLog.h"
+#include "sodium.h"
 
 #define LOG_NETWORK 0
 
 static const uint32_t MJMaxPacketSize = 1024*1024*sizeof(uint32_t) - (sizeof(uint32_t) * 4); //we use an 8 bit header, and two 32 bit header values for multipart downloads, enet maximum appears to be 1024*1024*sizeof(uint32_t)
+
+static char clientIDBuffer[128];
+static inline std::string clientIDForPublicKey(const std::string& publicKey)
+{
+    return sodium_bin2hex(clientIDBuffer, 128,
+                         (unsigned char*)&(publicKey[0]), publicKey.length());
+}
 
 struct ServerData {
     uint8_t type;

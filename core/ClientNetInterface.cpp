@@ -1041,7 +1041,10 @@ void ClientNetInterface::pollNetEvents()
                                         if(callbacksByID.count(callbackID) != 0)
                                         {
                                             //MJLog("calling func in KATIPO_NET_TYPE_FUNCTION_CALL_RESPONSE_TO_CLIENT_FROM_TRACKER");
-                                            callbacksByID[callbackID]->call("KATIPO_NET_TYPE_FUNCTION_CALL_RESPONSE_TO_CLIENT_FROM_HOST", responseData);
+                                            std::string publicKeyReadable = clientIDForPublicKey(((TuiTable*)hostEncryptedData)->getString("publicKey"));
+                                            TuiRef* publicKeyReadableRef = new TuiString(publicKeyReadable);
+                                            callbacksByID[callbackID]->call("KATIPO_NET_TYPE_FUNCTION_CALL_RESPONSE_TO_CLIENT_FROM_HOST", responseData, publicKeyReadableRef);
+                                            publicKeyReadableRef->release();
                                         }
                                     }
                                     else
