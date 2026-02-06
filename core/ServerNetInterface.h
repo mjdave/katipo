@@ -92,9 +92,6 @@ protected:
 private:
     void startThread();
     void checkEnetEvents();
-    bool checkClientAuthorized(uint16_t clientVersion,
-                               std::string* rejectionReason,
-                               std::string* rejectionContext);
     void sendJoinRejectionAndDisconnect(ENetPeer* peer,
                                         std::string rejectionReason,
                                         std::string rejectionContext);

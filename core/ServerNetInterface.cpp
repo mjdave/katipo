@@ -4,7 +4,6 @@
 //#include "sha1.h"
 #include "Server.h"
 #include "Timer.h"
-#include "MJVersion.h"
 #include "sodium.h"
 
 ServerNetInterface::ServerNetInterface(const std::string& publicKey_,
@@ -147,29 +146,6 @@ void ServerNetInterface::disconnect()
     enet_host_destroy(enetServer);
     enetServer = nullptr;
     enet_deinitialize(); //todo once per process?
-}
-
-bool ServerNetInterface::checkClientAuthorized(uint16_t clientVersion,
-                                               std::string* rejectionReason,
-                                               std::string* rejectionContext)
-{
-    if(clientVersion != NETWORK_COMPATIBILITY_VERSION)
-    {
-        *rejectionContext = KATIPO_VERSION;
-        if(clientVersion < NETWORK_COMPATIBILITY_VERSION)
-        {
-            *rejectionReason = "client_too_old";
-        }
-        else
-        {
-            *rejectionReason = "client_too_new";
-        }
-        MJLog("Connecting client version mismatch:%s. (client:%d server:%d)", rejectionReason->c_str(), clientVersion, NETWORK_COMPATIBILITY_VERSION);
-        
-        return false;
-    }
-    
-    return true;
 }
 
 void ServerNetInterface::sendJoinRejectionAndDisconnect(ENetPeer* peer,

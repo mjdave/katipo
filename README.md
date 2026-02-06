@@ -11,7 +11,9 @@ Katipo will make it much easier to create, host and share your own sites, apps a
 
 Katipo will also provide better security with end to end encryption between all parties at all times, and offers a number of other significant security benefits inherent in the design. Hosts don't know who clients are, trackers can't read any of the data going between hosts and clients, and the majority of the data will be stored encrypted on client devices with tracker based backups (built-in cloud storage) and sync between devices.
 
-Katipo uses a tracker based system to provide networking between clients and hosts that can both be behind firewalls, without the need to open any ports. How this works is that one or more trackers will sit between the host and the client, and act like a proxy. You can make small private networks with a single tracker, or (once implemented) chain trackers together to create much larger networks.
+Katipo uses a tracker based system to provide networking between clients and hosts that can both be behind firewalls, without the need to open any ports. How this works is that one or more trackers sit between the host and the client, and act like a proxy. You can make small private networks with a single tracker, or (once implemented) chain trackers together to create much larger networks.
+
+Both site hosts and clients are private, they are actually both clients. Trackers are the servers, the public facing hub with ports open for incoming connections. However a tracker is little more than a virtual router, shuffling encrypted data packets between hosts and clients.
 
 This repository contains the (functioning) core networking library. A free Vulkan/SDL3 based open source browser will be released for Windows, Mac, and iOS soon, with more platforms planned. The browser will allow both browsing/searching of sites, and hosting of sites and trackers. Tracker based features like data backups, port scanning for other trackers on the same network, and in/outboxes to support direct messaging and chat are planned.
 
@@ -96,9 +98,9 @@ So I'm Dave, and that's what motivates me to work on Katipo. But I think many of
 
 It's very much real, and I'm probably insane. Really I just saw it was possible and necessary, and that I could build it and that nobody else seemed to be doing that. 
 
-I have been making my own engines for my games for >20 years, and have learned some things. I have a very solid understanding of every part of making 3D games from scratch, from the low level hardware interactions to high level design and publishing, and games are pretty much entire platforms. Katipo is a natural evolution of my multiplayer game engines. I just saw this was a good idea, for me, maybe for others, and I went for it.
+I have been making my own engines for my games for >20 years, and have learned some things. I have a very solid understanding of every part of making 3D games from scratch, from the low level hardware interactions to high level design and publishing. Game engines are very much like browsers, and Katipo is a natural evolution of my multiplayer game engines. I just saw this was a good idea, for me, maybe for others, and I went for it.
 
-I am very much aware that Katipo is not perfect. Some of the early decisions need to be reworked, some things need to be replaced, there are bugs, and a lot is still missing. 
+I am very much aware that Katipo is not perfect. Some of the early decisions need to be reworked, some things need to be replaced, there are bugs and room for optimization, and a lot is still missing. 
 
 There are some things that I feel strongly about, that are very core to this design, like end to end encryption, client based data storage, one single data/code language. But the actual implementation details just need to be simple and clear. I don't really mind what technologies this is built on, and in fact the best solution would be to build them all with Tui/C++ only on top of low level system libraries. But the ones I have chosen so far are all excellent, and tend to best fit within these general goals, and I think if you were looking to contribute, these would be good to keep in mind:
 
