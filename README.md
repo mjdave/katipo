@@ -1,27 +1,31 @@
 # Katipo
-Katipo is a new type of decentralized network, designed to be as simple as possible, and useful in ways that the web isn't currently.
+Katipo is a new type of decentralized network, a free and open platform that lives entirely outside of the existing HTML/CSS/JS/Apache/Chrome based web.
 
-The Katipō is an endangered venomous spider from New Zealand. The name seems a good fit.
+The Katipō is an endangered venomous spider from New Zealand.
 
 ![Katipo browser for iOS icon](https://github.com/mjdave/katipo/blob/main/katipoBrowser-iOS128.png)
 
-Katipo replaces the transport and application layers in the standard IP model. It uses a tracker based system to provide networking between clients and hosts that can both be behind firewalls, without the need to open any ports.
+Katipo is open source and completely free, and it's being built from first principles by hand without any AI "help". Katipo's goal is to help make the next generation of software more accessible, cheaper, more secure, and more useful. It can help us to take control of our digital lives, our data, our apps, and most importantly, our connections.
+
+Katipo will make it much easier to create, host and share your own sites, apps and data. From within the Katipo Browser app, which you will be able to download from any app store (or compile yourself), you can easily host a site/app/file from any device.
+
+Katipo will also provide better security with end to end encryption between all parties at all times, and offers a number of other significant security benefits inherent in the design. Hosts don't know who clients are, trackers can't read any of the data going between hosts and clients, and the majority of the data will be stored encrypted on client devices with tracker based backups (built-in cloud storage) and sync between devices.
+
+Katipo uses a tracker based system to provide networking between clients and hosts that can both be behind firewalls, without the need to open any ports. How this works is that one or more trackers will sit between the host and the client, and act like a proxy. You can make small private networks with a single tracker, or (once implemented) chain trackers together to create much larger networks.
+
+This repository contains the (functioning) core networking library. A free Vulkan/SDL3 based open source browser will be released for Windows, Mac, and iOS soon, with more platforms planned. The browser will allow both browsing/searching of sites, and hosting of sites and trackers. Tracker based features like data backups, port scanning for other trackers on the same network, and in/outboxes to support direct messaging and chat are planned.
+
+PLEASE NOTE! Encryption has only just been implemented. For now, you should not use Katipo to transmit sensitive data or to connect to trackers or hosts that you do not trust. I have full faith in the design and general implementation, end to end encryption works. However there are likely to be a couple of bugs and things I've missed still.
 
 ![Katipo network diagram](https://github.com/mjdave/katipo/blob/main/katipoBasicNetwork.png)
 
-The katipo transport layer is based on UDP, and uses enet, with only IPv4 support (for now).
+Katipo replaces the transport and application layers in the standard IP model. The Katipo transport layer is based on UDP, and uses enet, with only IPv4 support (for now).
 
-The katipo application layer uses the tui interpreted programming language. Configuration and code are mostly written in tui, with the option of using C++ or interfacing with any other language. Tui configuration files are very similar to json, and tui code is similar to lua.
-
-All data is encrypted between the client and the host, as well as between the client and the tracker, and the tracker and the host. Data never travels between hosts and clients directly, but always via at least one tracker, which acts like a proxy. 
-
-Trackers cannot view or modify the data between hosts and clients, and hosts cannot derive the identity of any clients, without their permission.
-
-Katipo is designed to give people total control of all of their data, and tracker-based features like backups and in/outboxes are planned.
+The Katipo application layer uses the [tui](https://github.com/mjdave/tui) interpreted programming language (also made by the Katipo developer). Configuration and code are mostly written in tui, with the option of using C++ or interfacing with any other language. Tui configuration files are very similar to json, and tui code is similar to lua.
 
 # Current status
 
-This is currently a blueprint. It is bare bones, with a few missing parts and some of the components don't quite fit. But it is functional, it's good enough for a few things already, and over time it will be good enough for more.
+Katipo is still missing a few key features and some of the components don't quite fit. But it is a functional proof of concept, and it's good enough for a few things already. Over time it will be good enough for more.
 
 End to end encryption has just been added with libsodium, and the source repository has a couple of working examples, a fileServer and a basic example that returns a data table.
 
@@ -69,7 +73,7 @@ Xcode projects are provided within each app directory. The cmake build scripts a
 # Windows
 Visual Studio solutions are provided within each app directory. Cmake has not been tested on windows.
 
-# HTTP get requests
+# Host HTTP get requests (optional)
 There is an option to add a http.get method for the host. This allows communication with a lot of existing services over http, but requires curl.
 
 If you would like the host to be able to make http get requests, you will need curl. This is already installed on macos, on windows you are on your own for now, and on linux you can install libcurl developer libraries with:
@@ -82,35 +86,37 @@ Enabling this also (for now) requires setting COMPILE_WITH_HTTP_INTERFACE to 1 i
 
 The web was originally created by academics and nerds with the needs of end users (other academics and nerds) being the main focus. These nerds created bulletin boards, hosting content for a handful of others who dialed in on their phone lines. Later we had GeoCities, a free hosting service where anyone could learn some basic HTML and have their own website. It exploded in popularity but was killed by Yahoo's profit seeking.
 
-With the release of the iPhone, the web rapidly became available to billions of people. It was looking exciting - the web would be available to everyone, except that these new people were not given the tools. They were only allowed to be consumers. The first web was run by nerds for nerds. The second web was run by business for business.
+With the release of the iPhone, the web rapidly became available to billions of people. It was looking exciting, except that these new people were not given the tools. They were only allowed to be consumers. The first web was run by nerds for nerds. The second web was run by business for business.
 
-Today, personal or community websites are rare, and are run by a dying breed of enthusiasts. Now our communications and our memories, our photos and our videos, our precious data belongs to Meta, Apple, Microsoft, or Google, stored behind walls of ads or subscriptions. The web infrastructure is now too complex for individuals or small organizations to operate, and it is owned and controlled nearly exclusively by large for-profit businesses.
+Today, personal or community websites are rare, and are run by a dying breed of enthusiasts. Now our communications and our memories, our photos and our videos, our precious data belongs to Meta, Apple, Microsoft, or Google, stored behind walls of ads or subscriptions. The web infrastructure is now too complex for individuals or small organizations to operate at a low level, and it is owned and controlled nearly exclusively by large for-profit businesses.
 
-We have been pushed out of the open web, and into closed platforms, and the profit seeking businesses in control right now want to keep it that way forever. If we want to escape, to take back any control and start heading in a better direction, at some point we have to start actually doing something. 
+We have been pushed out of the open web, and into closed platforms, and the profit seeking businesses in control right now want to keep making it worse. If we want to escape, to take back any control and start heading in a better direction, at some point we have to start actually doing something. Now feels like a really good time.
 
-Katipo is an open source, free, people-focused alternative, being built from the ground up. Katipo's goal is to make software more accessible, cheaper, and more useful to more people. Katipo can help us to take back control of our digital lives, our data, our apps, and our connections.
+So I'm Dave, and that's what motivates me to work on Katipo. But I think many of you are still wondering what makes me so arrogant to even attempt this? Is this even real or has Dave gone insane?
 
-It can achieve this by focusing on simplicity. 
+It's very much real, and I'm probably insane. Really I just saw it was possible and necessary, and that I could build it and that nobody else seemed to be doing that. 
 
-Katipo will make it much easier to create, host and share your own sites, apps and data. You no longer need to rent a server, or set up port forwarding on your router, and you don't need a domain name. You don't need to learn 4 different languages or plug the whole thing into an AI model to understand it, you don't need to submit anything to be approved for an app store, and you don't need to install a disk image on a virtual machine to run it.
+I have been making my own engines for my games for >20 years, and have learned some things. I have a very solid understanding of every part of making 3D games from scratch, from the low level hardware interactions to high level design and publishing, and games are pretty much entire platforms. Katipo is a natural evolution of my multiplayer game engines. I just saw this was a good idea, for me, maybe for others, and I went for it.
 
-Instead, with Katipo, you can host a site/app/file on any device. You could launch a temporary hosting app from within the Katipo browser on an iPhone for example, and then permitted clients could immediately connect to your server and view your content, play a multiplayer game, chat or share files.
+I am very much aware that Katipo is not perfect. Some of the early decisions need to be reworked, some things need to be replaced, there are bugs, and a lot is still missing. 
 
-How this works is that when you host, you give it the address of a tracker server, which then acts like proxy for the host. The trackers can be public or private, can handle 1000s of hosts and clients, and can connect to other trackers. Clients then need an IP address of any tracker to connect to, and then they can search through connected hosts and other trackers, and then communicate securely with any available host via chains of trackers. 
+There are some things that I feel strongly about, that are very core to this design, like end to end encryption, client based data storage, one single data/code language. But the actual implementation details just need to be simple and clear. I don't really mind what technologies this is built on, and in fact the best solution would be to build them all with Tui/C++ only on top of low level system libraries. But the ones I have chosen so far are all excellent, and tend to best fit within these general goals, and I think if you were looking to contribute, these would be good to keep in mind:
 
-For now, this repository only contains the core proof of concept networking library and command line apps. I have started working on a full Katipo browser client with a Vulkan based renderer, and I plan to release this too in the future. This will allow the sharing of apps, games, music and images, and will feature a built in tui editor and the ability to host.
+Code in this project should ideally be
+1) Easily human readable/understandable
+2) Close to the metal
+3) Easy to compile and run with very few dependencies
+4) Small
 
-PLEASE NOTE! Encryption has only just been implemented. For now, you should not use Katipo to transmit sensitive data or to connect to trackers or hosts that you do not trust.
+But sometimes you just have to use whatever you can to get the job done too.
 
-Katipo is written in c++ and tui. Tui is a simple scripting language and serialization library which replaces html, javascript, css, and json in the Katipo stack. Katipo uses enet for low level networking over UDP. This is not necessarily always going to be the case, but it is a good fit for now.
+In general I am very keen for help and support. From here, I think Katipo is hungry for sites to host. Todo list apps, notes, book readers, photo libraries, syncing apps between platforms, and of course games! 
 
-There is a lot more to explain, and to work on too, this is a quick overview. Katipo is still in the very early stages of development (as of Jan 2026).
+Katipo also needs support for more platforms. If you are interested in building and releasing an Android Katipo Browser for example, or would like to help improve the build systems and create proper libraries for Tui and Katipo, or would like to help in any way at all really, please do get in touch!
 
-I am very keen for help. If I am to continue alone, my focus will be on getting this and tui hardened in my own coding projects, with a goal to releasing cross platform Katipo browsers and apps within the next year or so. 
+I want to make it really clear too, this project is released under the Unlicense license, which means you don't even have to credit me, just don't blame me. I don't mind at all if you want to compile and release your own Katipo Browser if you like, fork away. Use any of this stuff for anything, use it to make money, but don't repeat history.
 
-But I will get more inspired and move faster if people join me. I think maybe there are enough of us not motivated by greed that we can make and use something better. If you're interested in contributing to Katipo or Tui, or can see any way to help, please get in touch.
-
-No AI is used here.
+No AI is used here, and no AI support will be added by me. But again, please fork if that's your thing.
 
 --Dave
 - [dave@afk.nz](mailto:dave@afk.nz)
