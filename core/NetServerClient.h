@@ -25,7 +25,6 @@ public:
     
     double pingDelay = 0.0;
     
-    std::set<uint8_t> inUseChannels; //uploading to remote
     std::queue<ServerData> queuedDownloads; //uploading to remote
     
     std::map<uint8_t, std::string> inProgressMultiPartDownloadsByChannel; //downloading from remote
@@ -39,7 +38,6 @@ public:
     ~NetServerClient();
     
     virtual void sendDataToClient(const ServerData& serverData, bool reliable);
-    virtual void sendLargeDataToClient(const ServerData& serverData);
     
     TuiTable* getEncryptedDataTable(TuiTable* dataToSecure, const std::string& serverPublicKey, const std::string& serverSecretKey);
     

@@ -321,23 +321,12 @@ void ServerNetInterface::checkEnetEvents()
                                                            "");
                         }
                     }
-                    else if(incoming.type == KATIPO_NET_TYPE_CLIENT_SERVER_DOWNLOAD_FILE_COMPLETE_NOTIFICATION)
-                    {
-                        if(connectedClientsByEnetPeer.count(event.peer) != 0)
-                        {
-                            NetServerClient* client = connectedClientsByEnetPeer[event.peer];
-                            uint8_t channelIndex = *((uint8_t*)incoming.data);
-                            client->inUseChannels.erase(channelIndex);
-                        }
-                    }
                     else if(incoming.type == KATIPO_NET_TYPE_SERVER_MULTIPART_DOWNLOAD_RESPONSE) //todo we really need to just pass this on, don't store
                     {
                         if(connectedClientsByEnetPeer.count(event.peer) != 0)
                         {
                             NetServerClient* client = connectedClientsByEnetPeer[event.peer];
                             bool sendToOutput = true;
-                            bool sendDownloadAcknowledge = true;
-                            
                             
                             sendToOutput = false;
                             
@@ -377,21 +366,6 @@ void ServerNetInterface::checkEnetEvents()
                             else
                             {
                                 client->inProgressMultiPartDownloadsByChannel[event.channelID].append((((const char*)incoming.data) + additionalHeaderSize), recievedPayloadSize);
-                                sendDownloadAcknowledge = false;
-                            }
-                            
-                            if(sendDownloadAcknowledge)
-                            {
-                                uint8_t data[2] = {
-                                    KATIPO_NET_TYPE_CLIENT_SERVER_DOWNLOAD_FILE_COMPLETE_NOTIFICATION, //todo
-                                    event.channelID
-                                };
-                                ENetPacket * packet = enet_packet_create (data,
-                                                                          sizeof(uint8_t) * 2,
-                                                                          ENET_PACKET_FLAG_RELIABLE);
-                                
-                                
-                                enet_peer_send(client->enetPeer, 0, packet);
                             }
                             
                             if(sendToOutput)
@@ -416,7 +390,7 @@ void ServerNetInterface::checkEnetEvents()
                             }
                         }
                     }
-                    else if(connectedClientsByEnetPeer.count(event.peer) != 0)
+                    /*else if(connectedClientsByEnetPeer.count(event.peer) != 0)
                     {
                         
                         uint8_t data[2] = {
@@ -442,7 +416,7 @@ void ServerNetInterface::checkEnetEvents()
                         output.serverData.length = incoming.length;
                         
                         outputQueue->push(output);
-                    }
+                    }*/
                 }
                 enet_packet_destroy (event.packet);
             }

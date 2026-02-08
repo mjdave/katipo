@@ -61,7 +61,7 @@ private:
     
     std::map<uint8_t, std::string> inProgressMultiPartDownloadsByChannel; //downloading from remote
     
-    std::set<uint8_t> inUseChannels; //uploading to remote
+    uint8_t sendChannelIndex = 0;
     
     std::thread* thread;
     
@@ -90,6 +90,7 @@ public:
     
     void pollNetEvents();
     
+    void sendMultipartTuiData(std::string requestID, TuiTable* clientSendTable);
     void sendData(uint8_t type, const void * data = NULL, size_t dataLength = 0, bool reliable = true);
     //void sendLargeData(uint8_t type, const void * data, size_t dataLength = 0, bool reliable = true);
     

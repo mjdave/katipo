@@ -572,11 +572,6 @@ void ClientNetInterface::checkEnetEvents()
                         outputQueue->push(output);
                         
                     }
-                    else if(incoming.type == KATIPO_NET_TYPE_CLIENT_SERVER_DOWNLOAD_FILE_COMPLETE_NOTIFICATION)
-                    {
-                        uint8_t channelIndex = *((uint8_t*)incoming.data);
-                        inUseChannels.erase(channelIndex);
-                    }
                     else if(incoming.type == KATIPO_NET_TYPE_INITIAL_HANDSHAKE)
                     {
                         trackerPublicKey = std::string((const char*)incoming.data, incoming.length);
@@ -629,7 +624,6 @@ void ClientNetInterface::checkEnetEvents()
                     else
                     {
                         bool sendToOutput = true;
-                        bool sendDownloadAcknowledge = true;
                         
                         /*if(incoming.type == KATIPO_NET_TYPE_SERVER_DOWNLOAD_FILE_RESPONSE)
                         {
@@ -676,22 +670,7 @@ void ClientNetInterface::checkEnetEvents()
                             else
                             {
                                 inProgressMultiPartDownloadsByChannel[event.channelID].append((((const char*)incoming.data) + additionalHeaderSize), recievedPayloadSize);
-                                sendDownloadAcknowledge = false;
                             }
-                        }
-                        
-                        if(sendDownloadAcknowledge)
-                        {
-                            uint8_t data[2] = {
-                                KATIPO_NET_TYPE_CLIENT_SERVER_DOWNLOAD_FILE_COMPLETE_NOTIFICATION,
-                                event.channelID
-                            };
-                            ENetPacket * packet = enet_packet_create (data,
-                                                                      sizeof(uint8_t) * 2,
-                                                                      ENET_PACKET_FLAG_RELIABLE);
-                            
-                            
-                            enet_peer_send(enetPeer, 0, packet);
                         }
                         
                         if(sendToOutput)
@@ -876,7 +855,7 @@ void ClientNetInterface::processGetRequest(TuiTable* trackerData) //we are on a 
                         abort(); //todo shouldn't abort here
                     }
                     
-                    TuiTable* trackerDataToSecureTable = new TuiTable();
+                    /*TuiTable* trackerDataToSecureTable = new TuiTable();
                     trackerDataToSecureTable->setString("requestID", requestID);
                     trackerDataToSecureTable->set("clientData", clientSendTable);
                     clientSendTable->release();
@@ -884,10 +863,13 @@ void ClientNetInterface::processGetRequest(TuiTable* trackerData) //we are on a 
                     TuiTable* trackerSendTable = getTrackerEncryptedDataTable(trackerDataToSecureTable);
                     trackerDataToSecureTable->release();
                     std::string dataSerialized = trackerSendTable->serializeBinary();
-                    trackerSendTable->release();
+                    trackerSendTable->release();*/
                     
                     
-                    sendData(KATIPO_NET_TYPE_FUNCTION_CALL_RESPONSE_TO_CLIENT_FROM_HOST, dataSerialized.data(), dataSerialized.length());
+                    //sendData(KATIPO_NET_TYPE_FUNCTION_CALL_RESPONSE_TO_CLIENT_FROM_HOST, dataSerialized.data(), dataSerialized.length());
+                    
+                    
+                    sendMultipartTuiData(requestID, clientSendTable);
                     
                     //if(sendFile) //todo should use sendLargeData if data size above threshold, not based on whether it was loaded from disk
                   //  {
@@ -1109,7 +1091,7 @@ void ClientNetInterface::sendLargeDataInternal(uint8_t type,
         //uint32_t dataStartOffset = 0;
         while(bytesToSend > 0)
         {
-            MJError("Todo ClientNetInterface::sendLargeDataInternal. Katipo does not currently support data larger than 32MB.");
+            MJError("Todo ClientNetInterface::sendLargeDataInternal. Katipo does not currently support data larger than ~4MB.");
             abort();
             //todo IMPORTANT we need to send this in chunks with the request ID so that it can be passed on to the client immediately
             /*uint32_t additionalHeaderSize = sizeof(uint8_t) + sizeof(uint32_t) + sizeof(uint32_t);
@@ -1151,25 +1133,64 @@ void ClientNetInterface::sendLargeDataInternal(uint8_t type,
     }
 }
 
-void ClientNetInterface::sendData(uint8_t type, const void * data, size_t dataLength, bool reliable)
+void ClientNetInterface::sendMultipartTuiData(std::string requestID, TuiTable* clientSendTable)
 {
-    int freeChannel = 0;
-    for(freeChannel = 0; freeChannel < CLIENT_MAX_SIMULTANEOUS_DOWNLOADS; freeChannel++)
+    std::string clientSendTableSerialized = clientSendTable->serializeBinary();
+    
+    uint32_t dataLength = (uint32_t)clientSendTableSerialized.length();
+    uint32_t bytesToSend = dataLength;
+    uint32_t dataStartOffset = 0;
+    
+    TuiTable* trackerDataToSecureTable = new TuiTable();
+    trackerDataToSecureTable->setString("requestID", requestID);
+    while(bytesToSend > 0)
     {
-        if(inUseChannels.count(freeChannel) == 0)
-        {
-            break;
-        }
+        uint32_t thisPacketLoadBytesToSend = min(bytesToSend, MJMaxPacketSize / 2);
+        trackerDataToSecureTable->setString("clientData", clientSendTableSerialized.substr(dataStartOffset, thisPacketLoadBytesToSend)); //todo memcpy
+        
+        TuiTable* trackerSendTable = getTrackerEncryptedDataTable(trackerDataToSecureTable);
+        std::string dataSerialized = trackerSendTable->serializeBinary();
+        trackerSendTable->release();
+        
+        uint32_t additionalHeaderSize = sizeof(uint8_t) + sizeof(uint32_t) + sizeof(uint32_t);
+        uint32_t thisPacketTotalSize = thisPacketLoadBytesToSend + sizeof(uint8_t) + additionalHeaderSize;
+        uint8_t* netData = (uint8_t*)malloc(thisPacketTotalSize);
+        netData[0] = KATIPO_NET_TYPE_SERVER_MULTIPART_DOWNLOAD_RESPONSE;
+        netData[1] = KATIPO_NET_TYPE_FUNCTION_CALL_RESPONSE_TO_CLIENT_FROM_HOST;
+        
+        memcpy(&(netData[2]), &dataLength, sizeof(uint32_t));
+        memcpy(&(netData[6]), &dataStartOffset, sizeof(uint32_t));
+        
+        memcpy(&(netData[10]), ((uint8_t*)(&dataSerialized[0]) + dataStartOffset), thisPacketLoadBytesToSend);
+        
+        dataStartOffset += thisPacketLoadBytesToSend;
+        bytesToSend -= thisPacketLoadBytesToSend;
+        
+        ClientNetInterfaceInput input;
+        input.data = netData;
+        input.dataLength = thisPacketLoadBytesToSend + additionalHeaderSize;
+        input.reliable = true;
+        input.channelID = ((++sendChannelIndex) % CLIENT_MAX_SIMULTANEOUS_DOWNLOADS);
+        inputQueue->push(input);
     }
     
-    if(freeChannel < CLIENT_MAX_SIMULTANEOUS_DOWNLOADS)
-    {
-        inUseChannels.insert(freeChannel);
-        sendLargeDataInternal(type, data, dataLength, freeChannel);
-    }
-    else
-    {
-        MJError("todo MAX_SIMULTANEOUS_DOWNLOADS reached");
-        //queuedDownloads.push(serverData); // hmmmmm serverData.data is not valid once we exit this function
-    }
+    trackerDataToSecureTable->release();
+    clientSendTable->release();
+    
+    //KATIPO_NET_TYPE_FUNCTION_CALL_RESPONSE_TO_CLIENT_FROM_HOST
+    
+    /*TuiTable* trackerDataToSecureTable = new TuiTable();
+    trackerDataToSecureTable->setString("requestID", requestID);
+    trackerDataToSecureTable->set("clientData", clientSendTable);
+    clientSendTable->release();
+    
+    TuiTable* trackerSendTable = getTrackerEncryptedDataTable(trackerDataToSecureTable);
+    trackerDataToSecureTable->release();
+    std::string dataSerialized = trackerSendTable->serializeBinary();
+    trackerSendTable->release();*/
+}
+
+void ClientNetInterface::sendData(uint8_t type, const void * data, size_t dataLength, bool reliable) //todo tidy this up
+{
+    sendLargeDataInternal(type, data, dataLength, ((++sendChannelIndex) % CLIENT_MAX_SIMULTANEOUS_DOWNLOADS));
 }

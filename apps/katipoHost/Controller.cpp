@@ -127,7 +127,7 @@ void Controller::init(int argc, const char * argv[])
     scriptState = (TuiTable*)TuiRef::runScriptFile(Tui::pathByAppendingPathComponent(basePath,"scripts/code.tui"), rootTable);
 }
 
-static const double SERVER_FIXED_TIME_STEP = 1.0 / 60.0;
+static const double SERVER_FIXED_TIME_STEP = 1.0 / 10.0;
 
 void Controller::serverEventLoop()
 {

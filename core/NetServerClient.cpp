@@ -54,29 +54,6 @@ void NetServerClient::sendDataToClient(const ServerData& serverData, bool reliab
     netInterface->sendData(serverData.type, serverData.data, serverData.length, enetPeer, reliable);
 }
 
-void NetServerClient::sendLargeDataToClient(const ServerData& serverData)
-{
-    int freeChannel = 0;
-    for(freeChannel = 0; freeChannel < MAX_SIMULTANEOUS_DOWNLOADS; freeChannel++)
-    {
-        if(inUseChannels.count(freeChannel) == 0)
-        {
-            break;
-        }
-    }
-    
-    if(freeChannel < MAX_SIMULTANEOUS_DOWNLOADS)
-    {
-        inUseChannels.insert(freeChannel);
-        netInterface->sendLargeData(serverData.type, serverData.data, serverData.length, enetPeer, freeChannel);
-    }
-    else
-    {
-        MJError("todo");
-        //queuedDownloads.push(serverData); // hmmmmm serverData.data is not valid once we exit this function
-    }
-}
-
 double NetServerClient::getPingDelay()
 {
     return pingDelay;
