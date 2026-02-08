@@ -27,7 +27,7 @@ NetServerClient::NetServerClient(std::string publicKey_,
     }
     
     
-    clientID = clientIDForPublicKey(publicKey);
+    clientID = readableKeyForPublicKey(publicKey);
 
     
     valid = true;

@@ -39,7 +39,6 @@ ClientNetInterface::~ClientNetInterface()
     enet_deinitialize();
     delete inputQueue;
     delete outputQueue;
-    stateTable->release();
     if(initialData)
     {
         initialData->release();
@@ -100,17 +99,6 @@ void ClientNetInterface::disconnect()
     delete thread;
     thread = nullptr;
     
-    if(!callbacksByID.empty())
-    {
-        TuiRef* statusResult = new TuiTable("{status='error',message='not connected'}");
-        for(auto& idAndCallback : callbacksByID)
-        {
-            idAndCallback.second->call("SERVER_FUNCTION_CALL_RESPONSE", statusResult);
-        }
-        statusResult->release();
-        callbacksByID.clear();
-    }
-    
     if(enetPeer)
     {
         enet_peer_disconnect(enetPeer, 0);
@@ -141,6 +129,24 @@ void ClientNetInterface::disconnect()
     {
         enet_host_destroy(enetClient);
         enetClient = nullptr;
+    }
+    
+    
+    if(!callbacksByID.empty())
+    {
+        TuiRef* statusResult = new TuiTable("{status='error',message='not connected'}");
+        for(auto& idAndCallback : callbacksByID)
+        {
+            idAndCallback.second.func->call("SERVER_FUNCTION_CALL_RESPONSE", statusResult);
+        }
+        statusResult->release();
+        callbacksByID.clear();
+    }
+    
+    if(katipoTable->hasKey("disconnected"))
+    {
+        TuiFunction* disconnectedFunction = ((TuiFunction*)katipoTable->get("disconnected"));
+        disconnectedFunction->call("disconnected");
     }
     
 }
@@ -220,7 +226,7 @@ void ClientNetInterface::callTrackerFunction(TuiTable* args) //function name is 
         {
             callback = (TuiFunction*)(arg->retain());
             callbackID = functionCallbackIDCounter++;
-            callbacksByID[callbackID] = callback;
+            callbacksByID[callbackID].func = callback;
             dataToSecureTable->setDouble("callbackID", callbackID);
         }
         else
@@ -252,7 +258,7 @@ void ClientNetInterface::callTrackerFunction(TuiTable* args) //function name is 
         
 }
 
-void ClientNetInterface::callRemoteHostFunction(std::string hostPublicKey, TuiTable* args)
+void ClientNetInterface::callRemoteHostFunction(std::string hostSiteKey, std::string hostPublicKey, TuiTable* args)
 {
     if(args->arrayObjects.empty() || args->arrayObjects[0]->type() != Tui_ref_type_STRING)
     {
@@ -282,7 +288,8 @@ void ClientNetInterface::callRemoteHostFunction(std::string hostPublicKey, TuiTa
     if(callback)
     {
         callbackID = functionCallbackIDCounter++;
-        callbacksByID[callbackID] = ((TuiFunction*)callback->retain());
+        callbacksByID[callbackID].func = ((TuiFunction*)callback->retain());
+        callbacksByID[callbackID].hostSiteKey = hostSiteKey;
         hostDataToSecureTable->setDouble("callbackID", callbackID);
     }
     
@@ -333,129 +340,9 @@ void ClientNetInterface::callRemoteHostFunction(std::string hostPublicKey, TuiTa
     sendData(KATIPO_NET_TYPE_REMOTE_HOST_REQUEST, (void*)trackerDataSerialized.data(), trackerDataSerialized.length(), true);
 }
 
-TuiTable* ClientNetInterface::bindTui(TuiTable* katipoTable_)
+void ClientNetInterface::bindTui(TuiTable* katipoTable_)
 {
     katipoTable = katipoTable_;
-    stateTable = new TuiTable(katipoTable);
-    
-    
-    stateTable->onSet = [this](TuiRef* table, const std::string& key, TuiRef* value) {
-        /*if(key == "clientConnected")
-        {
-            if(value->type() == Tui_ref_type_FUNCTION)
-            {
-                clientConnectedFunction = (TuiFunction*)value;
-            }
-            else if(value->type() == Tui_ref_type_NIL)
-            {
-                clientConnectedFunction = nullptr;
-            }
-        }*/
-        
-    };
-    
-    /*stateTable->setFunction("register", [this](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
-        if(args->arrayObjects.size() >= 2)
-        {
-            TuiRef* functionNameRef = args->arrayObjects[0];
-            TuiRef* functionRef = args->arrayObjects[1];
-            if(functionNameRef->type() == Tui_ref_type_STRING && functionRef->type() == Tui_ref_type_FUNCTION)
-            {
-                registeredFunctions[((TuiString*)functionNameRef)->value] = (TuiFunction*)functionRef;
-                return TUI_TRUE;
-            }
-            else
-            {
-                TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "Incorrect argument type");
-            }
-        }
-        else
-        {
-            TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "Missing args");
-        }
-        return TUI_FALSE;
-    });*/
-    
-    // client.callTrackerFunction(clientID, "playlists", testPlaylists)
-    stateTable->setFunction("callTrackerFunction", [this](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
-        if(disconnected || !connected)
-        {
-            TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "attempted to callTrackerFunction, but we are not connected");
-            return TUI_NIL;
-        }
-        
-        callTrackerFunction(args);
-        
-        return TUI_NIL;
-    });
-    
-    
-    // client.downloadFromServer(clientID, "song", arg1, ... , callbackFunction)
-    /*stateTable->setFunction("downloadFromServer", [this](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
-        if(disconnected || !connected)
-        {
-            TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "attempted to downloadFromServer, but we have been disconnected");
-            return TUI_FALSE;
-        }
-        if(args->arrayObjects.size() >= 1)
-        {
-            TuiRef* functionNameRef = args->arrayObjects[0];
-            if(functionNameRef->type() == Tui_ref_type_STRING)
-            {
-                TuiTable* sendTable = new TuiTable(nullptr);
-                sendTable->set("name", functionNameRef);
-                for(int i = 1; i < args->arrayObjects.size(); i++)
-                {
-                    if(i == args->arrayObjects.size() - 1 && args->arrayObjects[i]->type() == Tui_ref_type_FUNCTION)
-                    {
-                        callbacksByID[functionCallbackIDCounter] = ((TuiFunction*)args->arrayObjects[i]->retain());
-                        sendTable->setDouble("callbackID", functionCallbackIDCounter++);
-                    }
-                    else
-                    {
-                        TuiRef* arg = args->arrayObjects[i];
-                        arg->retain();
-                        sendTable->arrayObjects.push_back(arg);
-                    }
-                }
-                
-                std::string dataSerialized = sendTable->serializeBinary();
-                sendTable->release();
-                
-                sendData(KATIPO_NET_TYPE_CLIENT_SERVER_DOWNLOAD_FILE_REQUEST, (void*)dataSerialized.data(), dataSerialized.length(), true);
-                return TUI_TRUE;
-                
-            }
-            else
-            {
-                TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "Incorrect argument type");
-            }
-        }
-        else
-        {
-            TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "Missing args");
-        }
-        return TUI_FALSE;
-    });*/
-    
-    
-    
-    
-    // client.disconnect()
-    stateTable->setFunction("disconnect", [this](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
-        if(!disconnected)
-        {
-            disconnect();
-            //todo call a disconnect function
-            /*if(registeredFunctions.count("disconnected") != 0)
-            {
-                registeredFunctions["disconnected"]->call("disconnect");
-            }*/
-        }
-        return TUI_NIL;
-    });
-    
-    return stateTable;
 }
 
 
@@ -987,7 +874,7 @@ void ClientNetInterface::pollNetEvents()
                         
                         if(callbacksByID.count(callbackID) != 0)
                         {
-                            callbacksByID[callbackID]->call("SERVER_FUNCTION_CALL_RESPONSE", tuiData);
+                            callbacksByID[callbackID].func->call("SERVER_FUNCTION_CALL_RESPONSE", tuiData);
                         }
                         
                         tuiData->release();
@@ -1022,11 +909,10 @@ void ClientNetInterface::pollNetEvents()
                                         
                                         if(callbacksByID.count(callbackID) != 0)
                                         {
-                                            //MJLog("calling func in KATIPO_NET_TYPE_FUNCTION_CALL_RESPONSE_TO_CLIENT_FROM_TRACKER");
-                                            std::string publicKeyReadable = clientIDForPublicKey(((TuiTable*)hostEncryptedData)->getString("publicKey"));
-                                            TuiRef* publicKeyReadableRef = new TuiString(publicKeyReadable);
-                                            callbacksByID[callbackID]->call("KATIPO_NET_TYPE_FUNCTION_CALL_RESPONSE_TO_CLIENT_FROM_HOST", responseData, publicKeyReadableRef);
-                                            publicKeyReadableRef->release();
+                                            ClientNetCallback& callback = callbacksByID[callbackID];
+                                            TuiRef* hostSiteKeyReadableRef = new TuiString(callback.hostSiteKey);
+                                            callback.func->call("KATIPO_NET_TYPE_FUNCTION_CALL_RESPONSE_TO_CLIENT_FROM_HOST", responseData, hostSiteKeyReadableRef);
+                                            hostSiteKeyReadableRef->release();
                                         }
                                     }
                                     else

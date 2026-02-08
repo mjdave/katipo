@@ -403,7 +403,7 @@ void Server::clientDataReceived(NetServerClient* client, const ServerData& serve
         if(decryptedDataTable)
         {
             std::string hostPublicKey = decryptedDataTable->getString("hostPublicKey");
-            std::string hostClientID = clientIDForPublicKey(hostPublicKey);
+            std::string hostClientID = readableKeyForPublicKey(hostPublicKey);
             
             if(!hostClientID.empty() && hostServer->clients.count(hostClientID) != 0 && decryptedDataTable->hasKey("data"))
             {

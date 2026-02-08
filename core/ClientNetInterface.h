@@ -4,6 +4,7 @@
 
 #include <stdio.h>
 #include <vector>
+#include <map>
 #include <string>
 #include "NetConstants.h"
 #include "ThreadSafeQueue.h"
@@ -29,19 +30,24 @@ struct ClientNetInterfaceOutput {
     ServerData serverData;
 };
 
+struct ClientNetCallback {
+    TuiFunction* func;
+    std::string hostSiteKey;
+};
+
 class ClientNetInterface {
 public:
 	std::string host;
     std::string port;
     
-    TuiTable* stateTable;
-    TuiTable* katipoTable;
     bool connected = false;
     bool disconnected = false; //true after a disconnect event
 
 private:
     ENetHost* enetClient;
     ENetPeer* enetPeer;
+    
+    TuiTable* katipoTable;
     
     ThreadSafeQueue<ClientNetInterfaceInput>* inputQueue;
     ThreadSafeQueue<ClientNetInterfaceOutput>* outputQueue;
@@ -57,7 +63,7 @@ private:
     TuiTable* initialData = nullptr;
     
     uint32_t functionCallbackIDCounter = 0;
-    std::map<uint32_t, TuiFunction*> callbacksByID;
+    std::map<uint32_t, ClientNetCallback> callbacksByID;
     
     std::map<uint8_t, std::string> inProgressMultiPartDownloadsByChannel; //downloading from remote
     
@@ -84,9 +90,9 @@ public:
     void disconnect();
     
     void callTrackerFunction(TuiTable* args);  //function name is assumed first arg, callback is last
-    void callRemoteHostFunction(std::string hostPublicKey, TuiTable* args); //function name is assumed first arg, callback is last
+    void callRemoteHostFunction(std::string hostSiteKey, std::string hostPublicKey, TuiTable* args); //function name is assumed first arg, callback is last
     
-    TuiTable* bindTui(TuiTable* katipoTable);
+    void bindTui(TuiTable* katipoTable);
     
     void pollNetEvents();
     
