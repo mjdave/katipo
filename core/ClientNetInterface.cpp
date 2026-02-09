@@ -98,6 +98,7 @@ void ClientNetInterface::disconnect()
         for(auto& idAndCallback : callbacksByID)
         {
             idAndCallback.second.func->call("SERVER_FUNCTION_CALL_RESPONSE", statusResult);
+            idAndCallback.second.func->release();
         }
         statusResult->release();
         callbacksByID.clear();
@@ -878,6 +879,8 @@ void ClientNetInterface::pollNetEvents()
                         if(callbacksByID.count(callbackID) != 0)
                         {
                             callbacksByID[callbackID].func->call("SERVER_FUNCTION_CALL_RESPONSE", tuiData);
+                            callbacksByID[callbackID].func->release();
+                            callbacksByID.erase(callbackID);
                         }
                         
                         tuiData->release();
@@ -902,6 +905,8 @@ void ClientNetInterface::pollNetEvents()
                                 ClientNetCallback& callback = callbacksByID[callbackID];
                                 TuiRef* hostSiteKeyReadableRef = new TuiString(callback.hostSiteKey);
                                 callback.func->call("KATIPO_NET_TYPE_GET_RESPONSE_TO_CLIENT_FROM_HOST", responseData, hostSiteKeyReadableRef);
+                                callback.func->release();
+                                callbacksByID.erase(callbackID);
                                 hostSiteKeyReadableRef->release();
                             }
                         }
@@ -933,13 +938,14 @@ void ClientNetInterface::pollNetEvents()
                                     {
                                         uint32_t callbackID = ((TuiNumber*)combinedHostData->objectsByStringKey["callbackID"])->value;
                                         TuiRef* responseData = combinedHostData->get("data");
-                                        //todo test handling of status/message responses
                                         
                                         if(callbacksByID.count(callbackID) != 0)
                                         {
                                             ClientNetCallback& callback = callbacksByID[callbackID];
                                             TuiRef* hostSiteKeyReadableRef = new TuiString(callback.hostSiteKey);
                                             callback.func->call("KATIPO_NET_TYPE_GET_RESPONSE_TO_CLIENT_FROM_HOST", responseData, hostSiteKeyReadableRef);
+                                            callback.func->release();
+                                            callbacksByID.erase(callbackID);
                                             hostSiteKeyReadableRef->release();
                                         }
                                     }
