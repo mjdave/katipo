@@ -375,7 +375,7 @@ void ClientNetInterface::startThread()
                                                           (input.reliable ? ENET_PACKET_FLAG_RELIABLE : 0));
                 
                 
-                enet_peer_send(enetPeer, 0, packet);
+                enet_peer_send(enetPeer, input.channelID, packet);
                 
                 free(input.data);
             }
