@@ -113,7 +113,6 @@ void Controller::init(int argc, const char * argv[])
                                                     katipoTable->get("trackerPort")->getStringValue(),
                                                          publicKey, secretKey, siteInfo);
             trackerNetInterface->bindTui(katipoTable);
-            katipoTable->set("tracker", trackerNetInterface->stateTable);
 
     
             thread = new std::thread(&Controller::serverEventLoop, this);

@@ -218,16 +218,10 @@ void Server::relayHostResponseToClient(TuiTable* decryptedDataTable) //called by
             
             if(!clientClientID.empty() && clients.count(clientClientID) != 0 && decryptedDataTable->hasKey("clientData"))
             {
-                TuiTable* toSecureTable = new TuiTable(nullptr);
-                toSecureTable->set("data", decryptedDataTable->objectsByStringKey["clientData"]);
-                
-                TuiTable* sendTable = clients[clientClientID]->getEncryptedDataTable(toSecureTable, publicKey, secretKey); //might be able to just pass this on rather than re-encrypting here, it is already host encrypted and we don't need to add anything (so far)
-                toSecureTable->release();
-                std::string dataSerialized = sendTable->serializeBinary();
-                sendTable->release();
+                const std::string& dataSerialized = ((TuiString*)decryptedDataTable->objectsByStringKey["clientData"])->value;
                 
                 ServerData sendToHostServerData;
-                sendToHostServerData.type = KATIPO_NET_TYPE_FUNCTION_CALL_RESPONSE_TO_CLIENT_FROM_HOST;
+                sendToHostServerData.type = KATIPO_NET_TYPE_GET_RESPONSE_TO_CLIENT_FROM_HOST;
                 sendToHostServerData.data = (void*)dataSerialized.data();
                 sendToHostServerData.length = dataSerialized.length();
                 
@@ -469,7 +463,7 @@ void Server::clientDataReceived(NetServerClient* client, const ServerData& serve
             decryptedDataTable->release();
         }
     }
-    else if(serverData.type == KATIPO_NET_TYPE_FUNCTION_CALL_RESPONSE_TO_CLIENT_FROM_HOST)
+    else if(serverData.type == KATIPO_NET_TYPE_GET_RESPONSE_TO_CLIENT_FROM_HOST)
     {
         TuiTable* tuiDataWrapper = (TuiTable*)TuiRef::loadBinaryString(std::string((const char*)serverData.data, serverData.length));
         TuiTable* decryptedDataTable = serverNetInterface->getDecryptedDataTable(tuiDataWrapper);

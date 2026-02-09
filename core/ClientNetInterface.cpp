@@ -92,6 +92,23 @@ void ClientNetInterface::disconnect()
         MJLog("Couldn't connect to tracker. Trying again in %d seconds", (int)timeBetweenReconnects);
     }
     
+    if(!callbacksByID.empty())
+    {
+        TuiRef* statusResult = new TuiTable("{status='error',message='not connected'}");
+        for(auto& idAndCallback : callbacksByID)
+        {
+            idAndCallback.second.func->call("SERVER_FUNCTION_CALL_RESPONSE", statusResult);
+        }
+        statusResult->release();
+        callbacksByID.clear();
+    }
+    
+    if(katipoTable->hasKey("disconnected"))
+    {
+        TuiFunction* disconnectedFunction = ((TuiFunction*)katipoTable->get("disconnected"));
+        disconnectedFunction->call("disconnected");
+    }
+    
     needsToExit = true;
     connected = false;
     disconnected = true;
@@ -129,24 +146,6 @@ void ClientNetInterface::disconnect()
     {
         enet_host_destroy(enetClient);
         enetClient = nullptr;
-    }
-    
-    
-    if(!callbacksByID.empty())
-    {
-        TuiRef* statusResult = new TuiTable("{status='error',message='not connected'}");
-        for(auto& idAndCallback : callbacksByID)
-        {
-            idAndCallback.second.func->call("SERVER_FUNCTION_CALL_RESPONSE", statusResult);
-        }
-        statusResult->release();
-        callbacksByID.clear();
-    }
-    
-    if(katipoTable->hasKey("disconnected"))
-    {
-        TuiFunction* disconnectedFunction = ((TuiFunction*)katipoTable->get("disconnected"));
-        disconnectedFunction->call("disconnected");
     }
     
 }
@@ -516,7 +515,7 @@ void ClientNetInterface::checkEnetEvents()
                         {
                             sendDownloadAcknowledge = true;
                         }*/
-                        if(incoming.type == KATIPO_NET_TYPE_SERVER_MULTIPART_DOWNLOAD_RESPONSE)
+                        /*if(incoming.type == KATIPO_NET_TYPE_SERVER_MULTIPART_DOWNLOAD_RESPONSE) //hmm KATIPO_NET_TYPE_GET_RESPONSE_TO_CLIENT_FROM_HOST
                         {
                             sendToOutput = false;
                             
@@ -558,7 +557,7 @@ void ClientNetInterface::checkEnetEvents()
                             {
                                 inProgressMultiPartDownloadsByChannel[event.channelID].append((((const char*)incoming.data) + additionalHeaderSize), recievedPayloadSize);
                             }
-                        }
+                        }*/
                         
                         if(sendToOutput)
                         {
@@ -683,7 +682,7 @@ void ClientNetInterface::processGetRequest(TuiTable* trackerData) //we are on a 
                 std::string requestID = trackerData->getString("requestID");
                 
                 callbackFunction = new TuiFunction([this, callbackID, requestID, clientPublicKey](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
-                    TuiTable* clientDataToSecureTable = new TuiTable(nullptr);
+                    TuiTable* clientDataToSecureTable = new TuiTable(nullptr); //todo never released?
                     clientDataToSecureTable->setDouble("callbackID", callbackID);
                     bool sendFile = false;
                     
@@ -733,14 +732,18 @@ void ClientNetInterface::processGetRequest(TuiTable* trackerData) //we are on a 
                         
                     }
                     //clientDataToSecureTable needs to be serialized, and then broken up into smaller packets if needed, send in multiple chunks
-                    TuiTable* clientSendTable = getHostOrClientEncryptedDataTable(clientPublicKey, clientDataToSecureTable);
+                    std::string clientDataToSecureTableFullSerialized = clientDataToSecureTable->serializeBinary();
+                    
+                    sendMultipartTuiData(requestID, clientPublicKey, clientDataToSecureTableFullSerialized);
+                    
+                    /*TuiTable* clientSendTable = getHostOrClientEncryptedDataTable(clientPublicKey, clientDataToSecureTable);
                     clientDataToSecureTable->release();
                     
                     if (!clientSendTable)
                     {
                         MJError("Failed to encode");
                         abort(); //todo shouldn't abort here
-                    }
+                    }*/
                     
                     /*TuiTable* trackerDataToSecureTable = new TuiTable();
                     trackerDataToSecureTable->setString("requestID", requestID);
@@ -753,10 +756,10 @@ void ClientNetInterface::processGetRequest(TuiTable* trackerData) //we are on a 
                     trackerSendTable->release();*/
                     
                     
-                    //sendData(KATIPO_NET_TYPE_FUNCTION_CALL_RESPONSE_TO_CLIENT_FROM_HOST, dataSerialized.data(), dataSerialized.length());
+                    //sendData(KATIPO_NET_TYPE_GET_RESPONSE_TO_CLIENT_FROM_HOST, dataSerialized.data(), dataSerialized.length());
                     
                     
-                    sendMultipartTuiData(requestID, clientSendTable);
+                    //sendMultipartTuiData(requestID, clientSendTable);
                     
                     //if(sendFile) //todo should use sendLargeData if data size above threshold, not based on whether it was loaded from disk
                   //  {
@@ -881,51 +884,85 @@ void ClientNetInterface::pollNetEvents()
                         
                     }
                         break;
-                    case KATIPO_NET_TYPE_FUNCTION_CALL_RESPONSE_TO_CLIENT_FROM_HOST: //client gets this after calling get, response is from host, data but no status means ok
+                    case KATIPO_NET_TYPE_GET_RESPONSE_TO_CLIENT_FROM_HOST: //client gets this after calling get, response is from host, data but no status means ok
                     {
                         int length = 0;
-                        TuiTable* trackerDataWrapper = (TuiTable*)TuiRef::loadBinaryString((const char*)output.serverData.data, &length, nullptr);
-                        TuiTable* trackerData = getDecryptedDataTable(trackerDataWrapper, false);
-                        trackerDataWrapper->release();
-                        
-                        if(trackerData)
-                        {
-                            if(trackerData->hasKey("data"))
-                            {
-                                TuiRef* hostEncryptedData = trackerData->get("data");
-                                if(hostEncryptedData->type() != Tui_ref_type_TABLE)
-                                {
-                                    MJError("Expected table");
-                                }
-                                else
-                                {
-                                    TuiTable* hostData = getDecryptedDataTable((TuiTable*)hostEncryptedData, true);
+                        TuiTable* hostEncryptedData = (TuiTable*)TuiRef::loadBinaryString((const char*)output.serverData.data, &length, nullptr);
+                        TuiTable* hostData = getDecryptedDataTable((TuiTable*)hostEncryptedData, true);
+                        hostEncryptedData->release();
                                     
-                                    if(hostData->hasKey("callbackID"))
+                        if(hostData->hasKey("callbackID")) //todo does this actually happen now?
+                        {
+                            uint32_t callbackID = ((TuiNumber*)hostData->objectsByStringKey["callbackID"])->value;
+                            TuiRef* responseData = hostData->get("data");
+                            //todo test handling of status/message responses
+                            
+                            if(callbacksByID.count(callbackID) != 0)
+                            {
+                                ClientNetCallback& callback = callbacksByID[callbackID];
+                                TuiRef* hostSiteKeyReadableRef = new TuiString(callback.hostSiteKey);
+                                callback.func->call("KATIPO_NET_TYPE_GET_RESPONSE_TO_CLIENT_FROM_HOST", responseData, hostSiteKeyReadableRef);
+                                hostSiteKeyReadableRef->release();
+                            }
+                        }
+                        else if(hostData->hasKey("total") && hostData->hasKey("requestID") && hostData->hasKey("clientData")) //multipart
+                        {
+                            std::string requestID = hostData->getString("requestID");
+                            if(!requestID.empty())
+                            {
+                                if(inProgressMultiPartDownloadsByRequestID.count(requestID) == 0)
+                                {
+                                    inProgressMultiPartDownloadsByRequestID[requestID].data.resize(hostData->getDouble("total"));
+                                }
+                                
+                                ClientNetMultipartDownload& download = inProgressMultiPartDownloadsByRequestID[requestID];
+                                
+                                const std::string& clientData = ((TuiString*)hostData->objectsByStringKey["clientData"])->value;
+                                memcpy((void*)(&download.data[hostData->getDouble("offset")]),
+                                       &(clientData[0]), clientData.length());
+                                
+                                download.recievedBytes += clientData.length();
+                                
+                                if(download.recievedBytes >= (uint32_t)hostData->getDouble("total"))
+                                {
+                                    MJLog("recieved full download bytes:%d", download.recievedBytes);
+                                    length = 0;
+                                    TuiTable* combinedHostData = (TuiTable*)TuiRef::loadBinaryString(&download.data[0], &length, nullptr);
+                                                
+                                    if(combinedHostData->hasKey("callbackID")) //todo does this actually happen now?
                                     {
-                                        uint32_t callbackID = ((TuiNumber*)hostData->objectsByStringKey["callbackID"])->value;
-                                        TuiRef* responseData = hostData->get("data");
+                                        uint32_t callbackID = ((TuiNumber*)combinedHostData->objectsByStringKey["callbackID"])->value;
+                                        TuiRef* responseData = combinedHostData->get("data");
                                         //todo test handling of status/message responses
                                         
                                         if(callbacksByID.count(callbackID) != 0)
                                         {
                                             ClientNetCallback& callback = callbacksByID[callbackID];
                                             TuiRef* hostSiteKeyReadableRef = new TuiString(callback.hostSiteKey);
-                                            callback.func->call("KATIPO_NET_TYPE_FUNCTION_CALL_RESPONSE_TO_CLIENT_FROM_HOST", responseData, hostSiteKeyReadableRef);
+                                            callback.func->call("KATIPO_NET_TYPE_GET_RESPONSE_TO_CLIENT_FROM_HOST", responseData, hostSiteKeyReadableRef);
                                             hostSiteKeyReadableRef->release();
                                         }
                                     }
-                                    else
-                                    {
-                                        MJError("Expected callbackID");
-                                    }
-                                    
-                                    hostData->release();
+                                }
+                                else
+                                {
+                                    MJLog("recieved download bytes:(%d/%d)", download.recievedBytes, (uint32_t)hostData->getDouble("total"));
                                 }
                             }
-                            
-                            trackerData->release();
+                               /* TuiTable* clientDataToSecureTable = new TuiTable(nullptr);
+                                clientDataToSecureTable->setString("requestID", requestID);
+                                clientDataToSecureTable->setDouble("total", dataLength);
+                                
+                                uint32_t thisPacketLoadBytesToSend = min(bytesToSend, MJMaxPacketSize / 2);
+                                clientDataToSecureTable->setString("clientData", clientDataToSecureTableFullSerialized.substr(dataStartOffset, thisPacketLoadBytesToSend));
+                                clientDataToSecureTable->setDouble("offset", dataStartOffset);*/
                         }
+                        else
+                        {
+                            MJError("Expected callbackID");
+                        }
+                        
+                        hostData->release();
                         
                     }
                         break;
@@ -957,13 +994,9 @@ void ClientNetInterface::pollNetEvents()
     }
 }
 
-#define CLIENT_MAX_SIMULTANEOUS_DOWNLOADS 4
+#define CLIENT_MAX_SIMULTANEOUS_DOWNLOADS 8
 
-
-void ClientNetInterface::sendLargeDataInternal(uint8_t type,
-    const void * data,
-    size_t dataLength,
-    uint8_t channel)
+void ClientNetInterface::sendMultipartTuiData(const std::string& requestID, const std::string& clientPublicKey, const std::string& clientDataToSecureTableFullSerialized) //todo pretty sure clientDataToSecureTableFullSerialized is double encrypted
 {
     if(!enetPeer || !enetClient || disconnected)
     {
@@ -971,112 +1004,70 @@ void ClientNetInterface::sendLargeDataInternal(uint8_t type,
         return;
     }
     
-    if(dataLength > MJMaxPacketSize)
-    {
-        uint32_t bytesToSend = (uint32_t)dataLength;
-        //uint32_t dataStartOffset = 0;
-        while(bytesToSend > 0)
-        {
-            MJError("Todo ClientNetInterface::sendLargeDataInternal. Katipo does not currently support data larger than ~4MB.");
-            abort();
-            //todo IMPORTANT we need to send this in chunks with the request ID so that it can be passed on to the client immediately
-            /*uint32_t additionalHeaderSize = sizeof(uint8_t) + sizeof(uint32_t) + sizeof(uint32_t);
-            uint32_t thisPacketLoadBytesToSend = min(bytesToSend, MJMaxPacketSize);
-            uint32_t thisPacketTotalSize = thisPacketLoadBytesToSend + sizeof(uint8_t) + additionalHeaderSize;
-            uint8_t* netData = (uint8_t*)malloc(thisPacketTotalSize);
-            netData[0] = KATIPO_NET_TYPE_SERVER_MULTIPART_DOWNLOAD_RESPONSE;
-            netData[1] = type;
-            
-            memcpy(&(netData[2]), &dataLength, sizeof(uint32_t));
-            memcpy(&(netData[6]), &dataStartOffset, sizeof(uint32_t));
-            
-            memcpy(&(netData[10]), ((uint8_t*)data + dataStartOffset), thisPacketLoadBytesToSend);
-            
-            dataStartOffset += thisPacketLoadBytesToSend;
-            bytesToSend -= thisPacketLoadBytesToSend;
-            
-            ClientNetInterfaceInput input;
-            input.data = netData;
-            input.dataLength = thisPacketLoadBytesToSend + additionalHeaderSize;
-            input.reliable = true;
-            input.channelID = channel;
-            inputQueue->push(input);*/
-        }
-    }
-    else
-    {
-        uint8_t* netData = (uint8_t*)malloc(dataLength + sizeof(uint8_t));
-        netData[0] = type;
-        
-        memcpy(&(netData[1]), data, dataLength);
-        
-        ClientNetInterfaceInput input;
-        input.data = netData;
-        input.dataLength = dataLength;
-        input.reliable = true;
-        input.channelID = channel;
-        inputQueue->push(input);
-    }
-}
-
-void ClientNetInterface::sendMultipartTuiData(std::string requestID, TuiTable* clientSendTable)
-{
-    std::string clientSendTableSerialized = clientSendTable->serializeBinary();
-    
-    uint32_t dataLength = (uint32_t)clientSendTableSerialized.length();
+    uint32_t dataLength = (uint32_t)clientDataToSecureTableFullSerialized.length();
     uint32_t bytesToSend = dataLength;
     uint32_t dataStartOffset = 0;
     
     TuiTable* trackerDataToSecureTable = new TuiTable();
     trackerDataToSecureTable->setString("requestID", requestID);
+    
     while(bytesToSend > 0)
     {
+        TuiTable* clientDataToSecureTable = new TuiTable(nullptr);
+        clientDataToSecureTable->setString("requestID", requestID);
+        clientDataToSecureTable->setDouble("total", dataLength);
+        
         uint32_t thisPacketLoadBytesToSend = min(bytesToSend, MJMaxPacketSize / 2);
-        trackerDataToSecureTable->setString("clientData", clientSendTableSerialized.substr(dataStartOffset, thisPacketLoadBytesToSend)); //todo memcpy
+        clientDataToSecureTable->setString("clientData", clientDataToSecureTableFullSerialized.substr(dataStartOffset, thisPacketLoadBytesToSend));
+        clientDataToSecureTable->setDouble("offset", dataStartOffset);
         
-        TuiTable* trackerSendTable = getTrackerEncryptedDataTable(trackerDataToSecureTable);
-        std::string dataSerialized = trackerSendTable->serializeBinary();
-        trackerSendTable->release();
-        
-        uint32_t additionalHeaderSize = sizeof(uint8_t) + sizeof(uint32_t) + sizeof(uint32_t);
-        uint32_t thisPacketTotalSize = thisPacketLoadBytesToSend + sizeof(uint8_t) + additionalHeaderSize;
-        uint8_t* netData = (uint8_t*)malloc(thisPacketTotalSize);
-        netData[0] = KATIPO_NET_TYPE_SERVER_MULTIPART_DOWNLOAD_RESPONSE;
-        netData[1] = KATIPO_NET_TYPE_FUNCTION_CALL_RESPONSE_TO_CLIENT_FROM_HOST;
-        
-        memcpy(&(netData[2]), &dataLength, sizeof(uint32_t));
-        memcpy(&(netData[6]), &dataStartOffset, sizeof(uint32_t));
-        
-        memcpy(&(netData[10]), ((uint8_t*)(&dataSerialized[0]) + dataStartOffset), thisPacketLoadBytesToSend);
+        TuiTable* clientSendTable = getHostOrClientEncryptedDataTable(clientPublicKey, clientDataToSecureTable);
+        std::string clientSendTableSerialized = clientSendTable->serializeBinary();
+        clientSendTable->release();
         
         dataStartOffset += thisPacketLoadBytesToSend;
         bytesToSend -= thisPacketLoadBytesToSend;
         
+        trackerDataToSecureTable->setString("clientData", clientSendTableSerialized); //todo this probably doesn't need to be serialized
+        TuiTable* trackerSendTable = getTrackerEncryptedDataTable(trackerDataToSecureTable);
+        std::string dataSerialized = trackerSendTable->serializeBinary();
+        trackerSendTable->release();
+        clientDataToSecureTable->release();
+        
+        uint32_t thisPacketTotalSize = dataSerialized.length() + sizeof(uint8_t);
+        uint8_t* netData = (uint8_t*)malloc(thisPacketTotalSize);
+        netData[0] = KATIPO_NET_TYPE_GET_RESPONSE_TO_CLIENT_FROM_HOST;
+        memcpy(&(netData[1]), ((uint8_t*)(&dataSerialized[0])), dataSerialized.length());
+        
         ClientNetInterfaceInput input;
         input.data = netData;
-        input.dataLength = thisPacketLoadBytesToSend + additionalHeaderSize;
+        input.dataLength = thisPacketTotalSize;
         input.reliable = true;
         input.channelID = ((++sendChannelIndex) % CLIENT_MAX_SIMULTANEOUS_DOWNLOADS);
         inputQueue->push(input);
+        
     }
     
     trackerDataToSecureTable->release();
-    clientSendTable->release();
-    
-    //KATIPO_NET_TYPE_FUNCTION_CALL_RESPONSE_TO_CLIENT_FROM_HOST
-    
-    /*TuiTable* trackerDataToSecureTable = new TuiTable();
-    trackerDataToSecureTable->setString("requestID", requestID);
-    trackerDataToSecureTable->set("clientData", clientSendTable);
-    clientSendTable->release();
-    
-    TuiTable* trackerSendTable = getTrackerEncryptedDataTable(trackerDataToSecureTable);
-    trackerDataToSecureTable->release();
-    std::string dataSerialized = trackerSendTable->serializeBinary();
-    trackerSendTable->release();*/
 }
 
-void ClientNetInterface::sendData(uint8_t type, const void * data, size_t dataLength, bool reliable) //todo tidy this up
+void ClientNetInterface::sendData(uint8_t type, const void * data, size_t dataLength, bool reliable)
 {
-    sendLargeDataInternal(type, data, dataLength, ((++sendChannelIndex) % CLIENT_MAX_SIMULTANEOUS_DOWNLOADS));
+    if(!enetPeer || !enetClient || disconnected)
+    {
+        MJLog("Attempt to send data with no connection.");
+        return;
+    }
+    
+    uint8_t* netData = (uint8_t*)malloc(dataLength + sizeof(uint8_t));
+    netData[0] = type;
+    
+    memcpy(&(netData[1]), data, dataLength);
+    
+    ClientNetInterfaceInput input;
+    input.data = netData;
+    input.dataLength = dataLength;
+    input.reliable = true;
+    input.channelID = ((++sendChannelIndex) % CLIENT_MAX_SIMULTANEOUS_DOWNLOADS);
+    inputQueue->push(input);
 }

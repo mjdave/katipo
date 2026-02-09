@@ -35,6 +35,11 @@ struct ClientNetCallback {
     std::string hostSiteKey;
 };
 
+struct ClientNetMultipartDownload {
+    int recievedBytes = 0;
+    std::string data;
+};
+
 class ClientNetInterface {
 public:
 	std::string host;
@@ -65,7 +70,7 @@ private:
     uint32_t functionCallbackIDCounter = 0;
     std::map<uint32_t, ClientNetCallback> callbacksByID;
     
-    std::map<uint8_t, std::string> inProgressMultiPartDownloadsByChannel; //downloading from remote
+    std::map<std::string, ClientNetMultipartDownload> inProgressMultiPartDownloadsByRequestID; //downloading from remote
     
     uint8_t sendChannelIndex = 0;
     
@@ -96,21 +101,14 @@ public:
     
     void pollNetEvents();
     
-    void sendMultipartTuiData(std::string requestID, TuiTable* clientSendTable);
+    void sendMultipartTuiData(const std::string& requestID, const std::string& clientPublicKey, const std::string& clientDataToSecureTableFullSerialized);
     void sendData(uint8_t type, const void * data = NULL, size_t dataLength = 0, bool reliable = true);
-    //void sendLargeData(uint8_t type, const void * data, size_t dataLength = 0, bool reliable = true);
     
 protected:
     
 private:
     void startThread();
     void checkEnetEvents();
-    
-    void sendLargeDataInternal(uint8_t type,
-                               const void * data,
-                               size_t dataLength,
-                               uint8_t channel);
-    
     
     TuiTable* getTrackerEncryptedDataTable(TuiTable* dataToSecure);
     TuiTable* getHostOrClientEncryptedDataTable(std::string hostPublicKey, TuiTable* dataToSecure);

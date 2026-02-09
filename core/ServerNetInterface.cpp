@@ -321,89 +321,8 @@ void ServerNetInterface::checkEnetEvents()
                                                            "");
                         }
                     }
-                    else if(incoming.type == KATIPO_NET_TYPE_SERVER_MULTIPART_DOWNLOAD_RESPONSE) //todo we really need to just pass this on, don't store
+                    else if(connectedClientsByEnetPeer.count(event.peer) != 0)
                     {
-                        if(connectedClientsByEnetPeer.count(event.peer) != 0)
-                        {
-                            NetServerClient* client = connectedClientsByEnetPeer[event.peer];
-                            bool sendToOutput = true;
-                            
-                            sendToOutput = false;
-                            
-                            uint32_t additionalHeaderSize = sizeof(uint8_t) + sizeof(uint32_t) + sizeof(uint32_t);
-                            
-                            uint32_t totalSize = *((uint32_t*)(((uint8_t*)incoming.data) + 1));
-                            uint32_t dataStartOffset = *((uint32_t*)(((uint8_t*)incoming.data) + 5));
-                            
-                            uint32_t recievedPayloadSize = (uint32_t)incoming.length - additionalHeaderSize;
-                            
-                            MJLog("multipart download: %d/%d", dataStartOffset + recievedPayloadSize, totalSize);
-                            
-                            if(recievedPayloadSize + dataStartOffset == totalSize)
-                            {
-                                MJLog("multipart download complete");
-                                if(client->inProgressMultiPartDownloadsByChannel.count(event.channelID) == 0)
-                                {
-                                    MJError("Got unexpected final multpart download packet");
-                                    abort();
-                                }
-                                
-                                client->inProgressMultiPartDownloadsByChannel[event.channelID].append((((const char*)incoming.data) + additionalHeaderSize), recievedPayloadSize);
-                                
-                                ServerNetInterfaceOutput output;
-                                
-                                output.outputType = SERVER_NET_INTERFACE_OUTPUT_DATA_RECEIEVED;
-                                
-                                output.serverData.type = *(((uint8_t*)incoming.data) + 0);
-                                
-                                output.serverData.data = malloc(totalSize);
-                                memcpy(output.serverData.data, client->inProgressMultiPartDownloadsByChannel[event.channelID].data(), client->inProgressMultiPartDownloadsByChannel[event.channelID].size());
-                                output.serverData.length = totalSize;
-                                
-                                outputQueue->push(output);
-                                client->inProgressMultiPartDownloadsByChannel.erase(event.channelID);
-                            }
-                            else
-                            {
-                                client->inProgressMultiPartDownloadsByChannel[event.channelID].append((((const char*)incoming.data) + additionalHeaderSize), recievedPayloadSize);
-                            }
-                            
-                            if(sendToOutput)
-                            {
-                                ServerNetInterfaceOutput output;
-                                
-                                output.outputType = SERVER_NET_INTERFACE_OUTPUT_DATA_RECEIEVED;
-                                
-                                output.serverData.type = incoming.type;
-                                if(incoming.length > 0)
-                                {
-                                    output.serverData.data = malloc(incoming.length);
-                                    memcpy(output.serverData.data, incoming.data, incoming.length);
-                                }
-                                else
-                                {
-                                    output.serverData.data = nullptr;
-                                }
-                                output.serverData.length = incoming.length;
-                                
-                                outputQueue->push(output);
-                            }
-                        }
-                    }
-                    /*else if(connectedClientsByEnetPeer.count(event.peer) != 0)
-                    {
-                        
-                        uint8_t data[2] = {
-                            KATIPO_NET_TYPE_CLIENT_SERVER_DOWNLOAD_FILE_COMPLETE_NOTIFICATION,
-                            event.channelID
-                        };
-                        ENetPacket * packet = enet_packet_create (data,
-                                                                  sizeof(uint8_t) * 2,
-                                                                  ENET_PACKET_FLAG_RELIABLE);
-                        
-                        
-                        enet_peer_send(event.peer, 0, packet);
-                        
                         NetServerClient* client = connectedClientsByEnetPeer[event.peer];
                         ServerNetInterfaceOutput output;
                         
@@ -416,7 +335,7 @@ void ServerNetInterface::checkEnetEvents()
                         output.serverData.length = incoming.length;
                         
                         outputQueue->push(output);
-                    }*/
+                    }
                 }
                 enet_packet_destroy (event.packet);
             }
@@ -507,62 +426,4 @@ void ServerNetInterface::sendData(uint8_t type,
         inputQueue->push(input);
     }
     
-}
-
-//todo
-// keep per client sets of in use channels
-// when client returns a packet with a new type TYPE, clear the in use state
-
-
-void ServerNetInterface::sendLargeData(uint8_t type,
-    const void * data,
-    size_t dataLength,
-    ENetPeer* peer,
-    uint8_t channel)
-{
-    if(dataLength > MJMaxPacketSize)
-    {
-        uint32_t bytesToSend = (uint32_t)dataLength;
-        uint32_t dataStartOffset = 0;
-        while(bytesToSend > 0)
-        {
-            uint32_t additionalHeaderSize = sizeof(uint8_t) + sizeof(uint32_t) + sizeof(uint32_t);
-            uint32_t thisPacketLoadBytesToSend = min(bytesToSend, MJMaxPacketSize);
-            uint32_t thisPacketTotalSize = thisPacketLoadBytesToSend + sizeof(uint8_t) + additionalHeaderSize;
-            uint8_t* netData = (uint8_t*)malloc(thisPacketTotalSize);
-            netData[0] = KATIPO_NET_TYPE_SERVER_MULTIPART_DOWNLOAD_RESPONSE;
-            netData[1] = type;
-            
-            memcpy(&(netData[2]), &dataLength, sizeof(uint32_t));
-            memcpy(&(netData[6]), &dataStartOffset, sizeof(uint32_t));
-            
-            memcpy(&(netData[10]), ((uint8_t*)data + dataStartOffset), thisPacketLoadBytesToSend);
-            
-            dataStartOffset += thisPacketLoadBytesToSend;
-            bytesToSend -= thisPacketLoadBytesToSend;
-            
-            ServerNetInterfaceInput input;
-            input.data = netData;
-            input.peer = peer;
-            input.dataLength = thisPacketLoadBytesToSend + additionalHeaderSize;
-            input.reliable = true;
-            input.channelID = channel;
-            inputQueue->push(input);
-        }
-    }
-    else
-    {
-        uint8_t* netData = (uint8_t*)malloc(dataLength + sizeof(uint8_t));
-        netData[0] = type;
-        
-        memcpy(&(netData[1]), data, dataLength);
-        
-        ServerNetInterfaceInput input;
-        input.data = netData;
-        input.peer = peer;
-        input.dataLength = dataLength;
-        input.reliable = true;
-        input.channelID = channel;
-        inputQueue->push(input);
-    }
 }

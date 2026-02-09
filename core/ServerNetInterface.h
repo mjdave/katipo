@@ -66,12 +66,6 @@ public:
                   ENetPeer* peer,
                   bool reliable);
     
-    void sendLargeData(uint8_t type,
-                  const void * data,
-                  size_t dataLength,
-                  ENetPeer* peer,
-                  uint8_t channel);
-    
     TuiTable* getDecryptedDataTable(TuiTable* tuiDataWrapper);
     
 public:
