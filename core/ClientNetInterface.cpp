@@ -737,41 +737,6 @@ void ClientNetInterface::processGetRequest(TuiTable* trackerData) //we are on a 
                     
                     sendMultipartTuiData(requestID, clientPublicKey, clientDataToSecureTableFullSerialized);
                     
-                    /*TuiTable* clientSendTable = getHostOrClientEncryptedDataTable(clientPublicKey, clientDataToSecureTable);
-                    clientDataToSecureTable->release();
-                    
-                    if (!clientSendTable)
-                    {
-                        MJError("Failed to encode");
-                        abort(); //todo shouldn't abort here
-                    }*/
-                    
-                    /*TuiTable* trackerDataToSecureTable = new TuiTable();
-                    trackerDataToSecureTable->setString("requestID", requestID);
-                    trackerDataToSecureTable->set("clientData", clientSendTable);
-                    clientSendTable->release();
-                    
-                    TuiTable* trackerSendTable = getTrackerEncryptedDataTable(trackerDataToSecureTable);
-                    trackerDataToSecureTable->release();
-                    std::string dataSerialized = trackerSendTable->serializeBinary();
-                    trackerSendTable->release();*/
-                    
-                    
-                    //sendData(KATIPO_NET_TYPE_GET_RESPONSE_TO_CLIENT_FROM_HOST, dataSerialized.data(), dataSerialized.length());
-                    
-                    
-                    //sendMultipartTuiData(requestID, clientSendTable);
-                    
-                    //if(sendFile) //todo should use sendLargeData if data size above threshold, not based on whether it was loaded from disk
-                  //  {
-                   //     sendLargeData(KATIPO_NET_TYPE_SERVER_DOWNLOAD_FILE_RESPONSE, dataSerialized.data(), dataSerialized.length());
-                   // }
-                   // else
-                   // {
-                        
-                   //     sendData(KATIPO_NET_TYPE_CLIENT_FUNCTION_CALL_RESPONSE, dataSerialized.data(), dataSerialized.length(), true);
-                   // }
-                    
                     return TUI_NIL;
                 });
                 sendArgs->push(callbackFunction);

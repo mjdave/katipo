@@ -12,9 +12,7 @@
 
 #define LOG_NETWORK 0
 
-#define CLIENT_MAX_SIMULTANEOUS_DOWNLOADS 32
-
-//static const uint32_t MJMaxPacketSize = 1024*1024*sizeof(uint32_t) - (sizeof(uint32_t) * 4); //we use an 8 bit header, and two 32 bit header values for multipart downloads, enet maximum appears to be 1024*1024*sizeof(uint32_t)
+#define CLIENT_MAX_SIMULTANEOUS_DOWNLOADS 32 //I think absolute max is 256, this value needs to be experimented with
 
 static const uint32_t MJMultipartChunkSize = 1024*1024; //1MB chunks. Absolute maximum for this is slightly under 8MB, before we hit a limit in enet
 
@@ -25,7 +23,7 @@ static inline std::string readableKeyForPublicKey(const std::string& publicKey)
                          (unsigned char*)&(publicKey[0]), publicKey.length());
 }
 
-static inline std::string publicKeyForReadableKey(const std::string& readableKey)
+static inline std::string publicKeyForReadableKey(const std::string& readableKey) //untested
 {
      if(sodium_hex2bin((unsigned char*)clientIDBuffer, 128,
                          (char*)&(readableKey[0]), readableKey.length(), NULL, NULL, NULL) >= 0)
@@ -42,18 +40,12 @@ struct ServerData {
 };
 
 enum {
-    KATIPO_NET_TYPE_SERVER_JOIN_RESPONSE_ACCEPT = 1,
-    KATIPO_NET_TYPE_SERVER_JOIN_RESPONSE_REJECT,//2
-    KATIPO_NET_TYPE_SERVER_HEARTBEAT,//3
+    KATIPO_NET_TYPE_SERVER_JOIN_RESPONSE_REJECT = 1,
     KATIPO_NET_TYPE_FUNCTION_CALL_RESPONSE_TO_CLIENT_FROM_TRACKER,
     KATIPO_NET_TYPE_GET_RESPONSE_TO_CLIENT_FROM_HOST,
-    KATIPO_NET_TYPE_SERVER_JOIN_INFO_RESPONSE,
     
     KATIPO_NET_TYPE_CLIENT_JOIN_REQUEST,
-    KATIPO_NET_TYPE_CLIENT_PLAYER_UPDATE,
     KATIPO_NET_TYPE_CLIENT_SERVER_FUNCTION_CALL_REQUEST,
-    KATIPO_NET_TYPE_CLIENT_FUNCTION_CALL_RESPONSE,
-    KATIPO_NET_TYPE_CLIENT_SERVER_DOWNLOAD_FILE_REQUEST,
     KATIPO_NET_TYPE_REMOTE_HOST_REQUEST,
     
     KATIPO_NET_TYPE_INITIAL_HANDSHAKE
