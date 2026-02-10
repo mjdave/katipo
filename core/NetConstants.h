@@ -12,7 +12,11 @@
 
 #define LOG_NETWORK 0
 
-static const uint32_t MJMaxPacketSize = 1024*1024*sizeof(uint32_t) - (sizeof(uint32_t) * 4); //we use an 8 bit header, and two 32 bit header values for multipart downloads, enet maximum appears to be 1024*1024*sizeof(uint32_t)
+#define CLIENT_MAX_SIMULTANEOUS_DOWNLOADS 32
+
+//static const uint32_t MJMaxPacketSize = 1024*1024*sizeof(uint32_t) - (sizeof(uint32_t) * 4); //we use an 8 bit header, and two 32 bit header values for multipart downloads, enet maximum appears to be 1024*1024*sizeof(uint32_t)
+
+static const uint32_t MJMultipartChunkSize = 1024*1024; //1MB chunks. Absolute maximum for this is slightly under 8MB, before we hit a limit in enet
 
 static char clientIDBuffer[128];
 static inline std::string readableKeyForPublicKey(const std::string& publicKey)

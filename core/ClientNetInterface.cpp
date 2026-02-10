@@ -934,7 +934,7 @@ void ClientNetInterface::pollNetEvents()
                                     length = 0;
                                     TuiTable* combinedHostData = (TuiTable*)TuiRef::loadBinaryString(&download.data[0], &length, nullptr);
                                                 
-                                    if(combinedHostData->hasKey("callbackID")) //todo does this actually happen now?
+                                    if(combinedHostData->hasKey("callbackID"))
                                     {
                                         uint32_t callbackID = ((TuiNumber*)combinedHostData->objectsByStringKey["callbackID"])->value;
                                         TuiRef* responseData = combinedHostData->get("data");
@@ -955,13 +955,6 @@ void ClientNetInterface::pollNetEvents()
                                     MJLog("recieved download bytes:(%d/%d)", download.recievedBytes, (uint32_t)hostData->getDouble("total"));
                                 }
                             }
-                               /* TuiTable* clientDataToSecureTable = new TuiTable(nullptr);
-                                clientDataToSecureTable->setString("requestID", requestID);
-                                clientDataToSecureTable->setDouble("total", dataLength);
-                                
-                                uint32_t thisPacketLoadBytesToSend = min(bytesToSend, MJMaxPacketSize / 2);
-                                clientDataToSecureTable->setString("clientData", clientDataToSecureTableFullSerialized.substr(dataStartOffset, thisPacketLoadBytesToSend));
-                                clientDataToSecureTable->setDouble("offset", dataStartOffset);*/
                         }
                         else
                         {
@@ -1000,8 +993,6 @@ void ClientNetInterface::pollNetEvents()
     }
 }
 
-#define CLIENT_MAX_SIMULTANEOUS_DOWNLOADS 8
-
 void ClientNetInterface::sendMultipartTuiData(const std::string& requestID, const std::string& clientPublicKey, const std::string& clientDataToSecureTableFullSerialized) //todo pretty sure clientDataToSecureTableFullSerialized is double encrypted
 {
     if(!enetPeer || !enetClient || disconnected)
@@ -1023,7 +1014,7 @@ void ClientNetInterface::sendMultipartTuiData(const std::string& requestID, cons
         clientDataToSecureTable->setString("requestID", requestID);
         clientDataToSecureTable->setDouble("total", dataLength);
         
-        uint32_t thisPacketLoadBytesToSend = min(bytesToSend, MJMaxPacketSize / 2);
+        uint32_t thisPacketLoadBytesToSend = min(bytesToSend, MJMultipartChunkSize);
         clientDataToSecureTable->setString("clientData", clientDataToSecureTableFullSerialized.substr(dataStartOffset, thisPacketLoadBytesToSend));
         clientDataToSecureTable->setDouble("offset", dataStartOffset);
         
