@@ -49,10 +49,10 @@ public:
     bool disconnected = false; //true after a disconnect event
 
 private:
-    ENetHost* enetClient;
-    ENetPeer* enetPeer;
+    ENetHost* enetClient = nullptr;
+    ENetPeer* enetPeer = nullptr;
     
-    TuiTable* katipoTable;
+    TuiTable* katipoTable = nullptr;
     
     ThreadSafeQueue<ClientNetInterfaceInput>* inputQueue;
     ThreadSafeQueue<ClientNetInterfaceOutput>* outputQueue;
@@ -74,7 +74,7 @@ private:
     
     uint8_t sendChannelIndex = 0;
     
-    std::thread* thread;
+    std::thread* thread = nullptr;
     
     bool needsToExit = false;
     

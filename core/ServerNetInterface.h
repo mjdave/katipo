@@ -36,7 +36,7 @@ struct ServerNetInterfaceOutput {
 class Server;
 
 class ServerNetInterface {
-    ENetHost* enetServer;
+    ENetHost* enetServer = nullptr;
     
     ThreadSafeQueue<ServerNetInterfaceInput>* inputQueue;
     ThreadSafeQueue<ServerNetInterfaceOutput>* outputQueue;
@@ -72,8 +72,8 @@ public:
     bool valid = false;
     
 private:
-    Server* server;
-    std::thread* thread;
+    Server* server = nullptr;
+    std::thread* thread = nullptr;
     std::string publicKey;
     std::string secretKey;
     

@@ -45,7 +45,7 @@ public:
     
 protected:
     
-    ServerNetInterface* netInterface;
+    ServerNetInterface* netInterface = nullptr;
     
 
 };

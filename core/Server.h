@@ -79,7 +79,7 @@ public:
 protected:
     ServerNetInterface* serverNetInterface = nullptr;
     
-    TuiTable* serverConfig;
+    TuiTable* serverConfig = nullptr;
     
     std::map<std::string, TuiFunction*> registeredFunctions;
     TuiFunction* clientConnectedFunction = nullptr;

@@ -14,8 +14,8 @@ class Database;
 
 class DatabaseEnvironment {
 public:
-    MDB_env* env;
-    MDB_txn* bulkTransaction;
+    MDB_env* env = nullptr;
+    MDB_txn* bulkTransaction = nullptr;
 
 	size_t currentMapSizeInMB;
 	unsigned int pageSize;

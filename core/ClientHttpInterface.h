@@ -31,8 +31,8 @@ private:
     ThreadSafeQueue<ClientHttpInterfaceThreadInput>* inputQueue;
     ThreadSafeQueue<ClientHttpInterfaceThreadOutput>* outputQueue;
     
-    std::thread* _thread;
-    uint32_t updateTimerID;
+    std::thread* _thread = nullptr;
+    uint32_t updateTimerID = 0;
 
 	//uint8_t* readBuffer;
     
