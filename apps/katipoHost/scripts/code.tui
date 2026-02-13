@@ -102,7 +102,7 @@ siteCode = require(siteCodePath)
 #print("siteCode:", siteCode)
 
 katipo.siteInfo = siteInfo
-katipo.connected = function() #we should set up this callback before we call init
+katipo.connected = function()
 {
     print("Successfully connected to katipo tracker server, with host name:", siteInfo.nameKey)
 }
@@ -116,13 +116,6 @@ if(!success)
 }
 
 print("Katipo initialized successfully.")
-
-
-/*clientConnected = function(clientInfo) #todo maybe need this?
-{
-    print("in tui clientConnected. clientInfo:", clientInfo)
-}*/
-
 
 katipo.get = function(url, clientData)
 {
