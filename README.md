@@ -7,15 +7,15 @@ The Katipō is an endangered venomous spider from New Zealand.
 
 Katipo is open source and completely free, and it's being built from first principles by hand without any AI "help". Katipo's goal is to help make the next generation of software more accessible, cheaper, more secure, and more useful. It can help us to take control of our digital lives, our data, our apps, and most importantly, our connections.
 
-Katipo will make it much easier to create, host and share your own sites, apps and data. From within the Katipo Browser app, which you will be able to download from any app store (or compile yourself), you can easily host a site/app/file from any device.
+Katipo will make it much easier to create, host and share your own sites, apps and data. From within the [Katipo Browser](https://github.com/mjdave/katipoBrowser) app, which you will be able to download from any app store (or compile yourself), you can easily host a site/app/file from any device.
 
-Katipo will also provide better security with end to end encryption between all parties at all times, and offers a number of other significant security benefits inherent in the design. Hosts don't know who clients are, trackers can't read any of the data going between hosts and clients, and the majority of the data will be stored encrypted on client devices with tracker based backups (built-in cloud storage) and sync between devices.
+Katipo also provides better security with end to end encryption between all parties at all times, and offers a number of other significant security benefits inherent in the design. Hosts don't know who clients are, trackers can't read any of the data going between hosts and clients, and the majority of the data will be stored encrypted on client devices with tracker based backups (built-in cloud storage) and sync between devices.
 
 Katipo uses a tracker based system to provide networking between clients and hosts that can both be behind firewalls, without the need to open any ports. How this works is that one or more trackers sit between the host and the client, and act like a proxy. You can make small private networks with a single tracker, or (once implemented) chain trackers together to create much larger networks.
 
 Both site hosts and clients are private, they are actually both clients. Trackers are the servers, the public facing hub with ports open for incoming connections. However a tracker is little more than a virtual router, shuffling encrypted data packets between hosts and clients.
 
-This repository contains the (functioning) core networking library. A free Vulkan/SDL3 based open source browser will be released for Windows, Mac, and iOS soon, with more platforms planned. The browser will allow both browsing/searching of sites, and hosting of sites and trackers. Tracker based features like data backups, port scanning for other trackers on the same network, and in/outboxes to support direct messaging and chat are planned.
+This repository contains the (functioning) core networking library. A free Vulkan/SDL3 based open source [Katipo Browser](https://github.com/mjdave/katipoBrowser) client app is being worked on and will be released for Windows, Mac, and iOS soon, with more platforms planned. The browser will allow both browsing/searching of sites, and hosting of sites and trackers. Tracker based features like data backups, port scanning for other trackers on the same network, and in/outboxes to support direct messaging and chat are planned.
 
 PLEASE NOTE! Encryption has only just been implemented. For now, you should not use Katipo to transmit sensitive data or to connect to trackers or hosts that you do not trust. I have full faith in the design and general implementation, end to end encryption works. However there are likely to be a couple of bugs and things I've missed still.
 
@@ -61,11 +61,13 @@ cd apps/katipoHost
 ./build.sh
 ./katipoHost --site exampleSites/basicSite
 ```
+You can now connect to the host from within the Katipo Browser app, by navigating to "basicSite", or 127.0.0.1/basicSite, or you can use the command line client:
 ```
 cd apps/katipoClient
 ./build.sh
 ./katipoClient --get basicSite
 ```
+
 
 All going well, the client should print the test message from the host.
 
@@ -98,7 +100,7 @@ So I'm Dave, and that's what motivates me to work on Katipo. But I think many of
 
 It's very much real, and I'm probably insane. Really I just saw it was possible and necessary, and that I could build it and that nobody else seemed to be doing that. 
 
-I have been making my own engines for my games for >20 years, and have learned some things. I have a very solid understanding of every part of making 3D games from scratch, from the low level hardware interactions to high level design and publishing. Game engines are very much like browsers, and Katipo is a natural evolution of my multiplayer game engines. I just saw this was a good idea, for me, maybe for others, and I went for it.
+I have been making my own engines for my games for 20+ years, and have learned some things. I have a very solid understanding of every part of making 3D games from scratch, from the low level hardware interactions to high level design and publishing. Game engines are very much like browsers, and Katipo is a natural evolution of my multiplayer game engines. I just saw this was a good idea, for me, maybe for others, and I went for it.
 
 I am very much aware that Katipo is not perfect. Some of the early decisions need to be reworked, some things need to be replaced, there are bugs and room for optimization, and a lot is still missing. 
 
