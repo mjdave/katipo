@@ -768,6 +768,11 @@ void ClientNetInterface::processGetRequest(TuiTable* trackerData) //we are on a 
             MJError("katipo.get callback function not set.");
         }
     }
+    
+    if(clientData)
+    {
+        clientData->release();
+    }
 }
 
 void ClientNetInterface::pollNetEvents()
@@ -914,6 +919,9 @@ void ClientNetInterface::pollNetEvents()
                                             hostSiteKeyReadableRef->release();
                                         }
                                     }
+                                    
+                                    combinedHostData->release();
+                                    inProgressMultiPartDownloadsByRequestID.erase(requestID);
                                 }
                                 else
                                 {
