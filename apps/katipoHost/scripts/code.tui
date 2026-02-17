@@ -3,6 +3,7 @@ KATIPO_VERSION = "0.1" #todo
 ### set defaults
 katipo.trackerIP = "127.0.0.1"
 katipo.trackerPort = "3470"
+katipo.retry = true
 
 printUsage = function()
 {
