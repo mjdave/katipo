@@ -69,6 +69,7 @@ void ClientNetInterface::connect()
     enet_address_set_host (&address, host.c_str());
     address.port = atoi(port.c_str());
     
+    MJLog("Connecting to tracker...");
     enetPeer = enet_host_connect (enetClient, &address, ENET_PROTOCOL_MAXIMUM_CHANNEL_COUNT, 0);
     
     enet_peer_timeout(enetPeer, 0, 5000, 10000);
@@ -86,10 +87,6 @@ void ClientNetInterface::disconnect()
     if(connected)
     {
         MJLog("Disconnected from tracker.");
-    }
-    else if(!disconnected)
-    {
-        MJLog("Couldn't connect to tracker. Trying again in %d seconds", (int)timeBetweenReconnects);
     }
     
     if(!callbacksByID.empty())
@@ -347,12 +344,10 @@ void ClientNetInterface::bindTui(TuiTable* katipoTable_)
 
 
 
-#define GOAL_TIME_PER_UPDATE 0.01
+#define GOAL_TIME_PER_UPDATE 0.1
 
 void ClientNetInterface::startThread()
 {
-    //std::string logPath = Tui::getSavePath("enetClientLog.log"); //todo hmm
-    
     Timer* timer = new Timer();
     
     while(1)
@@ -781,11 +776,28 @@ void ClientNetInterface::pollNetEvents()
     {
         if(!reconnectTimer)
         {
-            reconnectTimer = new Timer();
+            if(katipoTable->getBool("retry"))
+            {
+                timeBetweenReconnects = 5.0;
+                if(katipoTable->hasKey("retryDelay"))
+                {
+                    timeBetweenReconnects = katipoTable->getDouble("retryDelay");
+                }
+                MJLog("Couldn't connect to tracker. Trying again in %.2f seconds", timeBetweenReconnects);
+                reconnectTimer = new Timer();
+            }
+            else
+            {
+                if(katipoTable->hasKey("connectionFailed"))
+                {
+                    TuiFunction* connectionFailedFunction = ((TuiFunction*)katipoTable->get("connectionFailed"));
+                    connectionFailedFunction->call("connectionFailed");
+                }
+            }
         }
         else
         {
-            if(reconnectTimer->getElapsed() > 5.0)
+            if(reconnectTimer->getElapsed() > timeBetweenReconnects)
             {
                 MJLog("Attempting to reconnect...");
                 delete reconnectTimer;

@@ -226,16 +226,43 @@ void Controller::init(int argc, const char * argv[])
                         MJLog("loaded private key:\n%s", Tui::getAbsolutePath(clientKeyPath).c_str());
                     }
                     
+                    
+                    
+                    TuiFunction* mainGetCallbackFunction = nullptr; //we also need this in
+                    if(!args->arrayObjects.empty() && args->arrayObjects[args->arrayObjects.size() - 1]->type() == Tui_ref_type_FUNCTION)
+                    {
+                        mainGetCallbackFunction = ((TuiFunction*)args->arrayObjects[args->arrayObjects.size() - 1]);
+                        mainGetCallbackFunction->retain();
+                    }
+                    
                     TuiTable* getArgs = args;
                     getArgs->retain();
-                    TuiFunction* onConnect = new TuiFunction([this, trackerKey,remoteURL, hostName, getArgs](TuiTable* innerFuncArgs, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+                    TuiFunction* onConnect = new TuiFunction([this, trackerKey,remoteURL, hostName, getArgs, mainGetCallbackFunction](TuiTable* innerFuncArgs, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
                         //todo check for connection success
                         doGet(netInterfaces[trackerKey], remoteURL, hostName, getArgs);
                         getArgs->release();
+                        if(mainGetCallbackFunction)
+                        {
+                            mainGetCallbackFunction->release();
+                        }
                         return TUI_NIL;
                     });
-                    
                     katipoTable->set("connected", onConnect);
+                    
+                    if(mainGetCallbackFunction)
+                    {
+                        TuiFunction* onConnectionFailed = new TuiFunction([this, getArgs, mainGetCallbackFunction](TuiTable* innerFuncArgs, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+                            
+                            getArgs->release();
+                            mainGetCallbackFunction->call("connectionFailed", new TuiTable("{status='error',message='no connection'}"));
+                            mainGetCallbackFunction->release();
+                            return TUI_NIL;
+                        });
+                        
+                        katipoTable->set("connectionFailed", onConnectionFailed);
+                    }
+                    //katipoTable->set("retry", TUI_TRUE); //not needed here, but it works
+                    //katipoTable->setDouble("retryDelay", 1.0);
                     
                     onConnect->release();
                     
