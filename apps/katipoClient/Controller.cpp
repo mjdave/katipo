@@ -85,7 +85,7 @@ void doGet(ClientNetInterface* netInterface, const std::string& remoteURL, const
                 TuiRef* hostPublicKeyRef = ((TuiTable*)result)->get("publicKey");
                 if(hostPublicKeyRef && hostPublicKeyRef->type() == Tui_ref_type_STRING)
                 {
-                    netInterface->callRemoteHostFunction(((TuiString*)hostPublicKeyRef)->value, remoteFuncCallArgs);
+                    netInterface->callRemoteHostFunction("remote", ((TuiString*)hostPublicKeyRef)->value, remoteFuncCallArgs);
                 }
                 else
                 {
