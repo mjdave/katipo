@@ -42,7 +42,7 @@ ServerNetInterface::ServerNetInterface(const std::string& publicKey_,
     }
     
     
-    enet_host_compress_with_range_coder(enetServer);
+    //enet_host_compress_with_range_coder(enetServer);
     
     thread = new std::thread(&ServerNetInterface::startThread, this);
     valid = true;

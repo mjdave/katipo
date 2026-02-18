@@ -12,7 +12,7 @@
 
 #define LOG_NETWORK 0
 
-#define CLIENT_MAX_SIMULTANEOUS_DOWNLOADS 32 //I think absolute max is 256, this value needs to be experimented with
+#define CLIENT_MAX_SIMULTANEOUS_DOWNLOADS 8 //I think absolute max is 256, this value needs to be experimented with
 
 static const uint32_t MJMultipartChunkSize = 1024*1024; //1MB chunks. Absolute maximum for this is slightly under 8MB, before we hit a limit in enet
 

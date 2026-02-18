@@ -62,7 +62,7 @@ void ClientNetInterface::connect()
                                    0,
                                    0);
     
-    enet_host_compress_with_range_coder(enetClient);
+    //enet_host_compress_with_range_coder(enetClient); //NO!, lets save CPU and use the bandwidth instead.
     
     ENetAddress address;
     
