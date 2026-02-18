@@ -344,7 +344,7 @@ void ClientNetInterface::bindTui(TuiTable* katipoTable_)
 
 
 
-#define GOAL_TIME_PER_UPDATE 0.1
+#define GOAL_TIME_PER_UPDATE 0.001
 
 void ClientNetInterface::startThread()
 {
