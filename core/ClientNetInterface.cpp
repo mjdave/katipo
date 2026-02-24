@@ -45,6 +45,10 @@ ClientNetInterface::~ClientNetInterface()
     }
 }
 
+bool ClientNetInterface::connectedOrConnecting()
+{
+    return (thread != nullptr);
+}
 
 void ClientNetInterface::connect()
 {

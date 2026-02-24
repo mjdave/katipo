@@ -93,6 +93,7 @@ public:
     
     void connect();
     void disconnect();
+    bool connectedOrConnecting();
     
     void callTrackerFunction(TuiTable* args);  //function name is assumed first arg, callback is last
     void callRemoteHostFunction(std::string hostSiteKey, std::string hostPublicKey, TuiTable* args); //function name is assumed first arg, callback is last
