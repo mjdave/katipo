@@ -433,7 +433,7 @@ void Server::clientDataReceived(NetServerClient* client, const ServerData& serve
             MJError("failed to call remote host function, unable to decrypt");
         }
         
-        if(!sendSuccess && decryptedDataTable->hasKey("callbackID"))
+        if(!sendSuccess && decryptedDataTable && decryptedDataTable->hasKey("callbackID"))
         {
             TuiTable* toSecureTable = new TuiTable(nullptr);
             toSecureTable->set("callbackID", decryptedDataTable->get("callbackID"));

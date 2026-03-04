@@ -682,7 +682,7 @@ void ClientNetInterface::processGetRequest(TuiTable* trackerData) //we are on a 
                 std::string requestID = trackerData->getString("requestID");
                 
                 callbackFunction = new TuiFunction([this, callbackID, requestID, clientPublicKey](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
-                    TuiTable* clientDataToSecureTable = new TuiTable(nullptr); //todo never released?
+                    TuiTable* clientDataToSecureTable = new TuiTable(nullptr);
                     clientDataToSecureTable->setDouble("callbackID", callbackID);
                     bool sendFile = false;
                     
@@ -717,6 +717,8 @@ void ClientNetInterface::processGetRequest(TuiTable* trackerData) //we are on a 
                                         MJError("Unable to load file not found:\n%s", filePath.c_str());
                                     }
                                     
+                                    fileDataRef->release();
+                                    
                                 }
                                 else
                                 {
@@ -733,6 +735,7 @@ void ClientNetInterface::processGetRequest(TuiTable* trackerData) //we are on a 
                     }
                     //clientDataToSecureTable needs to be serialized, and then broken up into smaller packets if needed, send in multiple chunks
                     std::string clientDataToSecureTableFullSerialized = clientDataToSecureTable->serializeBinary();
+                    clientDataToSecureTable->release();
                     
                     sendMultipartTuiData(requestID, clientPublicKey, clientDataToSecureTableFullSerialized);
                     
@@ -752,6 +755,10 @@ void ClientNetInterface::processGetRequest(TuiTable* trackerData) //we are on a 
                 callbackFunction->call(funcCallArgs, nullptr, &debugInfo);
                 
                 funcCallArgs->release();
+            }
+            
+            if(result)
+            {
                 result->release();
             }
             
