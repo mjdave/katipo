@@ -76,7 +76,7 @@ void ClientNetInterface::connect()
     MJLog("Connecting to tracker...");
     enetPeer = enet_host_connect (enetClient, &address, ENET_PROTOCOL_MAXIMUM_CHANNEL_COUNT, 0);
     
-    enet_peer_timeout(enetPeer, 0, 5000, 10000);
+    enet_peer_timeout(enetPeer, 0, 2000, 3000);
     
     thread = new std::thread(&ClientNetInterface::startThread, this);
 }
@@ -105,10 +105,21 @@ void ClientNetInterface::disconnect()
         callbacksByID.clear();
     }
     
-    if(katipoTable->hasKey("disconnected"))
+    if(connected)
     {
-        TuiFunction* disconnectedFunction = ((TuiFunction*)katipoTable->get("disconnected"));
-        disconnectedFunction->call("disconnected");
+        if(katipoTable->hasKey("onDisconnected"))
+        {
+            TuiFunction* disconnectedFunction = ((TuiFunction*)katipoTable->get("onDisconnected"));
+            disconnectedFunction->call("onDisconnected");
+        }
+    }
+    else
+    {
+        if(katipoTable->hasKey("onConnectionFailed"))
+        {
+            TuiFunction* disconnectedFunction = ((TuiFunction*)katipoTable->get("onConnectionFailed"));
+            disconnectedFunction->call("onConnectionFailed");
+        }
     }
     
     needsToExit = true;
@@ -501,10 +512,10 @@ void ClientNetInterface::checkEnetEvents()
                         
                         connected = true;
                         
-                        if(katipoTable->hasKey("connected"))
+                        if(katipoTable->hasKey("onConnected"))
                         {
-                            TuiFunction* connectedFunction = ((TuiFunction*)katipoTable->get("connected"));
-                            connectedFunction->call("connected");
+                            TuiFunction* connectedFunction = ((TuiFunction*)katipoTable->get("onConnected"));
+                            connectedFunction->call("onConnected");
                         }
                     }
                     else
@@ -797,14 +808,14 @@ void ClientNetInterface::pollNetEvents()
                 MJLog("Couldn't connect to tracker. Trying again in %.2f seconds", timeBetweenReconnects);
                 reconnectTimer = new Timer();
             }
-            else
+            /*else //commented out as probably handled elsewhere now
             {
-                if(katipoTable->hasKey("connectionFailed"))
+                if(katipoTable->hasKey("onConnectionFailed"))
                 {
-                    TuiFunction* connectionFailedFunction = ((TuiFunction*)katipoTable->get("connectionFailed"));
-                    connectionFailedFunction->call("connectionFailed");
+                    TuiFunction* connectionFailedFunction = ((TuiFunction*)katipoTable->get("onConnectionFailed"));
+                    connectionFailedFunction->call("onConnectionFailed");
                 }
-            }
+            }*/
         }
         else
         {
@@ -831,10 +842,6 @@ void ClientNetInterface::pollNetEvents()
                 if(output.serverData.data)
                 {
                     disconnect();
-                    /*if(registeredFunctions.count("disconnected") != 0)
-                    {
-                        registeredFunctions["disconnected"]->call("CLIENT_NET_INTERFACE_OUTPUT_CLIENT_DISCONNECTED");
-                    }*/
                     return;
                 }
             }
@@ -842,10 +849,6 @@ void ClientNetInterface::pollNetEvents()
             case CLIENT_NET_INTERFACE_OUTPUT_CLIENT_DISCONNECTED:
             {
                 disconnect();
-                /*if(registeredFunctions.count("disconnected") != 0)
-                {
-                    registeredFunctions["disconnected"]->call("CLIENT_NET_INTERFACE_OUTPUT_CLIENT_DISCONNECTED");
-                }*/
                 return;
             }
                 break;

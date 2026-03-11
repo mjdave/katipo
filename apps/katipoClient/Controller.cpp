@@ -247,19 +247,19 @@ void Controller::init(int argc, const char * argv[])
                         }
                         return TUI_NIL;
                     });
-                    katipoTable->set("connected", onConnect);
+                    katipoTable->set("onConnected", onConnect);
                     
                     if(mainGetCallbackFunction)
                     {
                         TuiFunction* onConnectionFailed = new TuiFunction([this, getArgs, mainGetCallbackFunction](TuiTable* innerFuncArgs, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
                             
                             getArgs->release();
-                            mainGetCallbackFunction->call("connectionFailed", new TuiTable("{status='error',message='no connection'}"));
+                            mainGetCallbackFunction->call("onConnectionFailed", new TuiTable("{status='error',message='no connection'}"));
                             mainGetCallbackFunction->release();
                             return TUI_NIL;
                         });
                         
-                        katipoTable->set("connectionFailed", onConnectionFailed);
+                        katipoTable->set("onConnectionFailed", onConnectionFailed);
                     }
                     //katipoTable->set("retry", TUI_TRUE); //not needed here, but it works
                     //katipoTable->setDouble("retryDelay", 1.0);
