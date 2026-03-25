@@ -692,7 +692,7 @@ void ClientNetInterface::processGetRequest(TuiTable* trackerData) //we are on a 
                 uint32_t callbackID = clientData->getDouble("callbackID");
                 std::string requestID = trackerData->getString("requestID");
                 
-                callbackFunction = new TuiFunction([this, callbackID, requestID, clientPublicKey](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+                callbackFunction = new TuiFunction([this, callbackID, requestID, clientPublicKey](TuiTable* args, TuiRef* existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
                     TuiTable* clientDataToSecureTable = new TuiTable(nullptr);
                     clientDataToSecureTable->setDouble("callbackID", callbackID);
                     bool sendFile = false;
@@ -755,7 +755,7 @@ void ClientNetInterface::processGetRequest(TuiTable* trackerData) //we are on a 
                 sendArgs->push(callbackFunction);
             }
             
-            TuiRef* result = ((TuiFunction*)(katipoTable->objectsByStringKey["get"]))->call(sendArgs, nullptr, &debugInfo);
+            TuiRef* result = ((TuiFunction*)(katipoTable->objectsByStringKey["get"]))->call(sendArgs, nullptr, nullptr, &debugInfo);
             
             if(callbackFunction && result && result->type() != Tui_ref_type_NIL)
             {
@@ -763,7 +763,7 @@ void ClientNetInterface::processGetRequest(TuiTable* trackerData) //we are on a 
                 
                 funcCallArgs->push(result);
                 
-                callbackFunction->call(funcCallArgs, nullptr, &debugInfo);
+                callbackFunction->call(funcCallArgs, nullptr, nullptr, &debugInfo);
                 
                 funcCallArgs->release();
             }

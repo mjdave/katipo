@@ -43,7 +43,7 @@ void ClientHttpInterface::bindTui(TuiTable* rootTable) //adds an http.get functi
     rootTable->set("http", httpTable);
     httpTable->release();
     
-    httpTable->setFunction("get", [this](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+    httpTable->setFunction("get", [this](TuiTable* args, TuiRef* existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
         
         if(args && args->arrayObjects.size() > 1 && args->arrayObjects[0]->type() == Tui_ref_type_STRING && args->arrayObjects[1]->type() == Tui_ref_type_FUNCTION)
         {

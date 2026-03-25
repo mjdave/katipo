@@ -59,7 +59,7 @@ void Controller::init(int argc, const char * argv[])
         basePath = basePath + "/";
     }
 
-    katipoTable->setFunction("init", [this](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+    katipoTable->setFunction("init", [this](TuiTable* args, TuiRef* existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
         if(!hostServer)
         {
             //todo could have separate keys for hosts/clients
@@ -110,7 +110,7 @@ void Controller::init(int argc, const char * argv[])
 
 
 
-    katipoTable->setFunction("start", [this](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+    katipoTable->setFunction("start", [this](TuiTable* args, TuiRef* existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
         if(hostServer && !hostServer->running)
         {
             if(hostServer->start() && clientServer->start())

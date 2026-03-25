@@ -57,7 +57,7 @@ void Server::bindTui(TuiTable* parentTable)
         }
     };
     
-    serverTable->setFunction("register", [this](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+    serverTable->setFunction("register", [this](TuiTable* args, TuiRef* existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
         if(args->arrayObjects.size() >= 2)
         {
             TuiRef* functionNameRef = args->arrayObjects[0];
@@ -300,7 +300,7 @@ void Server::clientDataReceived(NetServerClient* client, const ServerData& serve
                 if(callbackID)
                 {
                     callbackID->retain();
-                    callbackFunction = new TuiFunction([this, callbackID, client](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+                    callbackFunction = new TuiFunction([this, callbackID, client](TuiTable* args, TuiRef* existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
                         TuiTable* toSecureTable = nullptr;
                         if(args && args->arrayObjects.size() > 0)
                         {
@@ -339,7 +339,7 @@ void Server::clientDataReceived(NetServerClient* client, const ServerData& serve
                     sendArgs->push(callbackFunction);
                 }
                 
-                TuiRef* result = registeredFunctions[functionName->value]->call(sendArgs, nullptr, &debugInfo);
+                TuiRef* result = registeredFunctions[functionName->value]->call(sendArgs, nullptr, nullptr, &debugInfo);
                 
                 if(callbackFunction && result && result->type() != Tui_ref_type_NIL)
                 {
@@ -348,7 +348,7 @@ void Server::clientDataReceived(NetServerClient* client, const ServerData& serve
                     
                     funcCallArgs->push(result);
                     
-                    callbackFunction->call(funcCallArgs, nullptr, &debugInfo);
+                    callbackFunction->call(funcCallArgs, nullptr, nullptr, &debugInfo);
                     
                     funcCallArgs->release();
                     result->release();

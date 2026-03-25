@@ -1,0 +1,157 @@
+
+loadFilesFromDir = function(dirPath)
+{
+    files = {}
+    contents = file.directoryContents(dirPath)
+    for(fileName in contents)
+    {
+        if(string.subString(fileName, 0, 1) != ".")
+        {
+            fullPath = dirPath + "/" + fileName
+            if(file.isDirectory(fullPath))
+            {
+                subFiles = loadFilesFromDir(fullPath)
+                if(subFiles)
+                {
+                    fileDataWrapper = {
+                        fileName = fileName,
+                        files = subFiles
+                    }
+                    table.insert(files, fileDataWrapper)
+                }
+            }
+            else
+            {
+                fileData = file.loadData(fullPath)
+                if(fileData)
+                {
+                    fileDataWrapper = {
+                        fileName = fileName,
+                        data = fileData
+                    }
+                    table.insert(files, fileDataWrapper)
+                }
+            }
+        }
+    }
+    if(table.count(files) == 0)
+    {
+        return nil
+    }
+    return files
+}
+
+cachedChecksum = false
+
+checksumRecursively = function(path)
+{
+    //print("checksumRecursively:", path)
+    if(file.isDirectory(path))
+    {
+        contents = file.directoryContents(path)
+        foundResult = false //token 47
+        for(fileOrDirectory in contents)
+        {
+            #print("fileOrDirectory:", fileOrDirectory, " contents:", contents)
+            thisResult = checksumRecursively(path + "/" + fileOrDirectory)
+            #print("thisResult a:", thisResult)
+            if(thisResult)
+            {
+                if(foundResult)
+                {
+                    #print("foundResult b:", foundResult)
+                    foundResult += thisResult
+                }
+                else
+                {
+                    #print("foundResult c:", foundResult)
+                    debug.break()
+                    .foundResult = thisResult
+                    #print("foundResult f:", foundResult)
+                }
+            }
+            #print("foundResult d:", foundResult)
+        }
+        #print("foundResult e:", foundResult) //false, token 47, bool in locals but the value stored at this level in the parent is correct
+        if(foundResult)
+        {
+            return foundResult
+        }
+    }
+    else
+    {
+        fileName = file.fileName(path)
+        if(fileName and string.subString(fileName, 0, 1) != ".")
+        {
+            #print("returning sha1 for file:", path)
+            return file.sha1(path)
+        }
+    }
+
+    print("nil")
+    return nil
+}
+
+getChecksum = function(path)
+{
+    combinedChecksum = checksumRecursively(path)
+    #print("combinedChecksum:", combinedChecksum)
+    return string.sha1(combinedChecksum)
+    /*if(cachedChecksum) #todo finish this (reset below in update loop), spamming / is a potential DOS attack vector for large sites otherwise
+    {
+        return cachedChecksum
+    }
+    .cachedChecksum = string.sha1(checksumRecursively(path))
+    cachedChecksum = .cachedChecksum
+    return cachedChecksum*/
+}
+
+### this function is called when clients query this site
+get = function(url, clientChecksum)
+{
+    siteInfo = require(katipo.sitePath + "/site.tui")
+    clientSitePath = file.getAbsolutePath(katipo.sitePath + "/clientSite")
+    if(!file.fileExists(clientSitePath))
+    {
+        error("missing public data directory:", clientSitePath)
+    }
+
+
+    print("in get. url:", url, " clientChecksum:", clientChecksum)
+    urlSplit = string.split(url, "/")
+
+    if(table.count(urlSplit) <= 1) #respond to get at the root level: "nameKey/" or "nameKey"
+    {
+        # This checksums all of the client code, and clients check against it, like a version number. 
+        # So clients will automatically download any updates to the site as an entire blob, but load from a cache otherwise
+        
+        checksum = getChecksum(clientSitePath)
+        if(clientChecksum == checksum)
+        {
+            return {
+                status = "ok"
+                unchanged = true
+            }
+        }
+        print("sending site data")
+
+        files = loadFilesFromDir(clientSitePath)
+
+        #these could be cached, however this way, changes are immediate when the client reloads, without needing to restart the host process
+        clientSiteData = {
+            files = files
+            siteInfo = siteInfo
+            #siteImage = siteImage
+            checksum = checksum
+        }
+        return {
+            status = "ok"
+            siteData = clientSiteData
+        }
+    }
+
+    return {
+        status = "error"
+        message = "unhandled request"
+    }
+}

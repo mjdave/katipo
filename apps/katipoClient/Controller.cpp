@@ -51,7 +51,7 @@ void doGet(ClientNetInterface* netInterface, const std::string& remoteURL, const
     MJLog("fetching from remote hostName:%s", hostName.c_str());
     
     
-    TuiFunction* callHostFunctionCallbackFunction = new TuiFunction([mainGetCallbackFunction](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+    TuiFunction* callHostFunctionCallbackFunction = new TuiFunction([mainGetCallbackFunction](TuiTable* args, TuiRef* existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
         
         if(args && !args->arrayObjects.empty())
         {
@@ -158,7 +158,7 @@ void Controller::init(int argc, const char * argv[])
     }
 
     //katipo.get("127.0.0.1/example", sendData, function(result){ print("got result:", result)})
-    katipoTable->setFunction("get", [this](TuiTable* args, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+    katipoTable->setFunction("get", [this](TuiTable* args, TuiRef* existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
         if(args->arrayObjects.size() >= 1)
         {
             TuiRef* urlRef = args->arrayObjects[0];

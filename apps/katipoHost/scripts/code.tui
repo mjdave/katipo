@@ -1,3 +1,5 @@
+host = require("host.tui")
+
 KATIPO_VERSION = "0.1" #todo
 
 ### set defaults
@@ -91,14 +93,18 @@ if(!file.fileExists(siteInfoPath))
     return
 }
 
-if(!file.fileExists(siteCodePath))
+siteInfo = require(siteInfoPath)
+siteCode = false
+
+if(file.fileExists(siteCodePath))
 {
-    print("\nError: Unable to find code.tui file at:", file.getAbsolutePath(siteCodePath))
-    return
+    siteCode = require(siteCodePath)
+}
+else
+{
+    siteCode = require("host.tui")
 }
 
-siteInfo = require(siteInfoPath)
-siteCode = require(siteCodePath)
 #print("siteInfo:", siteInfo)
 #print("siteCode:", siteCode)
 
