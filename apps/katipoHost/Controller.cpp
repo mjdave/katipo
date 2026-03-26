@@ -74,6 +74,8 @@ void Controller::init(int argc, const char * argv[])
             std::string publicKey = "";
             std::string secretKey = "";
             
+            MJLog("Loading site %s", siteInfo->getString("nameKey").c_str());
+            
             std::string hostKeyPath = siteInfo->getString("nameKey") + "_privateKey.tuib";
             
             if(Tui::fileExistsAtPath(hostKeyPath)) //todo these should be saved in the database, not files
@@ -104,7 +106,7 @@ void Controller::init(int argc, const char * argv[])
             }
             else
             {
-                MJLog("loaded private key:\n%s", Tui::getAbsolutePath(hostKeyPath).c_str());
+                MJLog("Loaded private key:\n%s", Tui::getAbsolutePath(hostKeyPath).c_str());
             }
             
             siteInfo->setString("publicKey", publicKey);

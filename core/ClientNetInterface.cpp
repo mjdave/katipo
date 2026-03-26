@@ -420,10 +420,7 @@ void ClientNetInterface::checkEnetEvents()
         {
             case ENET_EVENT_TYPE_CONNECT:
             {
-                MJLog("initial connection established.\n");
-                
-                /**/
-                
+                MJLog("Initial connection established");
             }
                 break;
             case ENET_EVENT_TYPE_RECEIVE:

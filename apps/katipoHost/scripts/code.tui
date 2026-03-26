@@ -109,7 +109,7 @@ else
 #print("siteCode:", siteCode)
 
 katipo.siteInfo = siteInfo
-katipo.connected = function()
+katipo.onConnected = function()
 {
     print("Successfully connected to katipo tracker server, with host name:", siteInfo.nameKey)
 }
@@ -122,16 +122,14 @@ if(!success)
     return
 }
 
-print("Katipo initialized successfully.")
-
 katipo.get = function(url, clientData)
 {
     print("in top level get. url:", url, " clientData:", clientData)
     return siteCode.get(url, clientData)
 }
 
-print("Welcome to katipo.
-Attempting to connect to tracker, type 'quit' to cancel and exit, 'help' for more commands.")
+print("Attempting to connect to tracker")
+print("Type 'quit' to cancel and exit, 'help' for more commands.")
 
 if(siteCode.runLoop)
 {
