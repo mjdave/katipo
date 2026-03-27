@@ -1,0 +1,28 @@
+viewTypes = {
+    markup = require("app/common/markupView.tui")
+    scrollView = require("app/common/scrollView.tui") #required by markupView
+}
+
+mainView = {
+    type = "view"
+    subviews = {
+        {
+            id = "pageBody"
+            type = "markup"
+        }
+    }
+}
+
+styleA = {
+    backgroundColor = vec4(0.0,0.5,0.0,0.5)
+}
+
+styleB = {
+    bold = true
+    color = vec4(1.0,0.0,0.0,1.0)
+}
+
+styleC = {
+    font = "sapiensInternational"
+    fontSize = 24
+}
