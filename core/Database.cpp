@@ -76,6 +76,65 @@ bool Database::finishTransaction(MDB_txn* transaction)
     return true;
 }
 
+void Database::bindTui(std::string prefix, TuiTable* rootTable)
+{
+    TuiTable* databaseTable = new TuiTable(rootTable);
+    rootTable->set("database", databaseTable);
+    databaseTable->release();
+    
+    //database.set(key, value)
+    databaseTable->setFunction("set", [this,prefix](TuiTable* args, TuiRef* existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+        if(args && args->arrayObjects.size() >= 2 && args->arrayObjects[0]->type() == Tui_ref_type_STRING)
+        {
+            setDataForKey(args->arrayObjects[1]->serializeBinary(), prefix + ((TuiString*)args->arrayObjects[0])->value);
+        }
+        else
+        {
+            TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "database.set expected string key, then data value");
+        }
+        return TUI_NIL;
+    });
+    
+    //database.remove(key)
+    databaseTable->setFunction("remove", [this,prefix](TuiTable* args, TuiRef* existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+        if(args && args->arrayObjects.size() >= 1 && args->arrayObjects[0]->type() == Tui_ref_type_STRING)
+        {
+            return TUI_BOOL(removeDataForKey(prefix + ((TuiString*)args->arrayObjects[0])->value));
+        }
+        else
+        {
+            TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "database.remove expected key string argument");
+        }
+        return TUI_NIL;
+    });
+    
+    //database.get(key)
+    databaseTable->setFunction("get", [this,prefix](TuiTable* args, TuiRef* existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+        if(args && args->arrayObjects.size() >= 1 && args->arrayObjects[0]->type() == Tui_ref_type_STRING)
+        {
+            return TuiRef::loadBinaryString(dataForKey(prefix + ((TuiString*)args->arrayObjects[0])->value));
+        }
+        else
+        {
+            TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "database.get expected key string argument");
+        }
+        return TUI_NIL;
+    });
+    
+    //database.has(key)
+    databaseTable->setFunction("has", [this,prefix](TuiTable* args, TuiRef* existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+        if(args && args->arrayObjects.size() >= 1 && args->arrayObjects[0]->type() == Tui_ref_type_STRING)
+        {
+            return TUI_BOOL(hasKey(prefix + ((TuiString*)args->arrayObjects[0])->value));
+        }
+        else
+        {
+            TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "database.has expected key string argument");
+        }
+        return TUI_NIL;
+    });
+}
+
 bool Database::setDataForKey(std::string data, std::string key)
 {
     if(key.length() == 0)

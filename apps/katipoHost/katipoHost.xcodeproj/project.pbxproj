@@ -21,6 +21,8 @@
 		5B849DF52F18886B007FCBE6 /* libsodium.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5B849DF42F18886B007FCBE6 /* libsodium.a */; };
 		5B9BE33F2F22E2750066EE8A /* libcurl.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 5B9BE33E2F22E2750066EE8A /* libcurl.tbd */; };
 		5B9E6D0D2F1433DD005E3DB5 /* exampleSites in CopyFiles */ = {isa = PBXBuildFile; fileRef = 5B9E6D0C2F1433DD005E3DB5 /* exampleSites */; };
+		5BC7E8AE2F7A05190024744E /* mdb.c in Sources */ = {isa = PBXBuildFile; fileRef = 5BC7E8AC2F7A05190024744E /* mdb.c */; };
+		5BC7E8AF2F7A05190024744E /* midl.c in Sources */ = {isa = PBXBuildFile; fileRef = 5BC7E8AD2F7A05190024744E /* midl.c */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -54,18 +56,9 @@
 		5B849DF42F18886B007FCBE6 /* libsodium.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libsodium.a; path = ../../thirdParty/libsodium/macos/lib/libsodium.a; sourceTree = "<group>"; };
 		5B9BE33E2F22E2750066EE8A /* libcurl.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libcurl.tbd; path = usr/lib/libcurl.tbd; sourceTree = SDKROOT; };
 		5B9E6D0C2F1433DD005E3DB5 /* exampleSites */ = {isa = PBXFileReference; lastKnownFileType = folder; path = exampleSites; sourceTree = "<group>"; };
+		5BC7E8AC2F7A05190024744E /* mdb.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = mdb.c; path = "../../thirdParty/liblmdb/mdb.c"; sourceTree = SOURCE_ROOT; };
+		5BC7E8AD2F7A05190024744E /* midl.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = midl.c; path = "../../thirdParty/liblmdb/midl.c"; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
-
-/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		5B7AB25F2E283D43009E04C8 /* Exceptions for "core" folder in "katipoHost" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				Database.cpp,
-				DatabaseEnvironment.cpp,
-			);
-			target = 5B7AB19A2E283C0B009E04C8 /* katipoHost */;
-		};
-/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		5B7AB1B72E283C88009E04C8 /* source */ = {
@@ -76,9 +69,6 @@
 		};
 		5B7AB22B2E283D20009E04C8 /* core */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				5B7AB25F2E283D43009E04C8 /* Exceptions for "core" folder in "katipoHost" target */,
-			);
 			name = core;
 			path = ../../core;
 			sourceTree = SOURCE_ROOT;
@@ -116,6 +106,8 @@
 				5B05885C2F026D8000557B42 /* packet.c */,
 				5B05885D2F026D8000557B42 /* peer.c */,
 				5B05885E2F026D8000557B42 /* protocol.c */,
+				5BC7E8AC2F7A05190024744E /* mdb.c */,
+				5BC7E8AD2F7A05190024744E /* midl.c */,
 				5B05885F2F026D8000557B42 /* unix.c */,
 				5B849DF32F18886B007FCBE6 /* Frameworks */,
 			);
@@ -205,6 +197,8 @@
 				5B7AB2622E283E97009E04C8 /* Controller.cpp in Sources */,
 				5B0588602F026D8000557B42 /* packet.c in Sources */,
 				5B0588612F026D8000557B42 /* compress.c in Sources */,
+				5BC7E8AE2F7A05190024744E /* mdb.c in Sources */,
+				5BC7E8AF2F7A05190024744E /* midl.c in Sources */,
 				5B0588622F026D8000557B42 /* host.c in Sources */,
 				5B0588632F026D8000557B42 /* unix.c in Sources */,
 				5B0588642F026D8000557B42 /* list.c in Sources */,
@@ -349,6 +343,7 @@
 					"\"$(SRCROOT)/../../thirdParty/tui/thirdParty/glm/glm\"",
 					"\"$(SRCROOT)/../../thirdParty/enet-1.3.18/include\"",
 					"\"$(SRCROOT)/../../thirdParty/libsodium/macos/include\"",
+					"\"$(SRCROOT)/../../thirdParty/liblmdb\"",
 				);
 			};
 			name = Debug;
@@ -367,6 +362,7 @@
 					"\"$(SRCROOT)/../../thirdParty/tui/thirdParty/glm/glm\"",
 					"\"$(SRCROOT)/../../thirdParty/enet-1.3.18/include\"",
 					"\"$(SRCROOT)/../../thirdParty/libsodium/macos/include\"",
+					"\"$(SRCROOT)/../../thirdParty/liblmdb\"",
 				);
 			};
 			name = Release;

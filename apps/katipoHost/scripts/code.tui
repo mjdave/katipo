@@ -122,6 +122,8 @@ if(!success)
     return
 }
 
+siteCode.init()
+
 katipo.get = function(url, clientData)
 {
     print("in top level get. url:", url, " clientData:", clientData)

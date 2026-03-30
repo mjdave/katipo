@@ -14,6 +14,7 @@
 #include "lmdb.h"
 //#include "MathUtils.h"
 #include "MJLog.h"
+#include "TuiScript.h"
 //#include "Serialization.h"
 
 class DatabaseEnvironment;
@@ -31,6 +32,7 @@ public:
     
     ~Database();
     
+    void bindTui(std::string prefix, TuiTable* rootTable);
     
     bool startBulkTransaction();
     bool finishBulkTransaction();

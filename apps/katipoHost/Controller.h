@@ -9,6 +9,8 @@
 #include <thread>
 
 class ClientNetInterface;
+class DatabaseEnvironment;
+class Database;
 
 #if COMPILE_WITH_HTTP_INTERFACE
 #include "ClientHttpInterface.h"
@@ -19,7 +21,12 @@ public:
     bool needsToExit = false;
     std::thread* thread = nullptr;
     
+    DatabaseEnvironment* databaseEnvironment;
+    Database* database;
+    
     ClientNetInterface* trackerNetInterface;
+    std::string currentHostNameKey;
+    
 #if COMPILE_WITH_HTTP_INTERFACE
     ClientHttpInterface* httpInterface;
 #endif

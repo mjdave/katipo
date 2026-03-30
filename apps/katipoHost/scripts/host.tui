@@ -106,6 +106,37 @@ getChecksum = function(path)
     return cachedChecksum*/
 }
 
+#publicFiles = false
+
+#addPublicFile = function(key, fileName) #not fully implemented
+#{
+#    if(!publicFiles)
+#    {
+#        .publicFiles = {}
+#    }
+#    publicFiles[key] = fileName
+#}
+
+sendPublicDataKeys = {}
+
+getPublicData = function(key)
+{
+    sendPublicDataKeys[key] = true
+    savedData = database.get(key)
+    if(savedData)
+    {
+        return savedData
+    }
+    return nil
+}
+
+savePublicData = function(key, data)
+{
+    sendPublicDataKeys[key] = true
+    #print("setting data:", key, " value:", data)
+    database.set(key, data)
+}
+
 ### this function is called when clients query this site
 get = function(url, clientChecksum)
 {
@@ -117,7 +148,7 @@ get = function(url, clientChecksum)
     }
 
 
-    print("in get. url:", url, " clientChecksum:", clientChecksum)
+    #print("in get. url:", url, " clientChecksum:", clientChecksum)
     urlSplit = string.split(url, "/")
 
     if(table.count(urlSplit) <= 1) #respond to get at the root level: "nameKey/" or "nameKey"
@@ -125,21 +156,39 @@ get = function(url, clientChecksum)
         # This checksums all of the client code, and clients check against it, like a version number. 
         # So clients will automatically download any updates to the site as an entire blob, but load from a cache otherwise
         
+        #print("sendPublicDataKeys:", sendPublicDataKeys)
+        publicData = false
+        for(k,v in sendPublicDataKeys)
+        {
+            if(!publicData)
+            {
+                .publicData = {}
+            }
+            #print("loading data:", k)
+            publicData[k] = database.get(k)
+        }
+        
+        #print("publicData:", publicData)
+        
         checksum = getChecksum(clientSitePath)
         if(clientChecksum == checksum)
         {
             return {
                 status = "ok"
                 unchanged = true
+                siteData = {
+                    publicData = publicData
+                }
             }
         }
-        print("sending site data")
+        #print("sending site data")
 
+        #these files could be cached, however this way, changes are immediate when the client reloads, without needing to restart the host process
         files = loadFilesFromDir(clientSitePath)
 
-        #these could be cached, however this way, changes are immediate when the client reloads, without needing to restart the host process
         clientSiteData = {
             files = files
+            publicData = publicData
             siteInfo = siteInfo
             #siteImage = siteImage
             checksum = checksum

@@ -11,6 +11,8 @@
 #include "Timer.h"
 #include "ClientNetInterface.h"
 #include "TuiFileUtils.h"
+#include "Database.h"
+#include "DatabaseEnvironment.h"
 #include "sodium.h"
 
 #if COMPILE_WITH_HTTP_INTERFACE
@@ -33,6 +35,12 @@ void Controller::init(int argc, const char * argv[])
     rootTable->set("katipo", katipoTable);
     katipoTable->release();
     
+    
+    databaseEnvironment = new DatabaseEnvironment("database",
+                                                     1,
+                                                     2);
+    database = new Database(databaseEnvironment, "app");
+    
 #if COMPILE_WITH_HTTP_INTERFACE
     httpInterface = new ClientHttpInterface();
     httpInterface->bindTui(rootTable);
@@ -54,6 +62,7 @@ void Controller::init(int argc, const char * argv[])
             launchArgsTable->arrayObjects.push_back(new TuiString(argv[i]));
         }
     }
+    
 
     katipoTable->setFunction("init", [this](TuiTable* args, TuiRef* existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
         if(!trackerNetInterface)
@@ -116,6 +125,11 @@ void Controller::init(int argc, const char * argv[])
                                                          publicKey, secretKey, siteInfo);
             trackerNetInterface->bindTui(katipoTable);
 
+            
+            
+            currentHostNameKey = siteInfo->getString("nameKey");
+            
+            database->bindTui(currentHostNameKey, rootTable);
     
             thread = new std::thread(&Controller::serverEventLoop, this);
 
@@ -169,6 +183,8 @@ Controller::~Controller()
 {
     rootTable->release();
     scriptState->release();
+    delete database;
+    delete databaseEnvironment;
     delete trackerNetInterface;
 }
 
