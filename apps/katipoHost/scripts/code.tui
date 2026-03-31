@@ -122,7 +122,10 @@ if(!success)
     return
 }
 
-siteCode.init()
+if(siteCode.init)
+{
+    siteCode.init()
+}
 
 katipo.get = function(url, clientData)
 {
