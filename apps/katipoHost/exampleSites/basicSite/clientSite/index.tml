@@ -9,7 +9,7 @@ You can edit this index.tml file to contain whatever content you like.
 
 index.tml is the katipo equivalent of an index.html. The ".tml" stands for "tui markup language".
 
-You can link to [other katipo sites]("katipobrowser.com") by using square brackets and parenthesis. Open up this index.tml file in a text editor to see how.
+You can link to [other katipo sites](link = "katipobrowser.com") by using square brackets and parenthesis. Open up this index.tml file in a text editor to see how.
 
 # A main header
 

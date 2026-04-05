@@ -49,7 +49,7 @@ checksumRecursively = function(path)
     if(file.isDirectory(path))
     {
         contents = file.directoryContents(path)
-        foundResult = false //token 47
+        foundResult = ""
         for(fileOrDirectory in contents)
         {
             #print("fileOrDirectory:", fileOrDirectory, " contents:", contents)
@@ -57,23 +57,12 @@ checksumRecursively = function(path)
             #print("thisResult a:", thisResult)
             if(thisResult)
             {
-                if(foundResult)
-                {
-                    #print("foundResult b:", foundResult)
-                    foundResult += thisResult
-                }
-                else
-                {
-                    #print("foundResult c:", foundResult)
-                    debug.break()
-                    .foundResult = thisResult
-                    #print("foundResult f:", foundResult)
-                }
+                foundResult += thisResult
             }
             #print("foundResult d:", foundResult)
         }
         #print("foundResult e:", foundResult) //false, token 47, bool in locals but the value stored at this level in the parent is correct
-        if(foundResult)
+        if(foundResult != "")
         {
             return foundResult
         }

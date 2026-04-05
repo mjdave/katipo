@@ -35,9 +35,14 @@ void Server::bindTui(TuiTable* parentTable)
     serverTable->onSet = [this](TuiRef* table, const std::string& key, TuiRef* value) {
         if(key == "clientConnected")
         {
+            if(clientConnectedFunction)
+            {
+                clientConnectedFunction->release();
+            }
             if(value->type() == Tui_ref_type_FUNCTION)
             {
                 clientConnectedFunction = (TuiFunction*)value;
+                clientConnectedFunction->retain();
             }
             else if(value->type() == Tui_ref_type_NIL)
             {
@@ -46,9 +51,14 @@ void Server::bindTui(TuiTable* parentTable)
         }
         else if(key == "clientDisconnected")
         {
+            if(clientConnectedFunction)
+            {
+                clientDisconnectedFunction->release();
+            }
             if(value->type() == Tui_ref_type_FUNCTION)
             {
                 clientDisconnectedFunction = (TuiFunction*)value;
+                clientConnectedFunction->retain();
             }
             else if(value->type() == Tui_ref_type_NIL)
             {
@@ -64,7 +74,11 @@ void Server::bindTui(TuiTable* parentTable)
             TuiRef* functionRef = args->arrayObjects[1];
             if(functionNameRef->type() == Tui_ref_type_STRING && functionRef->type() == Tui_ref_type_FUNCTION)
             {
-                registeredFunctions[((TuiString*)functionNameRef)->value] = (TuiFunction*)functionRef;
+                if(registeredFunctions.count(((TuiString*)functionNameRef)->value) != 0)
+                {
+                    registeredFunctions[((TuiString*)functionNameRef)->value]->release();
+                }
+                registeredFunctions[((TuiString*)functionNameRef)->value] = (TuiFunction*)(functionRef->retain());
                 return TUI_TRUE;
             }
             else
