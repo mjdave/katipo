@@ -111,7 +111,7 @@ sendPublicDataKeys = {}
 getPublicData = function(key)
 {
     sendPublicDataKeys[key] = true
-    savedData = database.get(key)
+    savedData = database.get("p_" + key)
     if(savedData)
     {
         return savedData
@@ -119,10 +119,19 @@ getPublicData = function(key)
     return nil
 }
 
-savePublicData = function(key, data)
+setPublicData = function(key, data)
 {
     sendPublicDataKeys[key] = true
-    #print("setting data:", key, " value:", data)
+    database.set("p_" + key, data)
+}
+
+getPrivateData = function(key)
+{
+    return database.get(key)
+}
+
+setPrivateData = function(key, data)
+{
     database.set(key, data)
 }
 
@@ -154,7 +163,7 @@ get = function(url, clientChecksum)
                 .publicData = {}
             }
             #print("loading data:", k)
-            publicData[k] = database.get(k)
+            publicData[k] = database.get("p_" + k)
         }
         
         #print("publicData:", publicData)

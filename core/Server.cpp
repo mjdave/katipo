@@ -51,14 +51,14 @@ void Server::bindTui(TuiTable* parentTable)
         }
         else if(key == "clientDisconnected")
         {
-            if(clientConnectedFunction)
+            if(clientDisconnectedFunction)
             {
                 clientDisconnectedFunction->release();
             }
             if(value->type() == Tui_ref_type_FUNCTION)
             {
                 clientDisconnectedFunction = (TuiFunction*)value;
-                clientConnectedFunction->retain();
+                clientDisconnectedFunction->retain();
             }
             else if(value->type() == Tui_ref_type_NIL)
             {
