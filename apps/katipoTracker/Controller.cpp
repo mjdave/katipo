@@ -31,7 +31,8 @@ void Controller::init(int argc, const char * argv[])
     katipoTable = new TuiTable(rootTable);
     rootTable->set("katipo", katipoTable);
     katipoTable->release();
-
+    
+    katipoTable->setString("version", KATIPO_VERSION);
     katipoTable->setString("hostPort", "3470");
     katipoTable->setString("clientPort", "3471");
     katipoTable->setString("basePath", basePath);

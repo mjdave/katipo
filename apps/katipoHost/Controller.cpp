@@ -35,6 +35,8 @@ void Controller::init(int argc, const char * argv[])
     rootTable->set("katipo", katipoTable);
     katipoTable->release();
     
+    katipoTable->setString("version", KATIPO_VERSION);
+    
     
     databaseEnvironment = new DatabaseEnvironment("database",
                                                      1,

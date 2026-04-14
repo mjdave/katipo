@@ -70,7 +70,7 @@ void doGet(ClientNetInterface* netInterface, const std::string& remoteURL, const
     remoteFuncCallArgs->push(callHostFunctionCallbackFunction);
     callHostFunctionCallbackFunction->release();
     
-    TuiFunction* getSiteKeyCallbackFunction = new TuiFunction([mainGetCallbackFunction, remoteFuncCallArgs, netInterface](TuiTable* incomingCallbackResponseData, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+    TuiFunction* getSiteKeyCallbackFunction = new TuiFunction([mainGetCallbackFunction, remoteFuncCallArgs, netInterface](TuiTable* incomingCallbackResponseData, TuiRef* existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
         
         if(incomingCallbackResponseData && !incomingCallbackResponseData->arrayObjects.empty())
         {
@@ -139,6 +139,8 @@ void Controller::init(int argc, const char * argv[])
     katipoTable = new TuiTable(rootTable);
     rootTable->set("katipo", katipoTable);
     katipoTable->release();
+    
+    katipoTable->setString("version", KATIPO_VERSION);
 
     for(int i = 1; i < argc; i++)
     {
@@ -237,7 +239,7 @@ void Controller::init(int argc, const char * argv[])
                     
                     TuiTable* getArgs = args;
                     getArgs->retain();
-                    TuiFunction* onConnect = new TuiFunction([this, trackerKey,remoteURL, hostName, getArgs, mainGetCallbackFunction](TuiTable* innerFuncArgs, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+                    TuiFunction* onConnect = new TuiFunction([this, trackerKey,remoteURL, hostName, getArgs, mainGetCallbackFunction](TuiTable* innerFuncArgs, TuiRef* existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
                         //todo check for connection success
                         doGet(netInterfaces[trackerKey], remoteURL, hostName, getArgs);
                         getArgs->release();
@@ -251,7 +253,7 @@ void Controller::init(int argc, const char * argv[])
                     
                     if(mainGetCallbackFunction)
                     {
-                        TuiFunction* onConnectionFailed = new TuiFunction([this, getArgs, mainGetCallbackFunction](TuiTable* innerFuncArgs, TuiRef* existingResult, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+                        TuiFunction* onConnectionFailed = new TuiFunction([this, getArgs, mainGetCallbackFunction](TuiTable* innerFuncArgs, TuiRef* existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
                             
                             getArgs->release();
                             mainGetCallbackFunction->call("onConnectionFailed", new TuiTable("{status='error',message='no connection'}"));
