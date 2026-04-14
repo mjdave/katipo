@@ -1,6 +1,6 @@
-host = require("host.tui")
+print("Katipo Host ", katipo.version)
 
-KATIPO_VERSION = "0.1" #todo
+host = require("host.tui")
 
 ### set defaults
 katipo.trackerIP = "127.0.0.1"
@@ -10,7 +10,7 @@ katipo.retry = true
 printUsage = function()
 {
     print("")
-    print("Katipo Host version:", KATIPO_VERSION)
+    print("Katipo Host version:", katipo.version)
     print("https://github.com/mjdave/katipo")
     print("")
     print("Usage: ./katipoHost --site exampleSites/basicSite")
@@ -148,7 +148,7 @@ while(true)
 
     if(value == "help")
     {
-        print("Katipo Host version:", KATIPO_VERSION)
+        print("Katipo Host version:", katipo.version)
         print("")
         print("available commands:")
         print("help: prints this text")

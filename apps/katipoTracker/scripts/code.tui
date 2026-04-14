@@ -1,10 +1,6 @@
-
+print("Katipo Tracker ", katipo.version)
 
 siteInfosBySiteKeys = {}
-
-KATIPO_VERSION = "0.1" #todo
-
-### loop over the launch arguments
 
 argCount = table.count(launchArgs)
 for(i = 0, i < argCount, i++)
@@ -34,7 +30,7 @@ for(i = 0, i < argCount, i++)
     else if(arg == "--help")
     {
         print("")
-        print("Katipo Tracker version:", KATIPO_VERSION)
+        print("Katipo Tracker version:", katipo.version)
         print("Example usage: ./katipoTracker --hostPort 3470 --clientPort 3471")
         print("")
         print("--basePath PATH") #this is handled by Controller.cpp

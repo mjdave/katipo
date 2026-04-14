@@ -1,10 +1,9 @@
-
-KATIPO_VERSION = "0.1" #todo
+print("Katipo Client ", katipo.version)
 
 printUsage = function()
 {
     print("")
-    print("Katipo Client version:", KATIPO_VERSION)
+    print("Katipo Client version:", katipo.version)
     print("https://github.com/mjdave/katipo")
     print("")
     print("Usage: ./katipoClient --get SITE_URL")
