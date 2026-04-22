@@ -49,6 +49,7 @@ set(SOURCES
     ../../core/DatabaseEnvironment.cpp
     ../../core/Server.cpp
     ../../core/Timer.cpp
+    ../../core/Tracker.cpp
 
     ../../apps/katipoTracker/Controller.cpp
 
