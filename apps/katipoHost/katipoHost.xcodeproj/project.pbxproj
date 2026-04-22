@@ -56,8 +56,8 @@
 		5B849DF42F18886B007FCBE6 /* libsodium.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libsodium.a; path = ../../thirdParty/libsodium/macos/lib/libsodium.a; sourceTree = "<group>"; };
 		5B9BE33E2F22E2750066EE8A /* libcurl.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libcurl.tbd; path = usr/lib/libcurl.tbd; sourceTree = SDKROOT; };
 		5B9E6D0C2F1433DD005E3DB5 /* exampleSites */ = {isa = PBXFileReference; lastKnownFileType = folder; path = exampleSites; sourceTree = "<group>"; };
-		5BC7E8AC2F7A05190024744E /* mdb.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = mdb.c; path = "../../thirdParty/liblmdb/mdb.c"; sourceTree = SOURCE_ROOT; };
-		5BC7E8AD2F7A05190024744E /* midl.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = midl.c; path = "../../thirdParty/liblmdb/midl.c"; sourceTree = SOURCE_ROOT; };
+		5BC7E8AC2F7A05190024744E /* mdb.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = mdb.c; path = ../../thirdParty/liblmdb/mdb.c; sourceTree = SOURCE_ROOT; };
+		5BC7E8AD2F7A05190024744E /* midl.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = midl.c; path = ../../thirdParty/liblmdb/midl.c; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */

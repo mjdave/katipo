@@ -27,6 +27,16 @@ for(i = 0, i < argCount, i++)
         i++
         katipo.clientPort = launchArgs[i]
     }
+    else if(arg == "--defaultHost")
+    {
+        if(i+1 >= argCount)
+        {
+            print("missing argument. usage example: ./katipoTracker --defaultHost basicSite")
+            return
+        }
+        i++
+        katipo.defaultHost = launchArgs[i]
+    }
     else if(arg == "--help")
     {
         print("")
@@ -44,6 +54,9 @@ for(i = 0, i < argCount, i++)
         print("--clientPort PORT")
         print("  The port clients will connect to.")
         print("  optional, default: 3471")
+        print("--defaultHost SITE_KEY")
+        print("  If a client connects to mytracker.com, they will be redirected to mytracker.com/SITE_KEY")
+        print("  optional, the default returns not found")
         return
     }
 }
@@ -118,9 +131,15 @@ clientServer.clientConnected = function(clientID)
 
 getSiteKey = function(clientID, siteNameKey, callbackFunc)
 {
-    if(siteNameKey)
+    siteNameKeyToUse = siteNameKey
+    if(!siteNameKeyToUse and katipo.defaultHost)
     {
-        siteInfo = siteInfosBySiteKeys[siteNameKey]
+        siteNameKeyToUse = katipo.defaultHost
+    }
+
+    if(siteNameKeyToUse)
+    {
+        siteInfo = siteInfosBySiteKeys[siteNameKeyToUse]
         if(siteInfo)
         {
             result = {
@@ -134,7 +153,7 @@ getSiteKey = function(clientID, siteNameKey, callbackFunc)
 
     result = {
         status = "error"
-        message = "no host found:" + siteNameKey
+        message = "no host found:" + siteNameKeyToUse
     }
 
     callbackFunc(result)

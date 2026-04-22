@@ -1,91 +1,54 @@
 
-loadFilesFromDir = function(dirPath)
+loadFilesRecursively = function(clientFiles, clientChecksums, fullPath, localPathOrNil)
 {
-    files = {}
-    contents = file.directoryContents(dirPath)
-    for(fileName in contents)
+    if(file.isDirectory(fullPath))
     {
-        if(string.subString(fileName, 0, 1) != ".")
-        {
-            fullPath = dirPath + "/" + fileName
-            if(file.isDirectory(fullPath))
-            {
-                subFiles = loadFilesFromDir(fullPath)
-                if(subFiles)
-                {
-                    fileDataWrapper = {
-                        fileName = fileName,
-                        files = subFiles
-                    }
-                    table.insert(files, fileDataWrapper)
-                }
-            }
-            else
-            {
-                fileData = file.loadData(fullPath)
-                if(fileData)
-                {
-                    fileDataWrapper = {
-                        fileName = fileName,
-                        data = fileData
-                    }
-                    table.insert(files, fileDataWrapper)
-                }
-            }
-        }
-    }
-    if(table.count(files) == 0)
-    {
-        return nil
-    }
-    return files
-}
-
-cachedChecksum = false
-
-checksumRecursively = function(path)
-{
-    #print("checksumRecursively:", path)
-    if(file.isDirectory(path))
-    {
-        contents = file.directoryContents(path)
-        foundResult = ""
+        contents = file.directoryContents(fullPath)
         for(fileOrDirectory in contents)
         {
-            #print("fileOrDirectory:", fileOrDirectory, " contents:", contents)
-            thisResult = checksumRecursively(path + "/" + fileOrDirectory)
-            #print("thisResult a:", thisResult)
-            if(thisResult)
+            if(string.subString(fileOrDirectory, 0, 1) != ".")
             {
-                foundResult += thisResult
+                subLocalPath = fileOrDirectory
+                if(localPathOrNil)
+                {
+                    subLocalPath = localPathOrNil + "/" + fileOrDirectory
+                }
+                loadFilesRecursively(clientFiles, clientChecksums, fullPath + "/" + fileOrDirectory, subLocalPath)
             }
-            #print("foundResult d:", foundResult)
-        }
-        #print("foundResult e:", foundResult) //false, token 47, bool in locals but the value stored at this level in the parent is correct
-        if(foundResult != "")
-        {
-            return foundResult
         }
     }
-    else
+    else if(localPathOrNil)
     {
-        fileName = file.fileName(path)
-        if(fileName and string.subString(fileName, 0, 1) != ".")
+        fileChecksum = file.sha1(fullPath)
+
+        if(!clientChecksums or (clientChecksums[localPathOrNil] != fileChecksum))
         {
-            #print("returning sha1 for file:", path)
-            return file.sha1(path)
+            fileData = file.loadData(fullPath)
+            if(fileData)
+            {
+                fileDataWrapper = {
+                    fileName = localPathOrNil
+                    checksum = fileChecksum
+                    data = fileData
+                }
+                table.insert(clientFiles, fileDataWrapper)
+            }
         }
     }
+}
 
-    #print("nil")
-    return nil
+loadFiles = function(clientSitePath, clientChecksums)
+{
+    clientFiles = {}
+    loadFilesRecursively(clientFiles, clientChecksums, clientSitePath)
+    return clientFiles
 }
 
 getChecksum = function(path)
 {
-    combinedChecksum = checksumRecursively(path)
-    #print("combinedChecksum:", combinedChecksum)
-    return string.sha1(combinedChecksum)
+    checksums = {}
+    checksumRecursively(checksums, path)
+    return checksums
     /*if(cachedChecksum) #todo finish this (reset below in update loop), spamming / is a potential DOS attack vector for large sites otherwise
     {
         return cachedChecksum
@@ -136,8 +99,13 @@ setPrivateData = function(key, data)
 }
 
 ### this function is called when clients query this site
-get = function(url, clientChecksum)
+get = function(url, clientChecksumsOrCallbackFunc)
 {
+    clientChecksums = clientChecksumsOrCallbackFunc
+    if(type(clientChecksums) != "table")
+    {
+        clientChecksums = nil
+    }
     siteInfo = require(katipo.sitePath + "/site.tui")
     clientSitePath = file.getAbsolutePath(katipo.sitePath + "/clientSite")
     if(!file.fileExists(clientSitePath))
@@ -168,28 +136,28 @@ get = function(url, clientChecksum)
         
         #print("publicData:", publicData)
         
-        checksum = getChecksum(clientSitePath)
-        if(clientChecksum == checksum)
-        {
-            return {
-                status = "ok"
-                unchanged = true
-                siteData = {
-                    publicData = publicData
-                }
-            }
-        }
+        #checksum = getChecksum(clientSitePath)
+        #print("checksum:", checksum)
+        #if(clientChecksum == checksum) #todo deep compare
+        #{
+        ##    return {
+        #        status = "ok"
+        #        unchanged = true
+        #        siteData = {
+        #            publicData = publicData
+        #        }
+        #    }
+        #}
         #print("sending site data")
 
         #these files could be cached, however this way, changes are immediate when the client reloads, without needing to restart the host process
-        files = loadFilesFromDir(clientSitePath)
+        files = loadFiles(clientSitePath, clientChecksums)
 
         clientSiteData = {
             files = files
             publicData = publicData
             siteInfo = siteInfo
             #siteImage = siteImage
-            checksum = checksum
         }
         return {
             status = "ok"

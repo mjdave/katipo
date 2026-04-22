@@ -3,23 +3,21 @@
 #define Controller_h
 
 #include "TuiScript.h"
-#include <thread>
+#include "Tracker.h"
 //#include "ThreadSafeQueue.h"
 
-class Server;
 
 class Controller {
 public:
     bool needsToExit = false;
-    std::thread* thread = nullptr;
     
-    Server* hostServer;
-    Server* clientServer;
+    Tracker* tracker;
 
     TuiTable* katipoTable;
     
     //ThreadSafeQueue<ControllerInput>* inputQueue;
     //ThreadSafeQueue<ServerAppControllerOutput>* outputQueue;
+    
 
 public:
     
@@ -35,7 +33,6 @@ public:
     
 private:
     
-    void serverEventLoop();
     
 private:
 
