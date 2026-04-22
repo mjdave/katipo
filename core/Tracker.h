@@ -2,12 +2,11 @@
 #ifndef __Tracker__
 #define __Tracker__
 
-#include "TuiScript.h"
 #include <thread>
 
 
 class Server;
-
+class TuiTable;
 
 
 class Tracker {

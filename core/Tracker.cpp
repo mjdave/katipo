@@ -2,7 +2,7 @@
 #include "Tracker.h"
 #include "Server.h"
 #include "Timer.h"
-
+#include "TuiScript.h"
 
 Tracker::Tracker(TuiTable* katipoTable)
 {

@@ -138,6 +138,9 @@
       <AdditionalDependencies>ws2_32.lib;winmm.lib;libsodium.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(SolutionDir)\..\..\thirdParty\libsodium\windows\x64\Release\v143\static;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
+    <PostBuildEvent>
+      <Command>xcopy "$(SolutionDir)\scripts" "$(TargetDir)\scripts" /i /d /y</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="../../thirdParty/tui/source/TuiFileUtils.cpp" />
