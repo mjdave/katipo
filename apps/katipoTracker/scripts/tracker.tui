@@ -1,0 +1,97 @@
+
+siteInfosBySiteKeys = {}
+
+init = function()
+{
+    hostServer = katipo.hostServer
+    clientServer = katipo.clientServer
+
+    ### hosts
+
+    hostServer.clientConnected = function(hostID, siteInfo)
+    {
+        print("host connected:", hostID)
+        print("key:", siteInfo.nameKey)
+        print("title:", siteInfo.title)
+
+        siteNameKey = siteInfo.nameKey
+        if(!siteNameKey)
+        {
+            message = "missing host nameKey"
+            print("Error:", message)
+            return {
+                status = "error"
+                message = message
+            }
+        }
+
+        existingSiteInfo = siteInfosBySiteKeys[siteNameKey]
+
+        if(existingSiteInfo)
+        {
+            if(hostID != existingSiteInfo.hostID)
+            {
+                message = "host nameKey already in use by another host"
+                print("Error:", message)
+                return {
+                    status = "error"
+                    message = message
+                }
+            }
+        }
+        else
+        {
+            siteInfo.hostID = hostID
+            siteInfosBySiteKeys[siteNameKey] = siteInfo
+        }
+        
+        return {
+            status = "ok"
+        }
+    }
+
+    hostServer.clientDisconnected = function(hostID) #todo
+    {
+        print("host disconnected:", hostID)
+    }
+
+    ### clients
+
+    clientServer.clientConnected = function(clientID)
+    {
+        print("client connected:", clientID)
+    }
+
+    getSiteKey = function(clientID, siteNameKey, callbackFunc)
+    {
+        siteNameKeyToUse = siteNameKey
+        if(!siteNameKeyToUse and katipo.defaultHost)
+        {
+            siteNameKeyToUse = katipo.defaultHost
+        }
+
+        if(siteNameKeyToUse)
+        {
+            siteInfo = siteInfosBySiteKeys[siteNameKeyToUse]
+            if(siteInfo)
+            {
+                result = {
+                    status = "ok"
+                    publicKey = siteInfo.publicKey
+                }
+                callbackFunc(result)
+                return
+            }
+        }
+
+        result = {
+            status = "error"
+            message = "no host found:" + siteNameKeyToUse
+        }
+
+        callbackFunc(result)
+    }
+
+    #called by client
+    clientServer.register("getSiteKey", getSiteKey)
+}

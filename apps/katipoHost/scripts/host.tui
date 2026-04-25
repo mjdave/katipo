@@ -58,17 +58,6 @@ getChecksum = function(path)
     return cachedChecksum*/
 }
 
-#publicFiles = false
-
-#addPublicFile = function(key, fileName) #not fully implemented
-#{
-#    if(!publicFiles)
-#    {
-#        .publicFiles = {}
-#    }
-#    publicFiles[key] = fileName
-#}
-
 sendPublicDataKeys = {}
 
 getPublicData = function(key)
@@ -133,22 +122,6 @@ get = function(url, clientChecksumsOrCallbackFunc)
             #print("loading data:", k)
             publicData[k] = database.get("p_" + k)
         }
-        
-        #print("publicData:", publicData)
-        
-        #checksum = getChecksum(clientSitePath)
-        #print("checksum:", checksum)
-        #if(clientChecksum == checksum) #todo deep compare
-        #{
-        ##    return {
-        #        status = "ok"
-        #        unchanged = true
-        #        siteData = {
-        #            publicData = publicData
-        #        }
-        #    }
-        #}
-        #print("sending site data")
 
         #these files could be cached, however this way, changes are immediate when the client reloads, without needing to restart the host process
         files = loadFiles(clientSitePath, clientChecksums)
