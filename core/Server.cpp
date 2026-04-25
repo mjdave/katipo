@@ -83,12 +83,12 @@ void Server::bindTui(TuiTable* parentTable)
             }
             else
             {
-                TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "Incorrect argument type");
+                TuiParseError(callingDebugInfo, "Incorrect argument type");
             }
         }
         else
         {
-            TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "Missing args");
+            TuiParseError(callingDebugInfo, "Missing args");
         }
         return TUI_FALSE;
     });
@@ -301,7 +301,7 @@ void Server::clientDataReceived(NetServerClient* client, const ServerData& serve
                 TuiTable* sendArgs = new TuiTable(nullptr);
                 
                 TuiDebugInfo debugInfo;
-                debugInfo.fileName = "FUNCTION_CALL_REQUEST";
+                TuiDebugInfoPush(&debugInfo, "clientDataReceived", 1);
                 
                 sendArgs->arrayObjects.push_back(new TuiString(client->clientID));
                 

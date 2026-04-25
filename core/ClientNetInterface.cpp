@@ -676,7 +676,7 @@ void ClientNetInterface::processGetRequest(TuiTable* trackerData) //we are on a 
             TuiTable* sendArgs = new TuiTable(nullptr);
             
             TuiDebugInfo debugInfo;
-            debugInfo.fileName = "FUNCTION_CALL_REQUEST";
+            TuiDebugInfoPush(&debugInfo, "processGetRequest", 1);
             
             for(int i = 0; i < clientData->arrayObjects.size(); i++)
             {

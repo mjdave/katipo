@@ -90,7 +90,7 @@ void Database::bindTui(std::string prefix, TuiTable* rootTable)
         }
         else
         {
-            TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "database.set expected string key, then data value");
+            TuiParseError(callingDebugInfo, "database.set expected string key, then data value");
         }
         return TUI_NIL;
     });
@@ -103,7 +103,7 @@ void Database::bindTui(std::string prefix, TuiTable* rootTable)
         }
         else
         {
-            TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "database.remove expected key string argument");
+            TuiParseError(callingDebugInfo, "database.remove expected key string argument");
         }
         return TUI_NIL;
     });
@@ -116,7 +116,7 @@ void Database::bindTui(std::string prefix, TuiTable* rootTable)
         }
         else
         {
-            TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "database.get expected key string argument");
+            TuiParseError(callingDebugInfo, "database.get expected key string argument");
         }
         return TUI_NIL;
     });
@@ -129,7 +129,7 @@ void Database::bindTui(std::string prefix, TuiTable* rootTable)
         }
         else
         {
-            TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "database.has expected key string argument");
+            TuiParseError(callingDebugInfo, "database.has expected key string argument");
         }
         return TUI_NIL;
     });

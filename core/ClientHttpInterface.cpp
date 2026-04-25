@@ -57,7 +57,7 @@ void ClientHttpInterface::bindTui(TuiTable* rootTable) //adds an http.get functi
         }
         else
         {
-            TuiParseError(callingDebugInfo->fileName.c_str(), callingDebugInfo->lineNumber, "http.get expected url and callback function");
+            TuiParseError(callingDebugInfo, "http.get expected url and callback function");
         }
         
         return TUI_NIL;
