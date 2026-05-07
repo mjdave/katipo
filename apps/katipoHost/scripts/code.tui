@@ -22,7 +22,11 @@ printUsage = function()
     print("  required")
     print("")
     print("--basePath PATH") #handled in Controller.cpp, as this is the location to find this very file
-    print("  Were to find scripts/code.tui")
+    print("  Were to find the host app resources eg this file, scripts/code.tui")
+    print("  optional, default: the same directory as the katipoHost binary")
+    print("")
+    print("--privateSavePath SAVE_PATH") #handled in Controller.cpp
+    print("  A private location to save site config files and private keys.")
     print("  optional, default: the same directory as the katipoHost binary")
     print("")
     print("--trackerIP example.com")

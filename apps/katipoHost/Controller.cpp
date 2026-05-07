@@ -25,6 +25,7 @@
 void Controller::init(int argc, const char * argv[])
 {
     std::string basePath = Tui::pathByRemovingLastPathComponent(argv[0]);
+    std::string privateSavePath = basePath;
     rootTable = Tui::getRootTable();
 
     TuiTable* launchArgsTable = new TuiTable(rootTable);
@@ -53,7 +54,7 @@ void Controller::init(int argc, const char * argv[])
         launchArgsTable->arrayObjects.push_back(new TuiString(argv[i]));
 
         std::string arg = argv[i];
-        if(arg == "--basePath") //base path is where we find scripts/code.tui. Allows the same executable to run different environments
+        if(arg == "--basePath") //Allows the same executable to run in different environments
         {
             if(i+1 >= argc)
             {
@@ -63,10 +64,22 @@ void Controller::init(int argc, const char * argv[])
             basePath = argv[++i];
             launchArgsTable->arrayObjects.push_back(new TuiString(argv[i]));
         }
+        else if(arg == "--privateSavePath") //Determines where to save and find private keys, and private config data
+        {
+            if(i+1 >= argc)
+            {
+                MJError("missing privateSavePath path argument. usage example: ./katipoHost --privateSavePath SAVE_PATH");
+                abort();
+            }
+            privateSavePath = argv[++i];
+            launchArgsTable->arrayObjects.push_back(new TuiString(argv[i]));
+        }
     }
     
+    katipoTable->setString("basePath", basePath);
+    katipoTable->setString("privateSavePath", privateSavePath);
 
-    katipoTable->setFunction("init", [this](TuiTable* args, TuiRef* existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+    katipoTable->setFunction("init", [this, privateSavePath](TuiTable* args, TuiRef* existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
         if(!trackerNetInterface)
         {
             //TuiTable* clientInfo = katipoTable->getTable("clientInfo");
@@ -87,7 +100,7 @@ void Controller::init(int argc, const char * argv[])
             
             MJLog("Loading site %s", siteInfo->getString("nameKey").c_str());
             
-            std::string hostKeyPath = siteInfo->getString("nameKey") + "_privateKey.tuib";
+            std::string hostKeyPath = privateSavePath + "/" + siteInfo->getString("nameKey") + "_privateKey.tuib";
             
             if(Tui::fileExistsAtPath(hostKeyPath)) //todo these should be saved in the database, not files
             {

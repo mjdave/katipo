@@ -1,4 +1,19 @@
 
+loadSingleFile = function(fullPath, fileName, fileChecksum)
+{
+    fileData = file.loadData(fullPath)
+    if(fileData)
+    {
+        fileDataWrapper = {
+            fileName = fileName
+            checksum = fileChecksum
+            data = fileData
+        }
+        return fileDataWrapper
+    }
+    return nil
+}
+
 loadFilesRecursively = function(clientFiles, clientChecksums, fullPath, localPathOrNil)
 {
     if(file.isDirectory(fullPath))
@@ -23,14 +38,9 @@ loadFilesRecursively = function(clientFiles, clientChecksums, fullPath, localPat
 
         if(!clientChecksums or (clientChecksums[localPathOrNil] != fileChecksum))
         {
-            fileData = file.loadData(fullPath)
-            if(fileData)
+            fileDataWrapper = loadSingleFile(fullPath, localPathOrNil, fileChecksum)
+            if(fileDataWrapper)
             {
-                fileDataWrapper = {
-                    fileName = localPathOrNil
-                    checksum = fileChecksum
-                    data = fileData
-                }
                 table.insert(clientFiles, fileDataWrapper)
             }
         }
@@ -135,6 +145,25 @@ get = function(url, clientChecksumsOrCallbackFunc)
         return {
             status = "ok"
             siteData = clientSiteData
+        }
+    }
+    else
+    {
+        if(urlSplit[1] == "install")
+        {
+            if(siteInfo.shareHost)
+            {
+                siteFiles = loadFiles(katipo.sitePath, clientChecksums)
+
+                hostSiteData = {
+                    siteFiles = siteFiles
+                    siteInfo = siteInfo
+                }
+                return {
+                    status = "ok"
+                    hostSiteData = hostSiteData
+                }
+            }
         }
     }
 
