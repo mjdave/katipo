@@ -69,8 +69,6 @@ Tracker::Tracker(TuiTable* katipoTable)
         return TUI_FALSE;
     });
     
-    
-    TuiRef::runScriptFile(katipoTable->getString("basePath") + "/scripts/code.tui", katipoTable);
 }
 
 Tracker::~Tracker()

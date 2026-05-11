@@ -21,9 +21,10 @@ void Controller::init(int argc, const char * argv[])
         abort();
     }
     
-    std::string basePath = Tui::pathByRemovingLastPathComponent(argv[0]);
 
-    TuiTable* rootTable = Tui::getRootTable();
+    rootTable = Tui::initRootTable();
+    
+    std::string basePath = Tui::pathByRemovingLastPathComponent(argv[0]);
     
     katipoTable = new TuiTable(rootTable);
     rootTable->set("katipo", katipoTable);
@@ -60,9 +61,10 @@ void Controller::init(int argc, const char * argv[])
         basePath = basePath + "/";
     }
     katipoTable->setString("basePath", basePath);
-
     
     tracker = new Tracker(katipoTable);
+    
+    scriptState = (TuiTable*)TuiRef::runScriptFile(katipoTable->getString("basePath") + "/scripts/code.tui", katipoTable);
     
 }
 
@@ -74,4 +76,7 @@ Controller::Controller()
 
 Controller::~Controller()
 {
+    delete tracker;
+    delete scriptState;
+    delete rootTable;
 }

@@ -21,19 +21,19 @@ public:
     bool needsToExit = false;
     std::thread* thread = nullptr;
     
-    DatabaseEnvironment* databaseEnvironment;
-    Database* database;
+    DatabaseEnvironment* databaseEnvironment = nullptr;
+    Database* database = nullptr;
     
-    ClientNetInterface* trackerNetInterface;
+    ClientNetInterface* trackerNetInterface = nullptr;
     std::string currentHostNameKey;
     
 #if COMPILE_WITH_HTTP_INTERFACE
-    ClientHttpInterface* httpInterface;
+    ClientHttpInterface* httpInterface = nullptr;
 #endif
     
-    TuiTable* rootTable;
-    TuiTable* katipoTable;
-    TuiTable* scriptState;
+    TuiTable* rootTable = nullptr;
+    TuiTable* katipoTable = nullptr;
+    TuiTable* scriptState = nullptr;
 
 public:
     

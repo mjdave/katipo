@@ -78,6 +78,10 @@ void Controller::init(int argc, const char * argv[])
     
     katipoTable->setString("basePath", basePath);
     katipoTable->setString("privateSavePath", privateSavePath);
+    
+    TuiRef* hostScriptState = (TuiTable*)TuiRef::runScriptFile(Tui::pathByAppendingPathComponent(basePath,"scripts/host.tui"), rootTable);
+    katipoTable->set("host", hostScriptState);
+    hostScriptState->release();
 
     katipoTable->setFunction("init", [this, privateSavePath](TuiTable* args, TuiRef* existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
         if(!trackerNetInterface)

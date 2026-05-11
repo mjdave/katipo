@@ -11,9 +11,11 @@ class Controller {
 public:
     bool needsToExit = false;
     
-    Tracker* tracker;
-
-    TuiTable* katipoTable;
+    Tracker* tracker = nullptr;
+    
+    TuiTable* rootTable = nullptr;
+    TuiTable* katipoTable = nullptr;
+    TuiTable* scriptState = nullptr;
     
     //ThreadSafeQueue<ControllerInput>* inputQueue;
     //ThreadSafeQueue<ServerAppControllerOutput>* outputQueue;

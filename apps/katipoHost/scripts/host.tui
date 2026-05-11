@@ -1,3 +1,4 @@
+#This file is loaded by Katipo any time we host, either from katipoHost or the Katipo Browser
 
 loadSingleFile = function(fullPath, fileName, fileChecksum)
 {
@@ -118,9 +119,6 @@ get = function(url, clientChecksumsOrCallbackFunc)
 
     if(table.count(urlSplit) <= 1) #respond to get at the root level: "nameKey/" or "nameKey"
     {
-        # This checksums all of the client code, and clients check against it, like a version number. 
-        # So clients will automatically download any updates to the site as an entire blob, but load from a cache otherwise
-        
         #print("sendPublicDataKeys:", sendPublicDataKeys)
         publicData = false
         for(k,v in sendPublicDataKeys)
@@ -170,5 +168,92 @@ get = function(url, clientChecksumsOrCallbackFunc)
     return {
         status = "error"
         message = "unhandled request"
+    }
+}
+
+start = function(isCommandLine)
+{
+    if(!katipo.sitePath)
+    {
+        print("\nError: katipoHost requires a site directory path to be passed with --site. run './katipoHost --help' for more information")
+        return
+    }
+
+    siteInfoPath = katipo.sitePath + "/site.tui"
+    siteCodePath = katipo.sitePath + "/code.tui"
+
+    if(!file.fileExists(siteInfoPath))
+    {
+        print("\nError: Unable to find site.tui file at:", file.getAbsolutePath(siteInfoPath))
+        return
+    }
+
+    siteInfo = require(siteInfoPath)
+    siteCode = false
+
+    if(file.fileExists(siteCodePath))
+    {
+        siteCode = require(siteCodePath)
+    }
+
+    #print("siteInfo:", siteInfo)
+    #print("siteCode:", siteCode)
+
+    katipo.siteInfo = siteInfo
+    katipo.onConnected = function()
+    {
+        print("Successfully connected to katipo tracker server, with host name:", siteInfo.nameKey)
+    }
+
+    ### initialize katipo now that we have loaded the launch args
+    success = katipo.init()
+    if(!success)
+    {
+        print("Failed to initialize katipo.")
+        return
+    }
+
+    if(siteCode.init)
+    {
+        siteCode.init()
+    }
+
+    katipo.get = function(url, clientData)
+    {
+        print("in top level get. url:", url, " clientData:", clientData)
+        return siteCode.get(url, clientData)
+    }
+
+    print("Attempting to connect to tracker...")
+
+    if(siteCode.runLoop)
+    {
+        siteCode.runLoop()
+    }
+    else if(isCommandLine)
+    {
+        while(true)
+        {
+            print("Type 'quit' to cancel and exit, 'help' for more commands.")
+
+            value = readValue()
+
+            if(value == "help")
+            {
+                print("Katipo Host version:", katipo.version)
+                print("")
+                print("available commands:")
+                print("help: prints this text")
+                print("quit or exit: exits")
+            }
+            else if(value == "quit" or value == "exit")
+            {
+                break
+            }
+            else
+            {
+                print("unhandled command:", value)
+            }
+        }
     }
 }
