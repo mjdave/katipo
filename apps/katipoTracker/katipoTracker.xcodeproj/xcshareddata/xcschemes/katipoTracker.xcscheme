@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Scheme
-   LastUpgradeVersion = "2620"
+   LastUpgradeVersion = "2640"
    version = "1.7">
    <BuildAction
       parallelizeBuildables = "YES"
@@ -16,9 +16,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "5B7AB19A2E283C0B009E04C8"
-               BuildableName = "katipoHost"
-               BlueprintName = "katipoHost"
-               ReferencedContainer = "container:katipoHost.xcodeproj">
+               BuildableName = "katipoTracker"
+               BlueprintName = "katipoTracker"
+               ReferencedContainer = "container:katipoTracker.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -40,61 +40,22 @@
       debugDocumentVersioning = "YES"
       debugServiceExtension = "internal"
       allowLocationSimulation = "YES"
-      viewDebuggingEnabled = "No">
+      viewDebuggingEnabled = "No"
+      queueDebuggingEnableBacktraceRecording = "Yes">
       <BuildableProductRunnable
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "5B7AB19A2E283C0B009E04C8"
-            BuildableName = "katipoHost"
-            BlueprintName = "katipoHost"
-            ReferencedContainer = "container:katipoHost.xcodeproj">
+            BuildableName = "katipoTracker"
+            BlueprintName = "katipoTracker"
+            ReferencedContainer = "container:katipoTracker.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
       <CommandLineArguments>
          <CommandLineArgument
-            argument = "--site exampleSites/basicSite"
-            isEnabled = "NO">
-         </CommandLineArgument>
-         <CommandLineArgument
-            argument = "--site /Users/davidframpton/katipoBrowser/katipo/apps/katipoHost/exampleSites/basicSite"
-            isEnabled = "NO">
-         </CommandLineArgument>
-         <CommandLineArgument
-            argument = "--site /Users/davidframpton/Documents/daves-katipo-sites/blockout"
-            isEnabled = "NO">
-         </CommandLineArgument>
-         <CommandLineArgument
-            argument = "--site /Users/davidframpton/Documents/daves-katipo-sites/notes"
+            argument = "--defaultHost snake"
             isEnabled = "YES">
-         </CommandLineArgument>
-         <CommandLineArgument
-            argument = "--site /Users/davidframpton/Documents/daves-katipo-sites/snake --trackerIP katipobrowser.com"
-            isEnabled = "NO">
-         </CommandLineArgument>
-         <CommandLineArgument
-            argument = "--site /Users/davidframpton/Documents/daves-katipo-sites/snake"
-            isEnabled = "NO">
-         </CommandLineArgument>
-         <CommandLineArgument
-            argument = "--site /Users/davidframpton/Documents/daves-katipo-sites/waraki"
-            isEnabled = "NO">
-         </CommandLineArgument>
-         <CommandLineArgument
-            argument = "--site /Users/davidframpton/Documents/daves-katipo-sites/blockrun"
-            isEnabled = "NO">
-         </CommandLineArgument>
-         <CommandLineArgument
-            argument = "--site /Users/davidframpton/Documents/daves-katipo-sites/katipobrowser.com"
-            isEnabled = "NO">
-         </CommandLineArgument>
-         <CommandLineArgument
-            argument = "--site exampleSites/scraperBot"
-            isEnabled = "NO">
-         </CommandLineArgument>
-         <CommandLineArgument
-            argument = "--site exampleSites/fileHost"
-            isEnabled = "NO">
          </CommandLineArgument>
       </CommandLineArguments>
    </LaunchAction>
@@ -109,9 +70,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "5B7AB19A2E283C0B009E04C8"
-            BuildableName = "katipoHost"
-            BlueprintName = "katipoHost"
-            ReferencedContainer = "container:katipoHost.xcodeproj">
+            BuildableName = "katipoTracker"
+            BlueprintName = "katipoTracker"
+            ReferencedContainer = "container:katipoTracker.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>
