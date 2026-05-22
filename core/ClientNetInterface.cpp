@@ -33,6 +33,42 @@ ClientNetInterface::ClientNetInterface(std::string host_,
 }
 
 
+
+ClientNetInterface::ClientNetInterface(std::string host_, //init from a scanner connection
+                                       std::string port_,
+                                       const std::string& savedPermanentPublicKey_,
+                                       const std::string& savedPermanentSecretKey_,
+                                       std::string trackerPublicKey_,
+                                       ENetHost* enetClient_,
+                                       ENetPeer* enetPeer_)
+{
+    host = host_;
+    port = port_;
+    savedPermanentPublicKey = savedPermanentPublicKey_;
+    savedPermanentSecretKey = savedPermanentSecretKey_;
+    
+    inputQueue = new ThreadSafeQueue<ClientNetInterfaceInput>();
+    outputQueue = new ThreadSafeQueue<ClientNetInterfaceOutput>();
+    
+    //todo this key pair is not used on the host, doesn't need to be generated there
+    sessionTransientPublicKey.resize(crypto_box_PUBLICKEYBYTES);
+    sessionTransientSecretKey.resize(crypto_box_SECRETKEYBYTES);
+    crypto_box_keypair((unsigned char*)&(sessionTransientPublicKey[0]), (unsigned char*)&(sessionTransientSecretKey[0]));
+    
+    trackerPublicKey = trackerPublicKey_;
+    enetClient = enetClient_;
+    enetPeer = enetPeer_;
+    
+    disconnected = false;
+    needsToExit = false;
+    
+    sendInitialData();
+    
+    thread = new std::thread(&ClientNetInterface::startThread, this);
+    
+}
+
+
 ClientNetInterface::~ClientNetInterface()
 {
     disconnect();
@@ -107,7 +143,7 @@ void ClientNetInterface::disconnect()
     
     if(connected)
     {
-        if(katipoTable->hasKey("onDisconnected"))
+        if(katipoTable && katipoTable->hasKey("onDisconnected"))
         {
             TuiFunction* disconnectedFunction = ((TuiFunction*)katipoTable->get("onDisconnected"));
             disconnectedFunction->call("onDisconnected");
@@ -115,7 +151,7 @@ void ClientNetInterface::disconnect()
     }
     else
     {
-        if(katipoTable->hasKey("onConnectionFailed"))
+        if(katipoTable && katipoTable->hasKey("onConnectionFailed"))
         {
             TuiFunction* disconnectedFunction = ((TuiFunction*)katipoTable->get("onConnectionFailed"));
             disconnectedFunction->call("onConnectionFailed");
@@ -407,6 +443,53 @@ void ClientNetInterface::startThread()
     }
 }
 
+void ClientNetInterface::sendInitialData()
+{
+    TuiTable* dataToSecureTable = initialData;
+    if(dataToSecureTable)
+    {
+        dataToSecureTable->retain();
+    }
+    else
+    {
+        //We just want to send through the clientID, but that is already public in sendTable, so lets just send an empty table
+        dataToSecureTable = new TuiTable(nullptr);
+    }
+    
+    TuiTable* sendTable = getTrackerEncryptedDataTable(dataToSecureTable);
+    dataToSecureTable->release();
+    
+    if (!sendTable)
+    {
+        MJError("Failed to encode");
+        abort();
+    }
+    
+    std::string data = sendTable->serializeBinary();
+    
+    int dataSize = (int)data.length() + (int)sizeof(uint8_t);
+    uint8_t* netData = (uint8_t*)malloc(dataSize);
+    netData[0] = KATIPO_NET_TYPE_CLIENT_JOIN_REQUEST;
+    memcpy(&(netData[1]), data.data(), data.length());
+    
+    ENetPacket * packet = enet_packet_create(netData,
+                                              dataSize,
+                                              ENET_PACKET_FLAG_RELIABLE);
+    
+    
+    enet_peer_send(enetPeer, 0, packet);
+    free(netData);
+    sendTable->release();
+    
+    connected = true;
+    
+    if(katipoTable && katipoTable->hasKey("onConnected")) //hmmm not thread safe?
+    {
+        TuiFunction* connectedFunction = ((TuiFunction*)katipoTable->get("onConnected"));
+        connectedFunction->call("onConnected");
+    }
+}
+
 void ClientNetInterface::checkEnetEvents()
 {
     ENetEvent event;
@@ -470,50 +553,7 @@ void ClientNetInterface::checkEnetEvents()
                     {
                         trackerPublicKey = std::string((const char*)incoming.data, incoming.length);
                         
-                        //We just want to send through the clientID, but that is already public in sendTable, so lets just send an empty table for now, we will need stuff later for sure
-                        TuiTable* dataToSecureTable = initialData;
-                        if(dataToSecureTable)
-                        {
-                            dataToSecureTable->retain();
-                        }
-                        else
-                        {
-                            dataToSecureTable = new TuiTable(nullptr);
-                        }
-                        //todo add initial data
-                        
-                        TuiTable* sendTable = getTrackerEncryptedDataTable(dataToSecureTable);
-                        dataToSecureTable->release();
-                        
-                        if (!sendTable)
-                        {
-                            MJError("Failed to encode");
-                            abort();
-                        }
-                        
-                        std::string data = sendTable->serializeBinary();
-                        
-                        int dataSize = (int)data.length() + (int)sizeof(uint8_t);
-                        uint8_t* netData = (uint8_t*)malloc(dataSize);
-                        netData[0] = KATIPO_NET_TYPE_CLIENT_JOIN_REQUEST;
-                        memcpy(&(netData[1]), data.data(), data.length());
-                        
-                        ENetPacket * packet = enet_packet_create(netData,
-                                                                  dataSize,
-                                                                  ENET_PACKET_FLAG_RELIABLE);
-                        
-                        
-                        enet_peer_send(enetPeer, 0, packet);
-                        free(netData);
-                        sendTable->release();
-                        
-                        connected = true;
-                        
-                        if(katipoTable->hasKey("onConnected"))
-                        {
-                            TuiFunction* connectedFunction = ((TuiFunction*)katipoTable->get("onConnected"));
-                            connectedFunction->call("onConnected");
-                        }
+                        sendInitialData();
                     }
                     else
                     {

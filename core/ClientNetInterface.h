@@ -89,6 +89,15 @@ public:
                        const std::string& savedPermanentPublicKey_,
                        const std::string& savedPermanentSecretKey_,
                        TuiTable* initialData_ = nullptr);
+    
+    ClientNetInterface(std::string host_, //init from a scanner connection
+                       std::string port_,
+                       const std::string& savedPermanentPublicKey_,
+                       const std::string& savedPermanentSecretKey_,
+                       std::string trackerPublicKey_,
+                       ENetHost* enetClient_,
+                       ENetPeer* enetPeer_);
+    
     ~ClientNetInterface();
     
     void connect();
@@ -110,6 +119,7 @@ protected:
 private:
     void startThread();
     void checkEnetEvents();
+    void sendInitialData();
     
     TuiTable* getTrackerEncryptedDataTable(TuiTable* dataToSecure);
     TuiTable* getHostOrClientEncryptedDataTable(std::string hostPublicKey, TuiTable* dataToSecure);

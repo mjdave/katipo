@@ -172,32 +172,105 @@ static inline std::vector<std::string> getScanIPs()
 
 #endif
 
+void Scanner::handleReceivedData(std::string ip, ENetEvent& event)
+{
+    if(validConnectionsByIP.count(ip) == 0)
+    {
+        return;
+    }
+    
+    completedIPsToRemove.insert(ip);
+    
+    bool success = false;
+    
+    ScannerConnection& connection = validConnectionsByIP[ip];
+    
+    if(event.packet->dataLength < 1)
+    {
+        MJLog("packet too small");
+    }
+    else
+    {
+        ServerData incoming;
+        incoming.type = ((uint8_t*)(event.packet->data))[0];
+        if(event.packet->dataLength > 1)
+        {
+            incoming.data = &(((uint8_t*)(event.packet->data))[1]);
+            incoming.length = event.packet->dataLength - 1;
+        }
+        else
+        {
+            incoming.data = NULL;
+            incoming.length = 0;
+        }
+        
+        if(incoming.type == KATIPO_NET_TYPE_SERVER_JOIN_RESPONSE_REJECT)
+        {
+            MJLog("rejected");
+        }
+        else if(incoming.type == KATIPO_NET_TYPE_INITIAL_HANDSHAKE)
+        {
+            connection.trackerPublicKey = std::string((const char*)incoming.data, incoming.length);
+            success = true;
+            
+            //todo we need a tracker function to query for a public waraki host
+            //but for now, we can assume. This is enough to show the tracker to the user, they can then attempt to connect to a host with the name 'waraki'
+            //todo simple passphrase protection, basically just like anonymous wifi
+            
+            
+        }
+    }
+    
+    
+    if(success)
+    {
+        if(callbackFunction)
+        {
+            TuiString* statusString = new TuiString("connected");
+            TuiString* ipString = new TuiString(ip);
+            callbackFunction->call("Scanner.cpp connected to tracker", statusString, ipString);
+            statusString->release();
+            ipString->release();
+        }
+    }
+    else
+    {
+        enet_peer_disconnect(connection.enetPeer, 0);
+        enet_peer_reset(connection.enetPeer);
+        connection.enetPeer = nullptr;
+        enet_host_destroy(connection.enetClient);
+        connection.enetClient = nullptr;
+        
+        validConnectionsByIP.erase(ip);
+    }
+}
 
 void Scanner::update()
 {
-    if(scanIndex >= 0 && scanIndex < scanIPs.size())
+    if(!complete)
     {
-        const std::string& scanIP = scanIPs[scanIndex++];
-        MJLog("scanIP:%s", scanIP.c_str());
-        
-        ScannerConnection& connection = currentlyTestingConnectionsByIP[scanIP];
-        if(!connection.enetClient)
+        int maxCount = 8;
+        for(int i = 0; i < maxCount && scanIndex < scanIPs.size(); i++)
         {
-            connection.enetClient = enet_host_create (nullptr, // create a client host
-                                                      1,
-                                                      0, //channels
-                                                      0,
-                                                      0);
-            ENetAddress address;
-            enet_address_set_host (&address, scanIP.c_str());
-            address.port = 3471;
-            connection.enetPeer = enet_host_connect(connection.enetClient, &address, 1, 0);
-            enet_peer_timeout(connection.enetPeer, 0, 2000, 3000);
+            const std::string& scanIP = scanIPs[scanIndex++];
+            //MJLog("scanIP:%s", scanIP.c_str());
+            
+            ScannerConnection& connection = currentlyTestingConnectionsByIP[scanIP];
+            if(!connection.enetClient)
+            {
+                connection.enetClient = enet_host_create (nullptr, // create a client host
+                                                          1,
+                                                          0, //channels
+                                                          0,
+                                                          0);
+                ENetAddress address;
+                enet_address_set_host (&address, scanIP.c_str());
+                address.port = 3471;
+                connection.enetPeer = enet_host_connect(connection.enetClient, &address, 1, 0);
+                enet_peer_timeout(connection.enetPeer, 0, 2000, 3000);
+            }
         }
-        //
     }
-    
-    std::set<std::string> completedIPs;
     
     for(auto& ipAndConnection : currentlyTestingConnectionsByIP)
     {
@@ -205,75 +278,69 @@ void Scanner::update()
         ENetEvent event;
         while(connection.enetClient && enet_host_service(connection.enetClient, &event, 0) > 0)
         {
-            bool foundResult = false;
             switch (event.type)
             {
                 case ENET_EVENT_TYPE_CONNECT:
                 {
-                    foundResult = true;
-                    MJLog("Scanner Initial connection established");
+                    validConnectionsByIP[ipAndConnection.first] = connection;
+                    MJLog("Scanner Initial connection established:%s", ipAndConnection.first.c_str());
                 }
                     break;
                 case ENET_EVENT_TYPE_RECEIVE:
                 {
-                    MJLog("Warning: Scanner got ENET_EVENT_TYPE_RECEIVE");
+                    handleReceivedData(ipAndConnection.first, event);
                     enet_packet_destroy (event.packet);
                 }
                     break;
                 case ENET_EVENT_TYPE_DISCONNECT:
                 {
-                    MJLog("Scanner ENET_EVENT_TYPE_DISCONNECT");
+                    enet_peer_disconnect(connection.enetPeer, 0);
+                    enet_peer_reset(connection.enetPeer);
+                    connection.enetPeer = nullptr;
+                    enet_host_destroy(connection.enetClient);
+                    connection.enetClient = nullptr;
+                    
+                    completedIPsToRemove.insert(ipAndConnection.first);
                 }
                     break;
                 default:
                     break;
             }
             
-            if(foundResult)
-            {
-                validConnectionsByIP[ipAndConnection.first] = connection;
-            }
-            else
-            {
-                
-                enet_peer_disconnect(connection.enetPeer, 0);
-                enet_peer_reset(connection.enetPeer);
-                connection.enetPeer = nullptr;
-                enet_host_destroy(connection.enetClient);
-                connection.enetClient = nullptr;
-                
-                completedIPs.insert(ipAndConnection.first);
-            }
         }
     }
     
-    for(auto& completedIP : completedIPs)
+    for(auto& completedIP : completedIPsToRemove)
     {
         currentlyTestingConnectionsByIP.erase(completedIP);
     }
-    /*enetClient = enet_host_create (nullptr, // create a client host
-                                   1,
-                                   0, //channels
-                                   0,
-                                   0);
+    completedIPsToRemove.clear();
     
-    //enet_host_compress_with_range_coder(enetClient); //NO!, lets save CPU and use the bandwidth instead.
-    
-    ENetAddress address;
-    
-    enet_address_set_host (&address, host.c_str());
-    address.port = atoi(port.c_str());
-    
-    MJLog("Connecting to tracker...");
-    enetPeer = enet_host_connect (enetClient, &address, ENET_PROTOCOL_MAXIMUM_CHANNEL_COUNT, 0);
-    
-    enet_peer_timeout(enetPeer, 0, 2000, 3000);*/
+    if(!complete && scanIndex >= scanIPs.size() && currentlyTestingConnectionsByIP.empty())
+    {
+        complete = true;
+        if(callbackFunction)
+        {
+            TuiString* statusString = new TuiString("complete");
+            callbackFunction->call("Scanner.cpp scan complete", statusString);
+            statusString->release();
+            callbackFunction->release();
+            callbackFunction = nullptr;
+        }
+    }
 }
 
 
-Scanner::Scanner()
+Scanner::Scanner(TuiFunction* callbackFunction_)
 {
+    callbackFunction = callbackFunction_;
+    if(callbackFunction)
+    {
+        callbackFunction->retain();
+    }
+    
     scanIPs = getScanIPs();
+    
     if(!scanIPs.empty())
     {
         scanIndex = 0;
@@ -281,10 +348,23 @@ Scanner::Scanner()
     else
     {
         scanIndex = -1;
+        complete = true;
+        
+        if(callbackFunction)
+        {
+            TuiString* statusString = new TuiString("error");
+            callbackFunction->call("Scanner.cpp scanIPs.empty() callback", statusString);
+            statusString->release();
+            callbackFunction->release();
+            callbackFunction = nullptr;
+        }
     }
 }
 
 Scanner::~Scanner()
 {
-    
+    if(callbackFunction)
+    {
+        callbackFunction->release();
+    }
 }
