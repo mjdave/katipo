@@ -136,6 +136,7 @@ static inline std::vector<std::string> getLocalIPs()
 static inline std::vector<std::string> getScanIPs()
 {
     std::vector<std::string> scanIPs;
+    scanIPs.push_back("127.0.0.1");
     std::vector<std::string> localIPs = getLocalIPs();
     for(const std::string& localIP : localIPs)
     {
@@ -263,11 +264,18 @@ void Scanner::update()
                                                           0, //channels
                                                           0,
                                                           0);
-                ENetAddress address;
-                enet_address_set_host (&address, scanIP.c_str());
-                address.port = 3471;
-                connection.enetPeer = enet_host_connect(connection.enetClient, &address, 1, 0);
-                enet_peer_timeout(connection.enetPeer, 0, 2000, 3000);
+                if(connection.enetClient)
+                {
+                    ENetAddress address;
+                    enet_address_set_host (&address, scanIP.c_str());
+                    address.port = 3471;
+                    connection.enetPeer = enet_host_connect(connection.enetClient, &address, 1, 0);
+                    enet_peer_timeout(connection.enetPeer, 0, 2000, 3000);
+                }
+                else
+                {
+                    currentlyTestingConnectionsByIP.erase(scanIP);
+                }
             }
         }
     }
