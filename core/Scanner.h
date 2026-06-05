@@ -27,10 +27,14 @@ public:
     std::map<std::string, ScannerConnection> validConnectionsByIP;
     
 public:
-    Scanner(TuiFunction* callbackFunction_);
+    Scanner();
     ~Scanner();
     
+    void startScan(TuiFunction* callbackFunction_);
+    void cleanupPreviousScan();
+    
     void update();
+    ScannerConnection getConnection(std::string ip); //caller is responsible for closing the returned connection
     
 private:
     

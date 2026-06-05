@@ -338,10 +338,75 @@ void Scanner::update()
     }
 }
 
-
-Scanner::Scanner(TuiFunction* callbackFunction_)
+void Scanner::cleanupPreviousScan()
 {
+    if(callbackFunction)
+    {
+        callbackFunction->release();
+        callbackFunction = nullptr;
+    }
+    
+    for(auto& ipAndConnection : validConnectionsByIP)
+    {
+        ENetHost* enetClient = ipAndConnection.second.enetClient;
+        ENetPeer* enetPeer = ipAndConnection.second.enetPeer;
+        
+        if(enetPeer)
+        {
+            enet_peer_disconnect(enetPeer, 0);
+            enet_peer_reset(enetPeer);
+        }
+        if(enetClient)
+        {
+            enet_host_destroy(enetClient);
+        }
+            
+        
+        /*if(enetPeer)
+        {
+            enet_peer_disconnect(enetPeer, 0);
+            ENetEvent event;
+            bool success = false;
+            while (!success && enet_host_service (enetClient, &event, 3000) > 0)
+            {
+                switch (event.type)
+                {
+                    case ENET_EVENT_TYPE_RECEIVE:
+                        enet_packet_destroy (event.packet);
+                        break;
+                    case ENET_EVENT_TYPE_DISCONNECT:
+                        success = true;
+                        break;
+                    default:
+                        break;
+                }
+            }
+            if(!success)
+            {
+                enet_peer_reset(enetPeer);
+            }
+            enetPeer = nullptr;
+        }
+        
+        if(enetClient)
+        {
+            enet_host_destroy(enetClient);
+            enetClient = nullptr;
+        }*/
+    }
+    
+    validConnectionsByIP.clear();
+    completedIPsToRemove.clear();
+    currentlyTestingConnectionsByIP.clear();
+}
+
+void Scanner::startScan(TuiFunction* callbackFunction_)
+{
+    cleanupPreviousScan();
     callbackFunction = callbackFunction_;
+    complete = false;
+    scanIndex = 0;
+    
     if(callbackFunction)
     {
         callbackFunction->retain();
@@ -369,10 +434,25 @@ Scanner::Scanner(TuiFunction* callbackFunction_)
     }
 }
 
+Scanner::Scanner()
+{
+}
+
 Scanner::~Scanner()
 {
-    if(callbackFunction)
+    cleanupPreviousScan();
+}
+
+
+ScannerConnection Scanner::getConnection(std::string ip) //caller is responsible for closing the returned connection
+{
+    if(validConnectionsByIP.count(ip) == 0)
     {
-        callbackFunction->release();
+        ScannerConnection connection;
+        return connection;
     }
+    ScannerConnection connection = validConnectionsByIP[ip];
+    validConnectionsByIP.erase(ip);
+    currentlyTestingConnectionsByIP.erase(ip);
+    return connection;
 }
