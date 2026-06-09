@@ -1,15 +1,15 @@
 # Katipo
 Katipo is a new type of network, a small, free and open platform that lives entirely outside of the existing HTML/CSS/JS/Apache/Chrome based web.
 
-The [Katipo Browser](https://github.com/mjdave/katipoBrowser) is built on top of Katipo. It can be thought of as a mixture between a web browser and a game engine. You can make games, you can make apps and sites, and Katipo makes it easy to share, load, use, and modify apps and games made by others.
+The [Koru Browser](https://github.com/mjdave/katipoBrowser) is built on top of Katipo. It can be thought of as a mixture between a web browser and a game engine. You can make games, you can make apps and sites, and Katipo makes it easy to share, load, use, and modify apps and games made by others.
 
 The Katipō is an endangered venomous spider from New Zealand.
 
-![Katipo browser for iOS icon](https://github.com/mjdave/katipo/blob/main/katipoBrowser-iOS128.png)
+![Katipo icon](https://github.com/mjdave/katipo/blob/main/katipoBrowser-iOS128.png)
 
 Katipo is being built from first principles by hand without the use of AI. Katipo's goal is to help make a new generation of software that is created and used by real people for meaningful things.
 
-Katipo makes it much easier to create, host and share your own sites, apps and data. From within the [Katipo Browser](https://github.com/mjdave/katipoBrowser) app, which is available now as a pre-alpha, you will be able to easily host a site/app/file from any device. Devices will be able to automatically find each other if they are on the same network, or are near by over bluetooth. Public connections are also easy to set up via exposed ports, or optional shared "tracker" based services.
+Katipo makes it much easier to create, host and share your own sites, apps and data. From within the [Koru Browser](https://github.com/mjdave/katipoBrowser) app, which is available now as a pre-alpha, you will be able to easily host a site/app/file from any device. Devices will be able to automatically find each other if they are on the same network, or are near by over bluetooth. Public connections are also easy to set up via exposed ports, or optional shared "tracker" based services.
 
 Both site hosts and clients are private, they are actually both clients. Katipo uses a tracker based system to provide networking between clients and hosts that can both be behind firewalls, without the need to open any ports. How this works is that one or more trackers sit between the host and the client, and act like a proxy. You can make small private networks with a single tracker, or (once implemented) chain trackers together to create much larger networks.
 
@@ -17,7 +17,7 @@ Trackers are the "servers", the public facing hub with ports open for incoming c
 
 Katipo also provides excellent security with end to end encryption between all parties at all times. Hosts can't track clients between sessions, trackers can't read any of the data going between hosts and clients, and the majority of the data will be stored on client devices. Katipo will also support optional encrypted tracker based backups (built-in cloud storage) and sync between devices, and it will be very close to password-less.
 
-This repository contains the (functioning) core networking library. A free Vulkan/SDL3 based open source [Katipo Browser](https://github.com/mjdave/katipoBrowser) client app is being worked on and will be released for Windows, Mac, and iOS soon, with more platforms planned. The browser will allow both browsing/searching of sites, and hosting of sites and trackers. Tracker based features like data backups, port scanning for other trackers on the same network, and in/outboxes to support direct messaging and chat are planned.
+This repository contains the (functioning) core networking library. A free Vulkan/SDL3 based open source [Koru Browser](https://github.com/mjdave/katipoBrowser) client app is being worked on and will be released for Windows, Mac, and iOS soon, with more platforms planned. The browser will allow both browsing/searching of sites, and hosting of sites and trackers. Tracker based features like data backups, port scanning for other trackers on the same network, and in/outboxes to support direct messaging and chat are planned.
 
 PLEASE NOTE! For now, you should not use Katipo to transmit sensitive data or to connect to trackers or hosts that you do not trust. The design and general implementation is secure, end to end encryption works. However there are some loose ends, and likely to be remaining exploitable bugs - as is this case with nearly all software - but a few more than normal to start with.
 
