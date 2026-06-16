@@ -926,78 +926,84 @@ void ClientNetInterface::pollNetEvents()
                         TuiTable* hostEncryptedData = (TuiTable*)TuiRef::loadBinaryString((const char*)output.serverData.data, &length, nullptr);
                         TuiTable* hostData = getDecryptedDataTable((TuiTable*)hostEncryptedData, true);
                         hostEncryptedData->release();
-                                    
-                        if(hostData->hasKey("callbackID")) //todo does this actually happen now?
+                           
+                        if(hostData)
                         {
-                            uint32_t callbackID = ((TuiNumber*)hostData->objectsByStringKey["callbackID"])->value;
-                            TuiRef* responseData = hostData->get("data");
-                            //todo test handling of status/message responses
-                            
-                            if(callbacksByID.count(callbackID) != 0)
+                            if(hostData->hasKey("callbackID")) //todo does this actually happen now?
                             {
-                                ClientNetCallback& callback = callbacksByID[callbackID];
-                                TuiRef* hostSiteKeyReadableRef = new TuiString(callback.hostSiteKey);
-                                callback.func->call("KATIPO_NET_TYPE_GET_RESPONSE_TO_CLIENT_FROM_HOST", responseData, hostSiteKeyReadableRef);
-                                callback.func->release();
-                                callbacksByID.erase(callbackID);
-                                hostSiteKeyReadableRef->release();
-                            }
-                        }
-                        else if(hostData->hasKey("total") && hostData->hasKey("requestID") && hostData->hasKey("clientData")) //multipart
-                        {
-                            std::string requestID = hostData->getString("requestID");
-                            if(!requestID.empty())
-                            {
-                                if(inProgressMultiPartDownloadsByRequestID.count(requestID) == 0)
+                                uint32_t callbackID = ((TuiNumber*)hostData->objectsByStringKey["callbackID"])->value;
+                                TuiRef* responseData = hostData->get("data");
+                                //todo test handling of status/message responses
+
+                                if(callbacksByID.count(callbackID) != 0)
                                 {
-                                    inProgressMultiPartDownloadsByRequestID[requestID].data.resize(hostData->getDouble("total"));
+                                    ClientNetCallback& callback = callbacksByID[callbackID];
+                                    TuiRef* hostSiteKeyReadableRef = new TuiString(callback.hostSiteKey);
+                                    callback.func->call("KATIPO_NET_TYPE_GET_RESPONSE_TO_CLIENT_FROM_HOST", responseData, hostSiteKeyReadableRef);
+                                    callback.func->release();
+                                    callbacksByID.erase(callbackID);
+                                    hostSiteKeyReadableRef->release();
                                 }
-                                
-                                ClientNetMultipartDownload& download = inProgressMultiPartDownloadsByRequestID[requestID];
-                                
-                                const std::string& clientData = ((TuiString*)hostData->objectsByStringKey["clientData"])->value;
-                                memcpy((void*)(&download.data[hostData->getDouble("offset")]),
-                                       &(clientData[0]), clientData.length());
-                                
-                                download.recievedBytes += clientData.length();
-                                
-                                if(download.recievedBytes >= (uint32_t)hostData->getDouble("total"))
+                            }
+                            else if(hostData->hasKey("total") && hostData->hasKey("requestID") && hostData->hasKey("clientData")) //multipart
+                            {
+                                std::string requestID = hostData->getString("requestID");
+                                if(!requestID.empty())
                                 {
-                                    MJLog("recieved full download bytes:%d", download.recievedBytes);
-                                    length = 0;
-                                    TuiTable* combinedHostData = (TuiTable*)TuiRef::loadBinaryString(&download.data[0], &length, nullptr);
-                                                
-                                    if(combinedHostData->hasKey("callbackID"))
+                                    if(inProgressMultiPartDownloadsByRequestID.count(requestID) == 0)
                                     {
-                                        uint32_t callbackID = ((TuiNumber*)combinedHostData->objectsByStringKey["callbackID"])->value;
-                                        TuiRef* responseData = combinedHostData->get("data");
-                                        
-                                        if(callbacksByID.count(callbackID) != 0)
-                                        {
-                                            ClientNetCallback& callback = callbacksByID[callbackID];
-                                            TuiRef* hostSiteKeyReadableRef = new TuiString(callback.hostSiteKey);
-                                            callback.func->call("KATIPO_NET_TYPE_GET_RESPONSE_TO_CLIENT_FROM_HOST", responseData, hostSiteKeyReadableRef);
-                                            callback.func->release();
-                                            callbacksByID.erase(callbackID);
-                                            hostSiteKeyReadableRef->release();
-                                        }
+                                        inProgressMultiPartDownloadsByRequestID[requestID].data.resize(hostData->getDouble("total"));
                                     }
-                                    
-                                    combinedHostData->release();
-                                    inProgressMultiPartDownloadsByRequestID.erase(requestID);
-                                }
-                                else
-                                {
-                                    MJLog("recieved download bytes:(%d/%d)", download.recievedBytes, (uint32_t)hostData->getDouble("total"));
+
+                                    ClientNetMultipartDownload& download = inProgressMultiPartDownloadsByRequestID[requestID];
+
+                                    const std::string& clientData = ((TuiString*)hostData->objectsByStringKey["clientData"])->value;
+                                    memcpy((void*)(&download.data[hostData->getDouble("offset")]),
+                                        &(clientData[0]), clientData.length());
+
+                                    download.recievedBytes += clientData.length();
+
+                                    if(download.recievedBytes >= (uint32_t)hostData->getDouble("total"))
+                                    {
+                                        MJLog("recieved full download bytes:%d", download.recievedBytes);
+                                        length = 0;
+                                        TuiTable* combinedHostData = (TuiTable*)TuiRef::loadBinaryString(&download.data[0], &length, nullptr);
+
+                                        if(combinedHostData->hasKey("callbackID"))
+                                        {
+                                            uint32_t callbackID = ((TuiNumber*)combinedHostData->objectsByStringKey["callbackID"])->value;
+                                            TuiRef* responseData = combinedHostData->get("data");
+
+                                            if(callbacksByID.count(callbackID) != 0)
+                                            {
+                                                ClientNetCallback& callback = callbacksByID[callbackID];
+                                                TuiRef* hostSiteKeyReadableRef = new TuiString(callback.hostSiteKey);
+                                                callback.func->call("KATIPO_NET_TYPE_GET_RESPONSE_TO_CLIENT_FROM_HOST", responseData, hostSiteKeyReadableRef);
+                                                callback.func->release();
+                                                callbacksByID.erase(callbackID);
+                                                hostSiteKeyReadableRef->release();
+                                            }
+                                        }
+
+                                        combinedHostData->release();
+                                        inProgressMultiPartDownloadsByRequestID.erase(requestID);
+                                    }
+                                    else
+                                    {
+                                        MJLog("recieved download bytes:(%d/%d)", download.recievedBytes, (uint32_t)hostData->getDouble("total"));
+                                    }
                                 }
                             }
+                            else
+                            {
+                                MJError("Expected callbackID");
+                            }
+                            hostData->release();
                         }
                         else
                         {
-                            MJError("Expected callbackID");
+                           // MJError(""); this can happen if we reconnect, probably OK
                         }
-                        
-                        hostData->release();
                         
                     }
                         break;
