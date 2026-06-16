@@ -2,27 +2,28 @@
 #include "Scanner.h"
 
 
-#ifdef _MSC_VER
-
-#include <winsock2.h>
-#include <iphlpapi.h>
-#include <stdio.h>
-#include <ws2tcpip.h>
-
-
 // Source - https://stackoverflow.com/a/10838854
 // Posted by kgriffs, modified by community. See post 'Timeline' for change history
 // Retrieved 2026-04-16, License - CC BY-SA 4.0
 
-void ListIpAddresses(IpAddresses& ipAddrs)
+#ifdef _MSC_VER
+
+#include <winsock2.h> 
+#include <iphlpapi.h> 
+#include <stdio.h> 
+#include <ws2tcpip.h>
+
+static inline std::vector<std::string> getLocalIPs()
 {
   IP_ADAPTER_ADDRESSES* adapter_addresses(NULL);
   IP_ADAPTER_ADDRESSES* adapter(NULL);
 
+  std::vector<std::string> result;
+
   // Start with a 16 KB buffer and resize if needed -
   // multiple attempts in case interfaces change while
   // we are in the middle of querying them.
-  DWORD adapter_addresses_buffer_size = 16 * KB;
+  DWORD adapter_addresses_buffer_size = 16 * 1024;
   for (int attempts = 0; attempts != 3; ++attempts)
   {
     adapter_addresses = (IP_ADAPTER_ADDRESSES*)malloc(adapter_addresses_buffer_size);
@@ -57,13 +58,14 @@ void ListIpAddresses(IpAddresses& ipAddrs)
       free(adapter_addresses);
       adapter_addresses = NULL;
         MJError("error finding local IP address");
-        return;//error
+        return result;
     }
   }
 
   // Iterate through all of the adapters
   for (adapter = adapter_addresses; NULL != adapter; adapter = adapter->Next)
   {
+      MJLog("adapter");
     // Skip loopback adapters
     if (IF_TYPE_SOFTWARE_LOOPBACK == adapter->IfType)
     {
@@ -84,7 +86,7 @@ void ListIpAddresses(IpAddresses& ipAddrs)
 
         char str_buffer[INET_ADDRSTRLEN] = {0};
         inet_ntop(AF_INET, &(ipv4->sin_addr), str_buffer, INET_ADDRSTRLEN);
-        ipAddrs.mIpv4.push_back(str_buffer);
+        result.push_back(str_buffer);
       }
       else
       {
@@ -98,7 +100,7 @@ void ListIpAddresses(IpAddresses& ipAddrs)
   free(adapter_addresses);
   adapter_addresses = NULL;
 
-  // Cheers!
+  return result;
 }
 
 #else
@@ -133,6 +135,9 @@ static inline std::vector<std::string> getLocalIPs()
     return result;
 }
 
+#endif
+
+
 static inline std::vector<std::string> getScanIPs()
 {
     std::vector<std::string> scanIPs;
@@ -144,7 +149,7 @@ static inline std::vector<std::string> getScanIPs()
         {
             std::string baseString = "";
             int dotCount = 0;
-            for(int c = 0;;c++)
+            for(int c = 0;; c++)
             {
                 baseString += localIP[c];
                 if(localIP[c] == '.')
@@ -156,7 +161,7 @@ static inline std::vector<std::string> getScanIPs()
                     }
                 }
             }
-            
+
             for(int i = 0; i < 256; i++)
             {
                 std::string thisIP = baseString + Tui::string_format("%d", i);
@@ -167,11 +172,9 @@ static inline std::vector<std::string> getScanIPs()
             }
         }
     }
-    
+
     return scanIPs;
 }
-
-#endif
 
 void Scanner::handleReceivedData(std::string ip, ENetEvent& event)
 {
@@ -250,7 +253,7 @@ void Scanner::update()
 {
     if(!complete)
     {
-        int maxCount = 8;
+        int maxCount = 1;
         for(int i = 0; i < maxCount && scanIndex < scanIPs.size(); i++)
         {
             const std::string& scanIP = scanIPs[scanIndex++];
@@ -402,6 +405,7 @@ void Scanner::cleanupPreviousScan()
 
 void Scanner::startScan(TuiFunction* callbackFunction_)
 {
+    enet_initialize();
     cleanupPreviousScan();
     callbackFunction = callbackFunction_;
     complete = false;

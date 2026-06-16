@@ -2,8 +2,16 @@
 #ifndef __Scanner__
 #define __Scanner__
 
+#ifdef _MSC_VER
+#define _WINSOCKAPI_    // stops windows.h including winsock.h
+#include <windows.h>
+#include <direct.h>
+#include <cstdint>
+#endif
+
 #include <vector>
 #include <string>
+#include <set>
 #include "TuiScript.h"
 #include "NetConstants.h"
 
