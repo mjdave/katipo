@@ -253,7 +253,7 @@ void Scanner::update()
 {
     if(!complete)
     {
-        int maxCount = 1;
+        int maxCount = 64;
         for(int i = 0; i < maxCount && scanIndex < scanIPs.size(); i++)
         {
             const std::string& scanIP = scanIPs[scanIndex++];
