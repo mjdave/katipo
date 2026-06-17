@@ -29,6 +29,7 @@ public:
     
     std::vector<std::string> scanIPs;
     bool complete = false;
+    bool hasTriedAgain = false;
     int scanIndex = 0;
     std::map<std::string, ScannerConnection> currentlyTestingConnectionsByIP;
     

@@ -299,12 +299,14 @@ void Scanner::update()
                     break;
                 case ENET_EVENT_TYPE_RECEIVE:
                 {
+                   // MJLog("ENET_EVENT_TYPE_RECEIVE:%s", ipAndConnection.first.c_str());
                     handleReceivedData(ipAndConnection.first, event);
                     enet_packet_destroy (event.packet);
                 }
                     break;
                 case ENET_EVENT_TYPE_DISCONNECT:
                 {
+                   // MJLog("ENET_EVENT_TYPE_DISCONNECT:%s", ipAndConnection.first.c_str());
                     enet_peer_disconnect(connection.enetPeer, 0);
                     enet_peer_reset(connection.enetPeer);
                     connection.enetPeer = nullptr;
@@ -329,14 +331,23 @@ void Scanner::update()
     
     if(!complete && scanIndex >= scanIPs.size() && currentlyTestingConnectionsByIP.empty())
     {
-        complete = true;
-        if(callbackFunction)
+        if(!hasTriedAgain && validConnectionsByIP.empty()) //OS security features will block the first attempt while prompting the user to allow access
         {
-            TuiString* statusString = new TuiString("complete");
-            callbackFunction->call("Scanner.cpp scan complete", statusString);
-            statusString->release();
-            callbackFunction->release();
-            callbackFunction = nullptr;
+            MJLog("Found no results, trying again...");
+            hasTriedAgain = true;
+            scanIndex = 0;
+        }
+        else
+        {
+            complete = true;
+            if(callbackFunction)
+            {
+                TuiString* statusString = new TuiString("complete");
+                callbackFunction->call("Scanner.cpp scan complete", statusString);
+                statusString->release();
+                callbackFunction->release();
+                callbackFunction = nullptr;
+            }
         }
     }
 }
@@ -410,6 +421,7 @@ void Scanner::startScan(TuiFunction* callbackFunction_)
     callbackFunction = callbackFunction_;
     complete = false;
     scanIndex = 0;
+    hasTriedAgain = false;
     
     if(callbackFunction)
     {
