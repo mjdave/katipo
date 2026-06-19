@@ -31,6 +31,7 @@ struct ClientNetInterfaceOutput {
 };
 
 struct ClientNetCallback {
+    TuiFunction* progressCallback = nullptr;
     TuiFunction* func;
     std::string hostSiteKey;
 };
@@ -111,7 +112,7 @@ public:
     
     void pollNetEvents();
     
-    void sendMultipartTuiData(const std::string& requestID, const std::string& clientPublicKey, const std::string& clientDataToSecureTableFullSerialized);
+    void sendMultipartTuiData(const std::string& requestID, double callbackID, const std::string& clientPublicKey, const std::string& clientDataToSecureTableFullSerialized);
     void sendData(uint8_t type, const void * data = NULL, size_t dataLength = 0, bool reliable = true);
     
 protected:

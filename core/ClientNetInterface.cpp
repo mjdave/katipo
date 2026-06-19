@@ -136,6 +136,10 @@ void ClientNetInterface::disconnect()
         {
             idAndCallback.second.func->call("SERVER_FUNCTION_CALL_RESPONSE", statusResult);
             idAndCallback.second.func->release();
+            if(idAndCallback.second.progressCallback)
+            {
+                idAndCallback.second.progressCallback->release();
+            }
         }
         statusResult->release();
         callbacksByID.clear();
@@ -315,12 +319,17 @@ void ClientNetInterface::callRemoteHostFunction(std::string hostSiteKey, std::st
     }
     
     TuiFunction* callback = nullptr;
+    TuiFunction* progressCallback = nullptr;
     TuiTable* hostDataToSecureTable = new TuiTable(nullptr);
     
     for(int i = 0; i < args->arrayObjects.size(); i++)
     {
         TuiRef* arg = args->arrayObjects[i];
-        if(i == args->arrayObjects.size() - 1 && arg->type() == Tui_ref_type_FUNCTION)
+        if(i == args->arrayObjects.size() - 2 && arg->type() == Tui_ref_type_FUNCTION)
+        {
+            progressCallback = (TuiFunction*)arg;
+        }
+        else if(i == args->arrayObjects.size() - 1 && arg->type() == Tui_ref_type_FUNCTION)
         {
             callback = (TuiFunction*)arg;
         }
@@ -337,6 +346,10 @@ void ClientNetInterface::callRemoteHostFunction(std::string hostSiteKey, std::st
     {
         callbackID = functionCallbackIDCounter++;
         callbacksByID[callbackID].func = ((TuiFunction*)callback->retain());
+        if(progressCallback)
+        {
+            callbacksByID[callbackID].progressCallback = ((TuiFunction*)progressCallback->retain());
+        }
         callbacksByID[callbackID].hostSiteKey = hostSiteKey;
         hostDataToSecureTable->setDouble("callbackID", callbackID);
     }
@@ -785,7 +798,7 @@ void ClientNetInterface::processGetRequest(TuiTable* trackerData) //we are on a 
                     std::string clientDataToSecureTableFullSerialized = clientDataToSecureTable->serializeBinary();
                     clientDataToSecureTable->release();
                     
-                    sendMultipartTuiData(requestID, clientPublicKey, clientDataToSecureTableFullSerialized);
+                    sendMultipartTuiData(requestID, callbackID, clientPublicKey, clientDataToSecureTableFullSerialized);
                     
                     return TUI_NIL;
                 });
@@ -911,6 +924,12 @@ void ClientNetInterface::pollNetEvents()
                         
                         if(callbacksByID.count(callbackID) != 0)
                         {
+                            if(callbacksByID[callbackID].progressCallback)
+                            {
+                                callbacksByID[callbackID].progressCallback->release();
+                                callbacksByID[callbackID].progressCallback = nullptr;
+                            }
+                            
                             callbacksByID[callbackID].func->call("SERVER_FUNCTION_CALL_RESPONSE", tuiData);
                             callbacksByID[callbackID].func->release();
                             callbacksByID.erase(callbackID);
@@ -929,7 +948,7 @@ void ClientNetInterface::pollNetEvents()
                            
                         if(hostData)
                         {
-                            if(hostData->hasKey("callbackID")) //todo does this actually happen now?
+                            /*if(hostData->hasKey("callbackID")) //todo does this actually happen now?
                             {
                                 uint32_t callbackID = ((TuiNumber*)hostData->objectsByStringKey["callbackID"])->value;
                                 TuiRef* responseData = hostData->get("data");
@@ -941,11 +960,18 @@ void ClientNetInterface::pollNetEvents()
                                     TuiRef* hostSiteKeyReadableRef = new TuiString(callback.hostSiteKey);
                                     callback.func->call("KATIPO_NET_TYPE_GET_RESPONSE_TO_CLIENT_FROM_HOST", responseData, hostSiteKeyReadableRef);
                                     callback.func->release();
+                                    if(callbacksByID[callbackID].progressCallback)
+                                    {
+                                        callbacksByID[callbackID].progressCallback->release();
+                                        callbacksByID[callbackID].progressCallback = nullptr;
+                                    }
                                     callbacksByID.erase(callbackID);
                                     hostSiteKeyReadableRef->release();
                                 }
                             }
-                            else if(hostData->hasKey("total") && hostData->hasKey("requestID") && hostData->hasKey("clientData")) //multipart
+                            else*/
+                                
+                            if(hostData->hasKey("total") && hostData->hasKey("requestID") && hostData->hasKey("clientData")) //multipart
                             {
                                 std::string requestID = hostData->getString("requestID");
                                 if(!requestID.empty())
@@ -980,6 +1006,11 @@ void ClientNetInterface::pollNetEvents()
                                                 TuiRef* hostSiteKeyReadableRef = new TuiString(callback.hostSiteKey);
                                                 callback.func->call("KATIPO_NET_TYPE_GET_RESPONSE_TO_CLIENT_FROM_HOST", responseData, hostSiteKeyReadableRef);
                                                 callback.func->release();
+                                                if(callbacksByID[callbackID].progressCallback)
+                                                {
+                                                    callbacksByID[callbackID].progressCallback->release();
+                                                    callbacksByID[callbackID].progressCallback = nullptr;
+                                                }
                                                 callbacksByID.erase(callbackID);
                                                 hostSiteKeyReadableRef->release();
                                             }
@@ -990,6 +1021,16 @@ void ClientNetInterface::pollNetEvents()
                                     }
                                     else
                                     {
+                                        if(hostData->hasKey("callbackID"))
+                                        {
+                                            uint32_t callbackID = ((TuiNumber*)hostData->objectsByStringKey["callbackID"])->value;
+                                            if(callbacksByID[callbackID].progressCallback)
+                                            {
+                                                TuiNumber* fractionNumber = new TuiNumber(((double)download.recievedBytes) / hostData->getDouble("total"));
+                                                callbacksByID[callbackID].progressCallback->call("progress callback", fractionNumber);
+                                                fractionNumber->release();
+                                            }
+                                        }
                                         MJLog("recieved download bytes:(%d/%d)", download.recievedBytes, (uint32_t)hostData->getDouble("total"));
                                     }
                                 }
@@ -1035,7 +1076,7 @@ void ClientNetInterface::pollNetEvents()
     }
 }
 
-void ClientNetInterface::sendMultipartTuiData(const std::string& requestID, const std::string& clientPublicKey, const std::string& clientDataToSecureTableFullSerialized) //todo pretty sure clientDataToSecureTableFullSerialized is double encrypted
+void ClientNetInterface::sendMultipartTuiData(const std::string& requestID, double callbackID, const std::string& clientPublicKey, const std::string& clientDataToSecureTableFullSerialized) //todo pretty sure clientDataToSecureTableFullSerialized is double encrypted
 {
     if(!enetPeer || !enetClient || disconnected)
     {
@@ -1054,6 +1095,7 @@ void ClientNetInterface::sendMultipartTuiData(const std::string& requestID, cons
     {
         TuiTable* clientDataToSecureTable = new TuiTable(nullptr);
         clientDataToSecureTable->setString("requestID", requestID);
+        clientDataToSecureTable->setDouble("callbackID", callbackID);
         clientDataToSecureTable->setDouble("total", dataLength);
         
         uint32_t thisPacketLoadBytesToSend = min(bytesToSend, MJMultipartChunkSize);
