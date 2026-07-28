@@ -171,6 +171,16 @@ get = function(url, clientChecksumsOrCallbackFunc)
     }
 }
 
+siteCode = false
+
+update = function(dt) #called by BrowserHost
+{
+    if(siteCode)
+    {
+        siteCode.update(dt)
+    }
+}
+
 start = function(isCommandLine)
 {
     if(!katipo.sitePath)
@@ -189,11 +199,11 @@ start = function(isCommandLine)
     }
 
     siteInfo = require(siteInfoPath)
-    siteCode = false
+    .siteCode = false
 
     if(file.fileExists(siteCodePath))
     {
-        siteCode = require(siteCodePath)
+        .siteCode = require(siteCodePath)
     }
 
     #print("siteInfo:", siteInfo)
@@ -226,33 +236,45 @@ start = function(isCommandLine)
 
     print("Attempting to connect to tracker...")
 
-    if(siteCode.runLoop)
+    
+    if(isCommandLine)
     {
-        siteCode.runLoop()
-    }
-    else if(isCommandLine)
-    {
-        while(true)
+        if(siteCode.runLoop)
         {
-            print("Type 'quit' to cancel and exit, 'help' for more commands.")
-
-            value = readValue()
-
-            if(value == "help")
+            siteCode.runLoop()
+        }
+        else if(siteCode.update)
+        {
+            while(true)
             {
-                print("Katipo Host version:", katipo.version)
-                print("")
-                print("available commands:")
-                print("help: prints this text")
-                print("quit or exit: exits")
+                sleep(0.1)
+                siteCode.update(0.1)#todo this is not accurate
             }
-            else if(value == "quit" or value == "exit")
+        }
+        else
+        {
+            while(true)
             {
-                break
-            }
-            else
-            {
-                print("unhandled command:", value)
+                print("Type 'quit' to cancel and exit, 'help' for more commands.")
+
+                value = readValue()
+
+                if(value == "help")
+                {
+                    print("Katipo Host version:", katipo.version)
+                    print("")
+                    print("available commands:")
+                    print("help: prints this text")
+                    print("quit or exit: exits")
+                }
+                else if(value == "quit" or value == "exit")
+                {
+                    break
+                }
+                else
+                {
+                    print("unhandled command:", value)
+                }
             }
         }
     }

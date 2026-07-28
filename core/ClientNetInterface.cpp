@@ -516,7 +516,7 @@ void ClientNetInterface::checkEnetEvents()
         {
             case ENET_EVENT_TYPE_CONNECT:
             {
-                MJLog("Initial connection established");
+                MJLog("Initial connection established with tracker.");
             }
                 break;
             case ENET_EVENT_TYPE_RECEIVE:

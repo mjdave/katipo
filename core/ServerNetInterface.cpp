@@ -242,7 +242,7 @@ void ServerNetInterface::checkEnetEvents()
         {
             case ENET_EVENT_TYPE_CONNECT:
             {
-                MJLog("initial connection established.\n");
+                MJLog("Tracker: initial connection established.\n");
                 
                 sendInitialHandshake(event.peer);
 

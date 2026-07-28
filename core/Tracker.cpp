@@ -3,6 +3,7 @@
 #include "Server.h"
 #include "Timer.h"
 #include "TuiScript.h"
+#include "KatipoUtilities.h"
 
 Tracker::Tracker(TuiTable* katipoTable)
 {
@@ -13,7 +14,7 @@ Tracker::Tracker(TuiTable* katipoTable)
             std::string publicKey = "";
             std::string secretKey = "";
             
-            std::string trackerKeyPath = "tracker_privateKey.tuib";
+            std::string trackerKeyPath = Katipo::getSavePath("tracker_privateKey.tuib");
             
             if(Tui::fileExistsAtPath(trackerKeyPath)) //todo these should be saved in the database, not files
             {
