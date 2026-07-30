@@ -1,5 +1,6 @@
 
 #include "Scanner.h"
+#include "ClientNetInterface.h"
 
 
 // Source - https://stackoverflow.com/a/10838854
@@ -178,16 +179,15 @@ static inline std::vector<std::string> getScanIPs()
 
 void Scanner::handleReceivedData(std::string ip, ENetEvent& event)
 {
-    if(validConnectionsByIP.count(ip) == 0)
+    if(connectionsByIP.count(ip) == 0)
     {
         return;
     }
     
-    completedIPsToRemove.insert(ip);
     
     bool success = false;
     
-    ScannerConnection& connection = validConnectionsByIP[ip];
+    ScannerConnection& connection = connectionsByIP[ip];
     
     if(event.packet->dataLength < 1)
     {
@@ -217,27 +217,75 @@ void Scanner::handleReceivedData(std::string ip, ENetEvent& event)
             connection.trackerPublicKey = std::string((const char*)incoming.data, incoming.length);
             success = true;
             
-            //todo we need a tracker function to query for a public waraki host
-            //but for now, we can assume. This is enough to show the tracker to the user, they can then attempt to connect to a host with the name 'waraki'
-            //todo simple passphrase protection, basically just like anonymous wifi
+            std::string trackerPort = "3471";
+            std::string trackerKey = ip + ":" + trackerPort;
             
+            TuiFunction* getSitesCallbackFunction = new TuiFunction([this, ip, trackerKey](TuiTable* incomingCallbackResponseData, TuiRef* existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+                
+                if(incomingCallbackResponseData && !incomingCallbackResponseData->arrayObjects.empty() && incomingCallbackResponseData->arrayObjects[0]->type() == Tui_ref_type_TABLE)
+                {
+                    TuiTable* result = (TuiTable*)(incomingCallbackResponseData->arrayObjects[0]);
+                    
+                    if(callbackFunction)
+                    {
+                        TuiString* statusString = new TuiString("connected");
+                        TuiTable* trackerResult = new TuiTable();
+                        
+                        trackerResult->setString("ip", ip);
+                        trackerResult->setString("trackerKey", trackerKey);
+                        trackerResult->set("sites", result->get("sites"));
+                        
+                        TuiRef* callbackResult = callbackFunction->call("Scanner.cpp connected to tracker", statusString, trackerResult);
+                        statusString->release();
+                        trackerResult->release();
+                        
+                        if(!(callbackResult && callbackResult->boolValue()))
+                        {
+                            ScannerConnection& connection = connectionsByIP[ip];
+                            enet_peer_disconnect(connection.enetPeer, 0);
+                            enet_peer_reset(connection.enetPeer);
+                            connection.enetPeer = nullptr;
+                            enet_host_destroy(connection.enetClient);
+                            connection.enetClient = nullptr;
+                            
+                            //MJLog("erase due to no sites:%s", ip.c_str());
+                            completedIPsToRemove.insert(ip);
+                        }
+                        
+                    }
+                }
+                return TUI_NIL;
+            });
+            
+            connection.netInterface = new ClientNetInterface(ip,
+                                                             trackerPort,
+                                                             publicKey,
+                                                             secretKey,
+                                                             connection.trackerPublicKey,
+                                                             connection.enetClient,
+                                                             connection.enetPeer);
+            
+            connection.netInterface->bindTui(katipoTable);
+            
+            TuiTable* remoteGetSitesFuncCallArgs = new TuiTable(nullptr);
+            remoteGetSitesFuncCallArgs->pushString("getSitesForBroadcastKey");
+            remoteGetSitesFuncCallArgs->pushString(broadcastKey);
+            remoteGetSitesFuncCallArgs->push(getSitesCallbackFunction);
+            
+            getSitesCallbackFunction->release();
+            
+            connection.netInterface->callTrackerFunction(remoteGetSitesFuncCallArgs);
+            //MJLog("calling getSitesForBroadcastKey:%s", trackerKey.c_str());
+            
+            remoteGetSitesFuncCallArgs->release();
+            
+            //todo simple passphrase protection, basically just like anonymous wifi?
             
         }
     }
     
     
-    if(success)
-    {
-        if(callbackFunction)
-        {
-            TuiString* statusString = new TuiString("connected");
-            TuiString* ipString = new TuiString(ip);
-            callbackFunction->call("Scanner.cpp connected to tracker", statusString, ipString);
-            statusString->release();
-            ipString->release();
-        }
-    }
-    else
+    if(!success)
     {
         enet_peer_disconnect(connection.enetPeer, 0);
         enet_peer_reset(connection.enetPeer);
@@ -245,7 +293,8 @@ void Scanner::handleReceivedData(std::string ip, ENetEvent& event)
         enet_host_destroy(connection.enetClient);
         connection.enetClient = nullptr;
         
-        validConnectionsByIP.erase(ip);
+        //MJLog("erase:%s", ip.c_str());
+        completedIPsToRemove.insert(ip);
     }
 }
 
@@ -253,18 +302,26 @@ void Scanner::update()
 {
     if(!complete)
     {
+        for(auto& ipAndConnection : connectionsByIP)
+        {
+            if(ipAndConnection.second.netInterface)
+            {
+                ipAndConnection.second.netInterface->pollNetEvents();
+            }
+        }
+        
         int maxCount = 64;
         for(int i = 0; i < maxCount && scanIndex < scanIPs.size(); i++)
         {
             const std::string& scanIP = scanIPs[scanIndex++];
             //MJLog("scanIP:%s", scanIP.c_str());
             
-            ScannerConnection& connection = currentlyTestingConnectionsByIP[scanIP];
-            if(!connection.enetClient)
+            ScannerConnection& connection = connectionsByIP[scanIP];
+            if(!connection.enetClient && !connection.netInterface)
             {
                 connection.enetClient = enet_host_create (nullptr, // create a client host
                                                           1,
-                                                          0, //channels
+                                                          CLIENT_MAX_SIMULTANEOUS_DOWNLOADS, //channels
                                                           0,
                                                           0);
                 if(connection.enetClient)
@@ -272,66 +329,69 @@ void Scanner::update()
                     ENetAddress address;
                     enet_address_set_host (&address, scanIP.c_str());
                     address.port = 3471;
-                    connection.enetPeer = enet_host_connect(connection.enetClient, &address, 1, 0);
+                    connection.enetPeer = enet_host_connect(connection.enetClient, &address, CLIENT_MAX_SIMULTANEOUS_DOWNLOADS, 0);
                     enet_peer_timeout(connection.enetPeer, 0, 2000, 3000);
                 }
                 else
                 {
-                    currentlyTestingConnectionsByIP.erase(scanIP);
+                    connectionsByIP.erase(scanIP);
                 }
             }
         }
     }
     
-    for(auto& ipAndConnection : currentlyTestingConnectionsByIP)
+    for(auto& ipAndConnection : connectionsByIP)
     {
         ScannerConnection& connection = ipAndConnection.second;
-        ENetEvent event;
-        while(connection.enetClient && enet_host_service(connection.enetClient, &event, 0) > 0)
+        if(!connection.netInterface) //otherwise netInterface will handle it in pollNetEvents
         {
-            switch (event.type)
+            ENetEvent event;
+            while(connection.enetClient && !connection.netInterface && enet_host_service(connection.enetClient, &event, 0) > 0)
             {
-                case ENET_EVENT_TYPE_CONNECT:
+                switch (event.type)
                 {
-                    validConnectionsByIP[ipAndConnection.first] = connection;
-                    MJLog("Scanner Initial connection established:%s", ipAndConnection.first.c_str());
+                    case ENET_EVENT_TYPE_CONNECT:
+                    {
+                        MJLog("Scanner Initial connection established:%s", ipAndConnection.first.c_str());
+                    }
+                        break;
+                    case ENET_EVENT_TYPE_RECEIVE:
+                    {
+                         MJLog("ENET_EVENT_TYPE_RECEIVE:%s", ipAndConnection.first.c_str());
+                        handleReceivedData(ipAndConnection.first, event);
+                        enet_packet_destroy (event.packet);
+                    }
+                        break;
+                    case ENET_EVENT_TYPE_DISCONNECT:
+                    {
+                         MJLog("ENET_EVENT_TYPE_DISCONNECT:%s", ipAndConnection.first.c_str());
+                        enet_peer_disconnect(connection.enetPeer, 0);
+                        enet_peer_reset(connection.enetPeer);
+                        connection.enetPeer = nullptr;
+                        enet_host_destroy(connection.enetClient);
+                        connection.enetClient = nullptr;
+                        
+                        completedIPsToRemove.insert(ipAndConnection.first);
+                    }
+                        break;
+                    default:
+                        break;
                 }
-                    break;
-                case ENET_EVENT_TYPE_RECEIVE:
-                {
-                   // MJLog("ENET_EVENT_TYPE_RECEIVE:%s", ipAndConnection.first.c_str());
-                    handleReceivedData(ipAndConnection.first, event);
-                    enet_packet_destroy (event.packet);
-                }
-                    break;
-                case ENET_EVENT_TYPE_DISCONNECT:
-                {
-                   // MJLog("ENET_EVENT_TYPE_DISCONNECT:%s", ipAndConnection.first.c_str());
-                    enet_peer_disconnect(connection.enetPeer, 0);
-                    enet_peer_reset(connection.enetPeer);
-                    connection.enetPeer = nullptr;
-                    enet_host_destroy(connection.enetClient);
-                    connection.enetClient = nullptr;
-                    
-                    completedIPsToRemove.insert(ipAndConnection.first);
-                }
-                    break;
-                default:
-                    break;
+                
             }
-            
         }
     }
     
     for(auto& completedIP : completedIPsToRemove)
     {
-        currentlyTestingConnectionsByIP.erase(completedIP);
+        MJLog("completedIPsToRemove:%s", completedIP.c_str());
+        connectionsByIP.erase(completedIP);
     }
     completedIPsToRemove.clear();
     
-    if(!complete && scanIndex >= scanIPs.size() && currentlyTestingConnectionsByIP.empty())
+    if(!complete && scanIndex >= scanIPs.size() && connectionsByIP.empty())
     {
-        if(!hasTriedAgain && validConnectionsByIP.empty()) //OS security features will block the first attempt while prompting the user to allow access
+        if(!hasTriedAgain) //OS security features will block the first attempt while prompting the user to allow access
         {
             MJLog("Found no results, trying again...");
             hasTriedAgain = true;
@@ -360,65 +420,40 @@ void Scanner::cleanupPreviousScan()
         callbackFunction = nullptr;
     }
     
-    for(auto& ipAndConnection : validConnectionsByIP)
+    for(auto& ipAndConnection : connectionsByIP)
     {
-        ENetHost* enetClient = ipAndConnection.second.enetClient;
-        ENetPeer* enetPeer = ipAndConnection.second.enetPeer;
-        
-        if(enetPeer)
+        if(ipAndConnection.second.netInterface)
         {
-            enet_peer_disconnect(enetPeer, 0);
-            enet_peer_reset(enetPeer);
+            delete ipAndConnection.second.netInterface;
         }
-        if(enetClient)
+        else
         {
-            enet_host_destroy(enetClient);
-        }
+            ENetHost* enetClient = ipAndConnection.second.enetClient;
+            ENetPeer* enetPeer = ipAndConnection.second.enetPeer;
+            MJLog("cleanupPreviousScan");
             
-        
-        /*if(enetPeer)
-        {
-            enet_peer_disconnect(enetPeer, 0);
-            ENetEvent event;
-            bool success = false;
-            while (!success && enet_host_service (enetClient, &event, 3000) > 0)
+            if(enetPeer)
             {
-                switch (event.type)
-                {
-                    case ENET_EVENT_TYPE_RECEIVE:
-                        enet_packet_destroy (event.packet);
-                        break;
-                    case ENET_EVENT_TYPE_DISCONNECT:
-                        success = true;
-                        break;
-                    default:
-                        break;
-                }
-            }
-            if(!success)
-            {
+                enet_peer_disconnect(enetPeer, 0);
                 enet_peer_reset(enetPeer);
             }
-            enetPeer = nullptr;
+            if(enetClient)
+            {
+                enet_host_destroy(enetClient);
+            }
         }
-        
-        if(enetClient)
-        {
-            enet_host_destroy(enetClient);
-            enetClient = nullptr;
-        }*/
     }
     
-    validConnectionsByIP.clear();
     completedIPsToRemove.clear();
-    currentlyTestingConnectionsByIP.clear();
+    connectionsByIP.clear();
 }
 
-void Scanner::startScan(TuiFunction* callbackFunction_)
+void Scanner::startScan(std::string broadcastKey_, TuiFunction* callbackFunction_)
 {
     enet_initialize();
     cleanupPreviousScan();
     callbackFunction = callbackFunction_;
+    broadcastKey = broadcastKey_;
     complete = false;
     scanIndex = 0;
     hasTriedAgain = false;
@@ -450,8 +485,11 @@ void Scanner::startScan(TuiFunction* callbackFunction_)
     }
 }
 
-Scanner::Scanner()
+Scanner::Scanner(std::string& publicKey_, std::string& secretKey_, TuiTable* katipoTable_)
 {
+    publicKey = publicKey_;
+    secretKey = secretKey_;
+    katipoTable = katipoTable_;
 }
 
 Scanner::~Scanner()
@@ -462,13 +500,12 @@ Scanner::~Scanner()
 
 ScannerConnection Scanner::getConnection(std::string ip) //caller is responsible for closing the returned connection
 {
-    if(validConnectionsByIP.count(ip) == 0)
+    if(connectionsByIP.count(ip) == 0)
     {
         ScannerConnection connection;
         return connection;
     }
-    ScannerConnection connection = validConnectionsByIP[ip];
-    validConnectionsByIP.erase(ip);
-    currentlyTestingConnectionsByIP.erase(ip);
+    ScannerConnection connection = connectionsByIP[ip];
+    connectionsByIP.erase(ip);
     return connection;
 }

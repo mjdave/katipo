@@ -59,6 +59,7 @@
 				ClientNetInterface.cpp,
 				Database.cpp,
 				DatabaseEnvironment.cpp,
+				Scanner.cpp,
 			);
 			target = 5B7AB19A2E283C0B009E04C8 /* katipoTracker */;
 		};

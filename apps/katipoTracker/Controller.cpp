@@ -25,6 +25,7 @@ void Controller::init(int argc, const char * argv[])
     rootTable = Tui::initRootTable();
     
     std::string basePath = Tui::pathByRemovingLastPathComponent(argv[0]);
+    std::string savePath = basePath;
     
     katipoTable = new TuiTable(rootTable);
     rootTable->set("katipo", katipoTable);
@@ -53,6 +54,16 @@ void Controller::init(int argc, const char * argv[])
             basePath = argv[++i];
             launchArgsTable->arrayObjects.push_back(new TuiString(argv[i]));
         }
+        else if(arg == "--savePath")
+        {
+            if(i+1 >= argc)
+            {
+                MJError("missing savePath. usage example: ./katipoTracker --savePath %s", savePath.c_str());
+                exit(1);
+            }
+            savePath = argv[++i];
+            launchArgsTable->arrayObjects.push_back(new TuiString(argv[i]));
+        }
         
     }
     
@@ -60,7 +71,14 @@ void Controller::init(int argc, const char * argv[])
     {
         basePath = basePath + "/";
     }
+    
+    if(savePath.back() != '/' && savePath.back() != '\\')
+    {
+        savePath = savePath + "/";
+    }
+    
     katipoTable->setString("basePath", basePath);
+    katipoTable->setString("savePath", savePath);
     
     tracker = new Tracker(katipoTable);
     

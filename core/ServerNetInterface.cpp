@@ -31,7 +31,7 @@ ServerNetInterface::ServerNetInterface(const std::string& publicKey_,
     
     enetServer = enet_host_create (& address /* the address to bind the server host to */,
                                    maxConnections      /* allow up to 32 clients and/or outgoing connections */,
-                                   0      /* allow up to 2 channels to be used, 0 and 1 */,
+                                   CLIENT_MAX_SIMULTANEOUS_DOWNLOADS      /* allow up to 2 channels to be used, 0 and 1 */,
                                    0      /* assume any amount of incoming bandwidth */,
                                    0      /* assume any amount of outgoing bandwidth */);
     

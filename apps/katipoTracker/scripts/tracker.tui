@@ -1,5 +1,6 @@
 
 siteInfosBySiteKeys = {}
+siteInfosByHostIDs = {}
 
 init = function()
 {
@@ -29,9 +30,9 @@ init = function()
 
         if(existingSiteInfo)
         {
-            if(hostID != existingSiteInfo.hostID)
+            if(hostID != existingSiteInfo.hostID) #todo this also needs security between sessions
             {
-                message = "host nameKey already in use by another host"
+                message = "nameKey already in use by another host"
                 print("Error:", message)
                 return {
                     status = "error"
@@ -43,6 +44,7 @@ init = function()
         {
             siteInfo.hostID = hostID
             siteInfosBySiteKeys[siteNameKey] = siteInfo
+            siteInfosByHostIDs[hostID] = siteInfo
         }
         
         return {
@@ -50,16 +52,28 @@ init = function()
         }
     }
 
-    hostServer.clientDisconnected = function(hostID) #todo
+    hostServer.clientDisconnected = function(hostID)
     {
         print("host disconnected:", hostID)
+        if(siteInfosByHostIDs[hostID])
+        {
+            siteInfo = siteInfosByHostIDs[hostID]
+            
+            siteInfosBySiteKeys[siteInfo.nameKey] = nil
+            siteInfosByHostIDs[hostID] = nil
+        }
     }
 
     ### clients
 
-    clientServer.clientConnected = function(clientID)
+    clientServer.clientConnected = function(clientID) #todo we probably want a keepalive interval, keep track of clients, kick them off if idle too long
     {
         print("client connected:", clientID)
+    }
+
+    clientServer.clientDisconnected = function(clientID)
+    {
+        print("client disconnected:", clientID)
     }
 
     getSiteKey = function(clientID, siteNameKey, callbackFunc)
@@ -92,6 +106,35 @@ init = function()
         callbackFunc(result)
     }
 
+    getSitesForBroadcastKey = function(clientID, broadcastKey, callbackFunc)
+    {
+        if(broadcastKey)
+        {
+            siteResults = {}
+            for(siteID,siteInfo in siteInfosByHostIDs)
+            {
+                if(siteInfo.broadcastKey == broadcastKey)
+                {
+                    table.insert(siteResults, siteInfo)
+                }
+            }
+            
+            result = {
+                status = "ok"
+                sites = siteResults
+            }
+            callbackFunc(result)
+        }
+
+        result = {
+            status = "error"
+            message = "getSitesForBroadcastKey got nil broadcastKey"
+        }
+
+        callbackFunc(result)
+    }
+
     #called by client
     clientServer.register("getSiteKey", getSiteKey)
+    clientServer.register("getSitesForBroadcastKey", getSitesForBroadcastKey)
 }

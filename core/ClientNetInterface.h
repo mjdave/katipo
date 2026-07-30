@@ -120,6 +120,7 @@ protected:
 private:
     void startThread();
     void checkEnetEvents();
+    
     void sendInitialData();
     
     TuiTable* getTrackerEncryptedDataTable(TuiTable* dataToSecure);

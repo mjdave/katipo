@@ -98,7 +98,7 @@ void ClientNetInterface::connect()
     
     enetClient = enet_host_create (nullptr, // create a client host
                                    1,
-                                   0, //channels
+                                   CLIENT_MAX_SIMULTANEOUS_DOWNLOADS, //channels
                                    0,
                                    0);
     
@@ -109,8 +109,8 @@ void ClientNetInterface::connect()
     enet_address_set_host (&address, host.c_str());
     address.port = atoi(port.c_str());
     
-    MJLog("Connecting to tracker...");
-    enetPeer = enet_host_connect (enetClient, &address, ENET_PROTOCOL_MAXIMUM_CHANNEL_COUNT, 0);
+    MJLog("Connecting to tracker:%s", host.c_str());
+    enetPeer = enet_host_connect (enetClient, &address, CLIENT_MAX_SIMULTANEOUS_DOWNLOADS, 0);
     
     enet_peer_timeout(enetPeer, 0, 2000, 3000);
     
@@ -126,7 +126,7 @@ void ClientNetInterface::disconnect()
     
     if(connected)
     {
-        MJLog("Disconnected from tracker.");
+        MJLog("Disconnected from tracker:%s",host.c_str());
     }
     
     if(!callbacksByID.empty())
@@ -435,7 +435,7 @@ void ClientNetInterface::startThread()
                                                           (input.reliable ? ENET_PACKET_FLAG_RELIABLE : 0));
                 
                 
-                enet_peer_send(enetPeer, input.channelID, packet);
+                enet_peer_send(enetPeer, 0, packet);
                 
                 free(input.data);
             }
@@ -495,12 +495,6 @@ void ClientNetInterface::sendInitialData()
     sendTable->release();
     
     connected = true;
-    
-    if(katipoTable && katipoTable->hasKey("onConnected")) //hmmm not thread safe?
-    {
-        TuiFunction* connectedFunction = ((TuiFunction*)katipoTable->get("onConnected"));
-        connectedFunction->call("onConnected");
-    }
 }
 
 void ClientNetInterface::checkEnetEvents()
@@ -567,6 +561,12 @@ void ClientNetInterface::checkEnetEvents()
                         trackerPublicKey = std::string((const char*)incoming.data, incoming.length);
                         
                         sendInitialData();
+                        
+                        if(katipoTable && katipoTable->hasKey("onConnected")) //hmmm not thread safe?
+                        {
+                            TuiFunction* connectedFunction = ((TuiFunction*)katipoTable->get("onConnected"));
+                            connectedFunction->call("onConnected");
+                        }
                     }
                     else
                     {

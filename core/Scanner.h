@@ -15,7 +15,10 @@
 #include "TuiScript.h"
 #include "NetConstants.h"
 
+class ClientNetInterface;
+
 struct ScannerConnection {
+    ClientNetInterface* netInterface = nullptr;
     std::string trackerPublicKey;
     ENetHost* enetClient = nullptr;
     ENetPeer* enetPeer = nullptr;
@@ -25,21 +28,25 @@ class Scanner {
     
 public:
     
+    std::string publicKey = "";
+    std::string secretKey = "";
+    TuiTable* katipoTable;
+    
+    std::string broadcastKey;
     TuiFunction* callbackFunction = nullptr;
     
     std::vector<std::string> scanIPs;
     bool complete = false;
     bool hasTriedAgain = false;
     int scanIndex = 0;
-    std::map<std::string, ScannerConnection> currentlyTestingConnectionsByIP;
     
-    std::map<std::string, ScannerConnection> validConnectionsByIP;
+    std::map<std::string, ScannerConnection> connectionsByIP;
     
 public:
-    Scanner();
+    Scanner(std::string& publicKey, std::string& secretKey, TuiTable* katipoTable_);
     ~Scanner();
     
-    void startScan(TuiFunction* callbackFunction_);
+    void startScan(std::string broadcastKey_, TuiFunction* callbackFunction_);
     void cleanupPreviousScan();
     
     void update();

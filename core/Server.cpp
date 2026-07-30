@@ -313,8 +313,8 @@ void Server::clientDataReceived(NetServerClient* client, const ServerData& serve
                 TuiFunction* callbackFunction = nullptr;
                 if(callbackID)
                 {
-                    callbackID->retain();
-                    callbackFunction = new TuiFunction([this, callbackID, client](TuiTable* args, TuiRef* existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
+                    int callbackIDInt = callbackID->getNumberValue();
+                    callbackFunction = new TuiFunction([this, callbackIDInt, client](TuiTable* args, TuiRef* existingResult, TuiFunctionCallData* incomingCallData, TuiDebugInfo* callingDebugInfo) -> TuiRef* {
                         TuiTable* toSecureTable = nullptr;
                         if(args && args->arrayObjects.size() > 0)
                         {
@@ -334,7 +334,9 @@ void Server::clientDataReceived(NetServerClient* client, const ServerData& serve
                         {
                             toSecureTable = new TuiTable(nullptr);
                         }
-                        toSecureTable->set("callbackID", callbackID);
+                        TuiNumber* callbackIDRef = new TuiNumber(callbackIDInt);
+                        toSecureTable->set("callbackID", callbackIDRef);
+                        callbackIDRef->release();
                         
                         TuiTable* sendTable = client->getEncryptedDataTable(toSecureTable, publicKey, secretKey);
                         toSecureTable->release();
@@ -347,7 +349,6 @@ void Server::clientDataReceived(NetServerClient* client, const ServerData& serve
                         serverData.length = dataSerialized.length();
                         
                         client->sendDataToClient(serverData, true); //todo don't capture client here, find it again in case it has disconnected
-                        callbackID->release();
                         return TUI_NIL;
                     });
                     sendArgs->push(callbackFunction);
