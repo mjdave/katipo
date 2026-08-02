@@ -184,9 +184,6 @@ void Scanner::handleReceivedData(std::string ip, ENetEvent& event)
         return;
     }
     
-    
-    bool success = false;
-    
     ScannerConnection& connection = connectionsByIP[ip];
     
     if(event.packet->dataLength < 1)
@@ -215,7 +212,6 @@ void Scanner::handleReceivedData(std::string ip, ENetEvent& event)
         else if(incoming.type == KATIPO_NET_TYPE_INITIAL_HANDSHAKE)
         {
             connection.trackerPublicKey = std::string((const char*)incoming.data, incoming.length);
-            success = true;
             
             std::string trackerPort = "3471";
             std::string trackerKey = ip + ":" + trackerPort;
@@ -248,7 +244,7 @@ void Scanner::handleReceivedData(std::string ip, ENetEvent& event)
                             enet_host_destroy(connection.enetClient);
                             connection.enetClient = nullptr;
                             
-                            //MJLog("erase due to no sites:%s", ip.c_str());
+                            MJLog("erase due to no sites:%s", ip.c_str());
                             completedIPsToRemove.insert(ip);
                         }
                         
@@ -285,7 +281,7 @@ void Scanner::handleReceivedData(std::string ip, ENetEvent& event)
     }
     
     
-    if(!success)
+    if(!connection.netInterface)
     {
         enet_peer_disconnect(connection.enetPeer, 0);
         enet_peer_reset(connection.enetPeer);
@@ -384,7 +380,7 @@ void Scanner::update()
     
     for(auto& completedIP : completedIPsToRemove)
     {
-        MJLog("completedIPsToRemove:%s", completedIP.c_str());
+        //MJLog("completedIPsToRemove:%s", completedIP.c_str());
         connectionsByIP.erase(completedIP);
     }
     completedIPsToRemove.clear();
@@ -430,7 +426,7 @@ void Scanner::cleanupPreviousScan()
         {
             ENetHost* enetClient = ipAndConnection.second.enetClient;
             ENetPeer* enetPeer = ipAndConnection.second.enetPeer;
-            MJLog("cleanupPreviousScan");
+            //MJLog("cleanupPreviousScan");
             
             if(enetPeer)
             {
