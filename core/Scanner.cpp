@@ -348,19 +348,19 @@ void Scanner::update()
                 {
                     case ENET_EVENT_TYPE_CONNECT:
                     {
-                        MJLog("Scanner Initial connection established:%s", ipAndConnection.first.c_str());
+                        //MJLog("Scanner Initial connection established:%s", ipAndConnection.first.c_str());
                     }
                         break;
                     case ENET_EVENT_TYPE_RECEIVE:
                     {
-                         MJLog("ENET_EVENT_TYPE_RECEIVE:%s", ipAndConnection.first.c_str());
+                        //MJLog("ENET_EVENT_TYPE_RECEIVE:%s", ipAndConnection.first.c_str());
                         handleReceivedData(ipAndConnection.first, event);
                         enet_packet_destroy (event.packet);
                     }
                         break;
                     case ENET_EVENT_TYPE_DISCONNECT:
                     {
-                         MJLog("ENET_EVENT_TYPE_DISCONNECT:%s", ipAndConnection.first.c_str());
+                        //MJLog("ENET_EVENT_TYPE_DISCONNECT:%s", ipAndConnection.first.c_str());
                         enet_peer_disconnect(connection.enetPeer, 0);
                         enet_peer_reset(connection.enetPeer);
                         connection.enetPeer = nullptr;
