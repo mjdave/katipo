@@ -500,7 +500,8 @@ void ClientNetInterface::sendInitialData()
 void ClientNetInterface::checkEnetEvents()
 {
     ENetEvent event;
-    while(enetClient && enet_host_service(enetClient, &event, 0) > 0)
+    bool gotDisconnectEvent = false;
+    while(enetClient && !gotDisconnectEvent && enet_host_service(enetClient, &event, 0) > 0)
     {
         if(needsToExit)
         {
@@ -648,8 +649,8 @@ void ClientNetInterface::checkEnetEvents()
                 break;
             case ENET_EVENT_TYPE_DISCONNECT:
             {
-                
                 enetPeer = nullptr;
+                gotDisconnectEvent = true;
                 if(enetClient)
                 {
                     ClientNetInterfaceOutput output;
