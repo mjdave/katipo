@@ -82,7 +82,7 @@ elseif(WIN32)
     #target_link_libraries(katipoTracker ${CMAKE_SOURCE_DIR}/../../thirdParty/libsodium/windows/lib/libsodium.a) #hmm
 elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "arm64" OR CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64")
     include_directories(../../thirdParty/libsodium/pi/include)
-    target_link_libraries(katipoHost ${CMAKE_SOURCE_DIR}/../../thirdParty/libsodium/pi/lib/libsodium.a)
+    target_link_libraries(katipoTracker ${CMAKE_SOURCE_DIR}/../../thirdParty/libsodium/pi/lib/libsodium.a)
 else()
     include_directories(../../thirdParty/libsodium/linux/include)
     target_link_libraries(katipoTracker ${CMAKE_SOURCE_DIR}/../../thirdParty/libsodium/linux/lib/libsodium.a)
