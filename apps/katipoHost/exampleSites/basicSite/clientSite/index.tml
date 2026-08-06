@@ -10,25 +10,3 @@ You can edit this index.tml file to contain whatever content you like.
 index.tml is the katipo equivalent of an index.html. The ".tml" stands for "tui markup language".
 
 You can link to [other katipo sites](link = "katipobrowser.com") by using square brackets and parenthesis. Open up this index.tml file in a text editor to see how.
-
-# A main header
-
-Paragraphs are as you write them, if you hit enter, you start a new paragraph.
-This is a new paragraph. No need for a line between
-(greenExample)This is another paragraph, but the line starts with a '(', so this paragraph uses the style id 'greenExample' which would be defined in style.tui, with a green background and stylized text.
-That was for a single paragraph. This next paragraph is back to normal again.
-
-We can leave a blank line if we like. 
-There are a few built-in styles that can be easily accessed with special characters, eg: *Italic*, **bold**, and `monospace`.
-
-You can also assign style ids for phrases within paragraphs by [using a markdown-like square bracket syntax,](squareBracketExample) and the rest of the paragraph will go back to normal again.
-
-(multilineExample)
-If you put the style id in brackets on its own, it will apply to all following paragraphs.
-
-But you can [still override that.](greenExample)
-
-And you can set everything back to normal with '(clear)'.
-(clear)
-
-Anything within the parenthesis is tui code, so could be tables filled with other attributes, link behaviors, and even function calls. Or, as is the case here, they can be simple strings naming variables which define the behavior and style in a document elsewhere.

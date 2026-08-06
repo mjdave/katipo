@@ -19,9 +19,6 @@
 #include "ClientHttpInterface.h"
 #endif
 
-//#define TRACKER_IP "127.0.0.1"
-//#define TRACKER_PORT "3470"
-
 void Controller::init(int argc, const char * argv[])
 {
     std::string basePath = Tui::pathByRemovingLastPathComponent(argv[0]);

@@ -223,15 +223,18 @@ start = function(isCommandLine)
         return
     }
 
-    if(siteCode.init)
+    if(siteCode and siteCode.init)
     {
         siteCode.init()
     }
 
     katipo.get = function(url, clientData)
     {
-        print("in top level get. url:", url, " clientData:", clientData)
-        return siteCode.get(url, clientData)
+        if(siteCode and siteCode.get)
+        {
+            return siteCode.get(url, clientData)
+        }
+        return get(url, clientData)
     }
 
     print("Attempting to connect to tracker...")
@@ -239,11 +242,11 @@ start = function(isCommandLine)
     
     if(isCommandLine)
     {
-        if(siteCode.runLoop)
+        if(siteCode and siteCode.runLoop)
         {
             siteCode.runLoop()
         }
-        else if(siteCode.update)
+        else if(siteCode and siteCode.update)
         {
             while(true)
             {
