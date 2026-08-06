@@ -119,7 +119,7 @@ void ClientNetInterface::connect()
 
 void ClientNetInterface::disconnect()
 {
-    if(!thread)
+    if(!thread || disconnected)
     {
         return;
     }
@@ -129,21 +129,9 @@ void ClientNetInterface::disconnect()
         MJLog("Disconnected from tracker:%s",host.c_str());
     }
     
-    if(!callbacksByID.empty())
-    {
-        TuiRef* statusResult = new TuiTable("{status='error',message='not connected'}");
-        for(auto& idAndCallback : callbacksByID)
-        {
-            idAndCallback.second.func->call("SERVER_FUNCTION_CALL_RESPONSE", statusResult);
-            idAndCallback.second.func->release();
-            if(idAndCallback.second.progressCallback)
-            {
-                idAndCallback.second.progressCallback->release();
-            }
-        }
-        statusResult->release();
-        callbacksByID.clear();
-    }
+    needsToExit = true;
+    disconnected = true;
+    
     
     if(connected)
     {
@@ -162,9 +150,8 @@ void ClientNetInterface::disconnect()
         }
     }
     
-    needsToExit = true;
     connected = false;
-    disconnected = true;
+    
     thread->join();
     delete thread;
     thread = nullptr;
@@ -199,6 +186,24 @@ void ClientNetInterface::disconnect()
     {
         enet_host_destroy(enetClient);
         enetClient = nullptr;
+    }
+    
+    
+    if(!callbacksByID.empty())
+    {
+        TuiRef* statusResult = new TuiTable("{status='error',message='not connected'}");
+        std::map<uint32_t, ClientNetCallback> callbacksByIDCopy = callbacksByID;
+        callbacksByID.clear();//avoid a loop
+        for(auto& idAndCallback : callbacksByIDCopy)
+        {
+            idAndCallback.second.func->call("SERVER_FUNCTION_CALL_RESPONSE", statusResult); //getSitesCallbackFunction is getting called
+            idAndCallback.second.func->release();
+            if(idAndCallback.second.progressCallback)
+            {
+                idAndCallback.second.progressCallback->release();
+            }
+        }
+        statusResult->release();
     }
     
 }
@@ -931,9 +936,10 @@ void ClientNetInterface::pollNetEvents()
                                 callbacksByID[callbackID].progressCallback = nullptr;
                             }
                             
-                            callbacksByID[callbackID].func->call("SERVER_FUNCTION_CALL_RESPONSE", tuiData);
-                            callbacksByID[callbackID].func->release();
+                            TuiFunction* callback = callbacksByID[callbackID].func;
                             callbacksByID.erase(callbackID);
+                            callback->call("SERVER_FUNCTION_CALL_RESPONSE", tuiData);
+                            callback->release();
                         }
                         
                         tuiData->release();

@@ -238,11 +238,14 @@ void Scanner::handleReceivedData(std::string ip, ENetEvent& event)
                         if(!(callbackResult && callbackResult->boolValue()))
                         {
                             ScannerConnection& connection = connectionsByIP[ip];
-                            enet_peer_disconnect(connection.enetPeer, 0);
-                            enet_peer_reset(connection.enetPeer);
-                            connection.enetPeer = nullptr;
-                            enet_host_destroy(connection.enetClient);
-                            connection.enetClient = nullptr;
+                            if(!connection.netInterface)
+                            {
+                                enet_peer_disconnect(connection.enetPeer, 0);
+                                enet_peer_reset(connection.enetPeer);
+                                connection.enetPeer = nullptr;
+                                enet_host_destroy(connection.enetClient);
+                                connection.enetClient = nullptr;
+                            }
                             
                             MJLog("erase due to no sites:%s", ip.c_str());
                             completedIPsToRemove.insert(ip);
@@ -380,6 +383,11 @@ void Scanner::update()
     
     for(auto& completedIP : completedIPsToRemove)
     {
+        if(connectionsByIP.count(completedIP) != 0)
+        {
+            delete connectionsByIP[completedIP].netInterface;
+            connectionsByIP[completedIP].netInterface = nullptr;
+        }
         //MJLog("completedIPsToRemove:%s", completedIP.c_str());
         connectionsByIP.erase(completedIP);
     }
