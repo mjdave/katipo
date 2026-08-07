@@ -79,12 +79,12 @@ init = function()
     getSiteKey = function(clientID, siteNameKey, callbackFunc)
     {
         siteNameKeyToUse = siteNameKey
-        if(!siteNameKeyToUse and katipo.defaultHost)
+        if(katipo.defaultHost and (!siteNameKeyToUse or siteNameKeyToUse == ""))
         {
             siteNameKeyToUse = katipo.defaultHost
         }
 
-        if(siteNameKeyToUse)
+        if(siteNameKeyToUse and siteNameKeyToUse != "")
         {
             siteInfo = siteInfosBySiteKeys[siteNameKeyToUse]
             if(siteInfo)
