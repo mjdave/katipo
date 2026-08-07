@@ -32,6 +32,11 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+# ifdef __APPLE__
+#define MDB_USE_POSIX_MUTEX 1
+#endif
+
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE 1
 #endif
@@ -131,7 +136,7 @@ typedef SSIZE_T	ssize_t;
 # define MDB_USE_POSIX_MUTEX	1
 # define MDB_USE_ROBUST	1
 #elif defined(__APPLE__) || defined (BSD) || defined(__FreeBSD_kernel__)
-# define MDB_USE_POSIX_SEM	1
+//# define MDB_USE_POSIX_SEM	1
 # define MDB_FDATASYNC		fsync
 #elif defined(ANDROID)
 # define MDB_FDATASYNC		fsync
@@ -266,7 +271,7 @@ typedef SSIZE_T	ssize_t;
  */
 #ifndef MDB_USE_ROBUST
 /* Android currently lacks Robust Mutex support. So does glibc < 2.4. */
-# if defined(MDB_USE_POSIX_MUTEX) && (defined(ANDROID) || \
+# if defined(MDB_USE_POSIX_MUTEX) && (defined(ANDROID) || defined(__APPLE__) ||\
 	(defined(__GLIBC__) && GLIBC_VER < 0x020004))
 #  define MDB_USE_ROBUST	0
 # else
