@@ -54,6 +54,10 @@
       <CommandLineArguments>
          <CommandLineArgument
             argument = "--site exampleSites/basicSite"
+            isEnabled = "YES">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "--site /Users/davidframpton/katipoBrowser/waraki/waraki-site"
             isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
@@ -65,8 +69,8 @@
             isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "--site /Users/davidframpton/Documents/daves-katipo-sites/notes"
-            isEnabled = "YES">
+            argument = "--site /Users/davidframpton/Documents/daves-katipo-sites/notes --trackerIP blue.local"
+            isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
             argument = "--site /Users/davidframpton/Documents/daves-katipo-sites/snake --trackerIP katipobrowser.com"
@@ -77,11 +81,15 @@
             isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "--site /Users/davidframpton/Documents/daves-katipo-sites/waraki"
+            argument = "--site /Users/davidframpton/Documents/daves-katipo-sites/waraki-site"
             isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
             argument = "--site /Users/davidframpton/Documents/daves-katipo-sites/blockrun"
+            isEnabled = "NO">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "--site /Users/davidframpton/Documents/daves-katipo-sites/solitaire"
             isEnabled = "NO">
          </CommandLineArgument>
          <CommandLineArgument
