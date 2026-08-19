@@ -135,6 +135,16 @@ void Database::bindTui(std::string prefix, TuiTable* rootTable)
     });
 }
 
+TuiRef* Database::get(std::string key)
+{
+    return TuiRef::loadBinaryString(dataForKey(key));
+}
+
+void Database::set(std::string key, TuiRef* data)
+{
+    setDataForKey(data->serializeBinary(), key);
+}
+
 bool Database::setDataForKey(std::string data, std::string key)
 {
     if(key.length() == 0)
