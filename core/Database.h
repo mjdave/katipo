@@ -33,8 +33,11 @@ public:
     ~Database();
     
     void bindTui(std::string prefix, TuiTable* rootTable);
+    
     TuiRef* get(std::string key);
     void set(std::string key, TuiRef* data);
+    TuiRef* get(uint32_t key);
+    void set(uint32_t key, TuiRef* data);
     
     bool startBulkTransaction();
     bool finishBulkTransaction();
@@ -45,6 +48,11 @@ public:
     bool removeDataForKey(std::string key);
     std::string dataForKey(std::string key);
     bool hasKey(std::string key);
+    
+    bool setDataForKey(std::string data, uint32_t key);
+    bool removeDataForKey(uint32_t key);
+    std::string dataForKey(uint32_t key);
+    bool hasKey(uint32_t key);
     
     
     uint64_t getSize();
