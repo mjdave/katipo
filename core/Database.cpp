@@ -155,9 +155,20 @@ void Database::set(uint32_t key, TuiRef* data)
     setDataForKey(data->serializeBinary(), key);
 }
 
-bool Database::setDataForKey(std::string data, std::string key)
+
+TuiRef* Database::get64(uint64_t key)
 {
-    if(key.length() == 0)
+    return TuiRef::loadBinaryString(dataForKey(key));
+}
+
+void Database::set64(uint64_t key, TuiRef* data)
+{
+    setDataForKey(data->serializeBinary(), key);
+}
+
+bool Database::setDataForKey(std::string data, void* keyData, size_t keySize)
+{
+    if(keySize == 0)
     {
         MJLog("Error, nil key in setData");
         return false;
@@ -165,7 +176,7 @@ bool Database::setDataForKey(std::string data, std::string key)
     
     if(data.length() == 0)
     {
-        return removeDataForKey(key);
+        return removeDataForKey(keyData, keySize);
     }
     
     MDB_txn* transaction = getTransaction();
@@ -177,8 +188,8 @@ bool Database::setDataForKey(std::string data, std::string key)
     MDB_val mdbKey, mdbData;
     
     
-    mdbKey.mv_size = key.size();
-    mdbKey.mv_data = (void *)key.data();
+    mdbKey.mv_size = keySize;
+    mdbKey.mv_data = keyData;
     mdbData.mv_size = data.size();
     mdbData.mv_data = (void *)data.data();
     
@@ -200,9 +211,9 @@ bool Database::setDataForKey(std::string data, std::string key)
     return finishTransaction(transaction);
 }
 
-bool Database::removeDataForKey(std::string key)
+bool Database::removeDataForKey(void* keyData, size_t keySize)
 {
-    if(key.length() == 0)
+    if(keySize == 0)
     {
         MJLog("Error, nil key in removeDataForKey");
         return false;
@@ -215,8 +226,8 @@ bool Database::removeDataForKey(std::string key)
     
     MDB_val mdbKey;
     
-    mdbKey.mv_size = key.size();
-    mdbKey.mv_data = (void *)key.data();
+    mdbKey.mv_size = keySize;
+    mdbKey.mv_data = keyData;
     
     int rc = mdb_del(transaction, dbi, &mdbKey, nullptr);
     
@@ -232,9 +243,9 @@ bool Database::removeDataForKey(std::string key)
     return true;
 }
 
-std::string Database::dataForKey(std::string key)
+std::string Database::dataForKey(void* keyData, size_t keySize)
 {
-    if(key.length() == 0)
+    if(keySize == 0)
     {
         MJLog("Error, nil key in dataForKey");
         return "";
@@ -248,8 +259,8 @@ std::string Database::dataForKey(std::string key)
     
     MDB_val mdbKey, mdbData;
     
-    mdbKey.mv_size = key.size();
-    mdbKey.mv_data = (void *)key.data();
+    mdbKey.mv_size = keySize;
+    mdbKey.mv_data = keyData;
     
     int rc = mdb_get(transaction, dbi, &mdbKey, &mdbData);
     if(rc != MDB_SUCCESS || mdbData.mv_size == 0)
@@ -263,125 +274,92 @@ std::string Database::dataForKey(std::string key)
     finishTransaction(transaction);
     
     return str;
+}
+
+bool Database::hasKey(void* keyData, size_t keySize)
+{
+    MDB_txn* transaction = getTransaction();
+    if(!transaction)
+    {
+        return false;
+    }
+    
+    MDB_val mdbKey, mdbData;
+    
+    mdbKey.mv_size = keySize;
+    mdbKey.mv_data = keyData;
+    
+    int rc = mdb_get(transaction, dbi, &mdbKey, &mdbData);
+    if(rc != MDB_SUCCESS || mdbData.mv_size == 0)
+    {
+        finishTransaction(transaction);
+        return false;
+    }
+    finishTransaction(transaction);
+    
+    return true;
+}
+
+bool Database::setDataForKey(std::string data, std::string key)
+{
+    return setDataForKey(data, (void *)key.data(), key.size());
+}
+
+bool Database::removeDataForKey(std::string key)
+{
+    return removeDataForKey((void *)key.data(), key.size());
+}
+
+std::string Database::dataForKey(std::string key)
+{
+    return dataForKey((void *)key.data(), key.size());
+}
+
+bool Database::hasKey(std::string key)
+{
+    return hasKey((void *)key.data(), key.size());
 }
 
 bool Database::setDataForKey(std::string data, uint32_t key)
 {
-    if(data.length() == 0)
-    {
-        return removeDataForKey(key);
-    }
-    
-    MDB_txn* transaction = getTransaction();
-    if(!transaction)
-    {
-        return false;
-    }
-    
-    MDB_val mdbKey, mdbData;
-    
-    
-    mdbKey.mv_size = sizeof(key);
-    mdbKey.mv_data = &key;
-    mdbData.mv_size = data.size();
-    mdbData.mv_data = (void *)data.data();
-    
-    int rc = mdb_put(transaction, dbi, &mdbKey, &mdbData, 0);
-    
-    if(rc != MDB_SUCCESS)
-    {
-        MJLog("mdb setData failed:%d - %s", rc, mdb_strerror(rc));
-        finishTransaction(transaction);
-        
-        if(rc == MDB_MAP_FULL)
-        {
-            MJLog("Database map is full. Exiting, will resize on next launch.");
-            exit(0);
-        }
-        return false;
-    }
-    
-    return finishTransaction(transaction);
+    return setDataForKey(data, &key, sizeof(key));
 }
 
 bool Database::removeDataForKey(uint32_t key)
 {
-    MDB_txn* transaction = getTransaction();
-    if(!transaction)
-    {
-        return false;
-    }
-    
-    MDB_val mdbKey;
-    
-    mdbKey.mv_size = sizeof(key);
-    mdbKey.mv_data = &key;
-    
-    int rc = mdb_del(transaction, dbi, &mdbKey, nullptr);
-    
-    finishTransaction(transaction);
-    
-    if(rc != MDB_SUCCESS &&
-       rc != MDB_NOTFOUND)
-    {
-        MJLog("mdb removeObject failed:%d - %s", rc, mdb_strerror(rc));
-        return false;
-    }
-    
-    return true;
+    return removeDataForKey(&key, sizeof(key));
 }
 
 std::string Database::dataForKey(uint32_t key)
 {
-    MDB_txn* transaction = getTransaction();
-    if(!transaction)
-    {
-        return "";
-    }
-    
-    MDB_val mdbKey, mdbData;
-    
-    mdbKey.mv_size = sizeof(key);
-    mdbKey.mv_data = &key;
-    
-    int rc = mdb_get(transaction, dbi, &mdbKey, &mdbData);
-    if(rc != MDB_SUCCESS || mdbData.mv_size == 0)
-    {
-        finishTransaction(transaction);
-        return "";
-    }
-    
-    std::string str((char *)mdbData.mv_data,mdbData.mv_size);
-    
-    finishTransaction(transaction);
-    
-    return str;
+    return dataForKey(&key, sizeof(key));
 }
 
 bool Database::hasKey(uint32_t key)
 {
-    MDB_txn* transaction = getTransaction();
-    if(!transaction)
-    {
-        return false;
-    }
-    
-    MDB_val mdbKey, mdbData;
-    
-    mdbKey.mv_size = sizeof(key);
-    mdbKey.mv_data = &key;
-    
-    int rc = mdb_get(transaction, dbi, &mdbKey, &mdbData);
-    if(rc != MDB_SUCCESS || mdbData.mv_size == 0)
-    {
-        finishTransaction(transaction);
-        return false;
-    }
-    finishTransaction(transaction);
-    
-    return true;
+    return hasKey(&key, sizeof(key));
 }
 
+
+bool Database::setDataForKey64(std::string data, uint64_t key)
+{
+    return setDataForKey(data, &key, sizeof(key));
+}
+
+bool Database::removeDataForKey64(uint64_t key)
+{
+    return removeDataForKey(&key, sizeof(key));
+}
+
+std::string Database::dataForKey64(uint64_t key)
+{
+    return dataForKey(&key, sizeof(key));
+}
+
+bool Database::hasKey64(uint64_t key)
+{
+    return hasKey(&key, sizeof(key));
+}
 
 std::map<std::string, std::string> Database::allData()
 {
@@ -416,34 +394,6 @@ std::map<std::string, std::string> Database::allData()
 	return result;
 }
 
-bool Database::hasKey(std::string key)
-{
-    if(key.length() == 0)
-    {
-        MJLog("Error, nil key in hasKey");
-        return false;
-    }
-    MDB_txn* transaction = getTransaction();
-    if(!transaction)
-    {
-        return false;
-    }
-    
-    MDB_val mdbKey, mdbData;
-    
-    mdbKey.mv_size = key.size();
-    mdbKey.mv_data = (void *)key.data();
-    
-    int rc = mdb_get(transaction, dbi, &mdbKey, &mdbData);
-    if(rc != MDB_SUCCESS || mdbData.mv_size == 0)
-    {
-        finishTransaction(transaction);
-        return false;
-    }
-    finishTransaction(transaction);
-    
-    return true;
-}
 
 /*
 

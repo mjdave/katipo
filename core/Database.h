@@ -38,11 +38,18 @@ public:
     void set(std::string key, TuiRef* data);
     TuiRef* get(uint32_t key);
     void set(uint32_t key, TuiRef* data);
+    TuiRef* get64(uint64_t key);
+    void set64(uint64_t key, TuiRef* data);
     
     bool startBulkTransaction();
     bool finishBulkTransaction();
 
 	std::map<std::string, std::string> allData();
+    
+    bool setDataForKey(std::string data, void* keyData, size_t keySize);
+    bool removeDataForKey(void* keyData, size_t keySize);
+    std::string dataForKey(void* keyData, size_t keySize);
+    bool hasKey(void* keyData, size_t keySize);
     
     bool setDataForKey(std::string data, std::string key);
     bool removeDataForKey(std::string key);
@@ -53,6 +60,11 @@ public:
     bool removeDataForKey(uint32_t key);
     std::string dataForKey(uint32_t key);
     bool hasKey(uint32_t key);
+    
+    bool setDataForKey64(std::string data, uint64_t key);
+    bool removeDataForKey64(uint64_t key);
+    std::string dataForKey64(uint64_t key);
+    bool hasKey64(uint64_t key);
     
     
     uint64_t getSize();
