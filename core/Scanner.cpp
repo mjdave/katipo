@@ -116,6 +116,9 @@ static inline std::vector<std::string> getLocalIPs()
 static inline std::vector<std::string> getLocalIPs()
 {
     std::vector<std::string> result;
+#if defined(__ANDROID__) //not supported (todo)
+    return result;
+#else
     struct ifaddrs *ipAddrStruct = NULL;
     struct ifaddrs *ipPtr = NULL;
     getifaddrs(&ipAddrStruct);
@@ -134,6 +137,7 @@ static inline std::vector<std::string> getLocalIPs()
     free(ipAddrStruct);
     
     return result;
+#endif
 }
 
 #endif

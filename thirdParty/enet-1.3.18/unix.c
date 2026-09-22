@@ -53,6 +53,9 @@
 #include <poll.h>
 #endif
 
+#if defined(__ANDROID__)
+    #define HAS_SOCKLEN_T 1
+#endif
 #if !defined(HAS_SOCKLEN_T) && !defined(__socklen_t_defined)
 typedef int socklen_t;
 #endif
