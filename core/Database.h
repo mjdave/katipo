@@ -51,6 +51,9 @@ public:
     std::string dataForKey(void* keyData, size_t keySize);
     bool hasKey(void* keyData, size_t keySize);
     
+    void dataForKey(void* keyData, size_t keySize, void* data, uint32_t* dataSize); //you must set allowed max size in dataSize, this memcpys into data, and found data size is returned
+    bool setDataForKey(void* data, size_t dataSize, void* keyData, size_t keySize);
+    
     bool setDataForKey(std::string data, std::string key);
     bool removeDataForKey(std::string key);
     std::string dataForKey(std::string key);
